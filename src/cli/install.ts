@@ -1,4 +1,5 @@
 import type { InstallArgs, InstallConfig, BooleanArg, DetectedConfig } from "./types"
+import * as readline from "readline"
 import {
   addPluginToOpenCodeConfig,
   writeLiteConfig,
@@ -8,6 +9,59 @@ import {
   addProviderConfig,
   detectCurrentConfig,
 } from "./config-manager"
+
+// Line reader for TUI mode that handles both TTY and piped input
+let lineReader: readline.Interface | null = null
+let lineBuffer: string[] = []
+let lineResolvers: ((line: string) => void)[] = []
+
+function initLineReader(): void {
+  if (lineReader) return
+
+  lineReader = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: process.stdin.isTTY ?? false,
+  })
+
+  lineReader.on("line", (line) => {
+    if (lineResolvers.length > 0) {
+      const resolve = lineResolvers.shift()!
+      resolve(line)
+    } else {
+      lineBuffer.push(line)
+    }
+  })
+
+  lineReader.on("close", () => {
+    // Resolve any pending readers with empty string
+    while (lineResolvers.length > 0) {
+      const resolve = lineResolvers.shift()!
+      resolve("")
+    }
+  })
+}
+
+async function readLine(): Promise<string> {
+  initLineReader()
+
+  if (lineBuffer.length > 0) {
+    return lineBuffer.shift()!
+  }
+
+  return new Promise((resolve) => {
+    lineResolvers.push(resolve)
+  })
+}
+
+function closeLineReader(): void {
+  if (lineReader) {
+    lineReader.close()
+    lineReader = null
+    lineBuffer = []
+    lineResolvers = []
+  }
+}
 
 const GREEN = "\x1b[32m"
 const BLUE = "\x1b[34m"
@@ -55,6 +109,30 @@ function printWarning(message: string): void {
   console.log(`${SYMBOLS.warn} ${YELLOW}${message}${RESET}`)
 }
 
+async function checkOpenCodeInstalled(): Promise<{ ok: boolean; version?: string }> {
+  const installed = await isOpenCodeInstalled()
+  if (!installed) {
+    printError("OpenCode is not installed on this system.")
+    printInfo("Install it with:")
+    console.log(`     ${BLUE}curl -fsSL https://opencode.ai/install | bash${RESET}`)
+    return { ok: false }
+  }
+  const version = await getOpenCodeVersion()
+  printSuccess(`OpenCode ${version ?? ""} detected`)
+  return { ok: true, version: version ?? undefined }
+}
+
+type StepResult = { success: boolean; error?: string; configPath?: string }
+
+function handleStepResult(result: StepResult, successMsg: string): boolean {
+  if (!result.success) {
+    printError(`Failed: ${result.error}`)
+    return false
+  }
+  printSuccess(`${successMsg} ${SYMBOLS.arrow} ${DIM}${result.configPath}${RESET}`)
+  return true
+}
+
 function formatConfigSummary(config: InstallConfig): string {
   const lines: string[] = []
   lines.push(`${BOLD}Configuration Summary${RESET}`)
@@ -66,26 +144,13 @@ function formatConfigSummary(config: InstallConfig): string {
 }
 
 function validateNonTuiArgs(args: InstallArgs): { valid: boolean; errors: string[] } {
-  const errors: string[] = []
-
-  if (args.antigravity === undefined) {
-    errors.push("--antigravity is required (values: yes, no)")
-  } else if (!["yes", "no"].includes(args.antigravity)) {
-    errors.push(`Invalid --antigravity value: ${args.antigravity} (expected: yes, no)`)
-  }
-
-  if (args.openai === undefined) {
-    errors.push("--openai is required (values: yes, no)")
-  } else if (!["yes", "no"].includes(args.openai)) {
-    errors.push(`Invalid --openai value: ${args.openai} (expected: yes, no)`)
-  }
-
-  if (args.cerebras === undefined) {
-    errors.push("--cerebras is required (values: yes, no)")
-  } else if (!["yes", "no"].includes(args.cerebras)) {
-    errors.push(`Invalid --cerebras value: ${args.cerebras} (expected: yes, no)`)
-  }
-
+  const requiredArgs = ["antigravity", "openai", "cerebras"] as const
+  const errors = requiredArgs.flatMap((key) => {
+    const value = args[key]
+    if (value === undefined) return [`--${key} is required (values: yes, no)`]
+    if (!["yes", "no"].includes(value)) return [`Invalid --${key} value: ${value} (expected: yes, no)`]
+    return []
+  })
   return { valid: errors.length === 0, errors }
 }
 
@@ -109,17 +174,14 @@ function detectedToInitialValues(detected: DetectedConfig): {
   }
 }
 
-async function askYesNo(prompt: string, defaultValue: BooleanArg = "no"): Promise<BooleanArg> {
+async function askYesNo(promptText: string, defaultValue: BooleanArg = "no"): Promise<BooleanArg> {
   const defaultHint = defaultValue === "yes" ? "[Y/n]" : "[y/N]"
-  process.stdout.write(`${BLUE}${prompt}${RESET} ${defaultHint}: `)
+  const fullPrompt = `${BLUE}${promptText}${RESET} ${defaultHint}: `
 
-  const reader = Bun.stdin.stream().getReader()
-  const { value } = await reader.read()
-  reader.releaseLock()
+  process.stdout.write(fullPrompt)
+  const answer = (await readLine()).trim().toLowerCase()
 
-  const answer = value ? new TextDecoder().decode(value).trim().toLowerCase() : ""
-
-  if (answer === "" || answer === "\n") return defaultValue
+  if (answer === "") return defaultValue
   if (answer === "y" || answer === "yes") return "yes"
   if (answer === "n" || answer === "no") return "no"
   return defaultValue
@@ -143,6 +205,8 @@ async function runTuiMode(detected: DetectedConfig): Promise<InstallConfig | nul
   const cerebras = await askYesNo("Do you have access to Cerebras API?", initial.cerebras)
   console.log()
 
+  closeLineReader()
+
   return {
     hasAntigravity: antigravity === "yes",
     hasOpenAI: openai === "yes",
@@ -150,7 +214,7 @@ async function runTuiMode(detected: DetectedConfig): Promise<InstallConfig | nul
   }
 }
 
-async function runInstall(args: InstallArgs, config: InstallConfig): Promise<number> {
+async function runInstall(config: InstallConfig): Promise<number> {
   const detected = detectCurrentConfig()
   const isUpdate = detected.isInstalled
 
@@ -161,52 +225,29 @@ async function runInstall(args: InstallArgs, config: InstallConfig): Promise<num
 
   // Step 1: Check OpenCode
   printStep(step++, totalSteps, "Checking OpenCode installation...")
-  const installed = await isOpenCodeInstalled()
-  if (!installed) {
-    printError("OpenCode is not installed on this system.")
-    printInfo("Visit https://opencode.ai/docs for installation instructions")
-    return 1
-  }
-
-  const version = await getOpenCodeVersion()
-  printSuccess(`OpenCode ${version ?? ""} detected`)
+  const { ok } = await checkOpenCodeInstalled()
+  if (!ok) return 1
 
   // Step 2: Add plugin
   printStep(step++, totalSteps, "Adding oh-my-opencode-slim plugin...")
   const pluginResult = await addPluginToOpenCodeConfig()
-  if (!pluginResult.success) {
-    printError(`Failed: ${pluginResult.error}`)
-    return 1
-  }
-  printSuccess(`Plugin added ${SYMBOLS.arrow} ${DIM}${pluginResult.configPath}${RESET}`)
+  if (!handleStepResult(pluginResult, "Plugin added")) return 1
 
   // Step 3-4: Auth plugins and provider config (if Antigravity)
   if (config.hasAntigravity) {
     printStep(step++, totalSteps, "Adding auth plugins...")
     const authResult = await addAuthPlugins(config)
-    if (!authResult.success) {
-      printError(`Failed: ${authResult.error}`)
-      return 1
-    }
-    printSuccess(`Auth plugins configured ${SYMBOLS.arrow} ${DIM}${authResult.configPath}${RESET}`)
+    if (!handleStepResult(authResult, "Auth plugins configured")) return 1
 
     printStep(step++, totalSteps, "Adding provider configurations...")
     const providerResult = addProviderConfig(config)
-    if (!providerResult.success) {
-      printError(`Failed: ${providerResult.error}`)
-      return 1
-    }
-    printSuccess(`Providers configured ${SYMBOLS.arrow} ${DIM}${providerResult.configPath}${RESET}`)
+    if (!handleStepResult(providerResult, "Providers configured")) return 1
   }
 
   // Step 5: Write lite config
   printStep(step++, totalSteps, "Writing oh-my-opencode-slim configuration...")
   const liteResult = writeLiteConfig(config)
-  if (!liteResult.success) {
-    printError(`Failed: ${liteResult.error}`)
-    return 1
-  }
-  printSuccess(`Config written ${SYMBOLS.arrow} ${DIM}${liteResult.configPath}${RESET}`)
+  if (!handleStepResult(liteResult, "Config written")) return 1
 
   // Summary
   console.log()
@@ -251,7 +292,7 @@ export async function install(args: InstallArgs): Promise<number> {
     }
 
     const config = argsToConfig(args)
-    return runInstall(args, config)
+    return runInstall(config)
   }
 
   // TUI mode
@@ -260,19 +301,12 @@ export async function install(args: InstallArgs): Promise<number> {
   printHeader(detected.isInstalled)
 
   printStep(1, 1, "Checking OpenCode installation...")
-  const installed = await isOpenCodeInstalled()
-  if (!installed) {
-    printError("OpenCode is not installed on this system.")
-    printInfo("Visit https://opencode.ai/docs for installation instructions")
-    return 1
-  }
-
-  const version = await getOpenCodeVersion()
-  printSuccess(`OpenCode ${version ?? ""} detected`)
+  const { ok } = await checkOpenCodeInstalled()
+  if (!ok) return 1
   console.log()
 
   const config = await runTuiMode(detected)
   if (!config) return 1
 
-  return runInstall(args, config)
+  return runInstall(config)
 }
