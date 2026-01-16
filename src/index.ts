@@ -1,6 +1,6 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { getAgentConfigs } from "./agents";
-import { BackgroundTaskManager } from "./features";
+import { BackgroundTaskManager, TmuxSessionManager } from "./features";
 import {
   createBackgroundTools,
   lsp_goto_definition,
@@ -43,6 +43,9 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   const backgroundManager = new BackgroundTaskManager(ctx, tmuxConfig);
   const backgroundTools = createBackgroundTools(ctx, backgroundManager, tmuxConfig);
   const mcps = createBuiltinMcps(config.disabled_mcps);
+
+  // Initialize TmuxSessionManager to handle OpenCode's built-in Task tool sessions
+  const tmuxSessionManager = new TmuxSessionManager(ctx, tmuxConfig);
 
   // Initialize auto-update checker hook
   const autoUpdateChecker = createAutoUpdateCheckerHook(ctx, {
@@ -89,7 +92,14 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
     },
 
     event: async (input) => {
+      // Handle auto-update checking
       await autoUpdateChecker.event(input);
+      
+      // Handle tmux pane spawning for OpenCode's Task tool sessions
+      await tmuxSessionManager.onSessionCreated(input.event as {
+        type: string;
+        properties?: { info?: { id?: string; parentID?: string; title?: string } };
+      });
     },
   };
 };
