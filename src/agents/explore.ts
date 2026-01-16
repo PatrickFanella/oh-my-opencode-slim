@@ -39,7 +39,7 @@ const EXPLORE_PROMPT = `You are Explorer - a fast codebase navigation specialist
 **Output Format**:
 <results>
 <files>
-- /path/to/file.ts:42 — Brief description of what's there
+- /path/to/file.ts:42 - Brief description of what's there
 </files>
 <answer>
 Concise answer to the question
