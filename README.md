@@ -28,7 +28,7 @@
   - [Oracle](#oracle)
   - [Librarian](#librarian)
   - [Frontend Designer](#frontend-designer)
-  - [Document Writer](#document-writer)
+  - [Coder](#coder)
   - [Multimodal Viewer](#multimodal-viewer)
   - [Code Simplifier](#code-simplifier)
 - [🛠️ **Tools & Capabilities**](#tools--capabilities)
@@ -189,8 +189,8 @@ The plugin follows a "Hub and Spoke" model:
 3. **Delegation**:
    - Launches an `@explore` background task to find all auth-related files.
    - Launches a `@librarian` task to check the latest documentation for the auth library used.
-4. **Integration**: Once background results are ready, the Orchestrator performs the refactor.
-5. **Finalization**: Passes the changes to `@document-writer` to update the README.
+4. **Integration**: Once background results are ready, the Orchestrator delegates to `@coder` for multi-file refactor.
+5. **Review**: Orchestrator deep-reviews the code, fixes any issues directly, marks complete.
 
 ---
 
@@ -278,17 +278,17 @@ Modern responsive design, CSS/Tailwind mastery, micro-animations, component arch
 
 ---
 
-### Document Writer
+### Coder
 
-<a href="src/agents/document-writer.ts"><img src="img/scribe.png" alt="Document Writer" align="right" width="240"></a>
+<a href="src/agents/coder.ts"><img src="img/scribe.png" alt="Coder" align="right" width="240"></a>
 
-> **The Scribe** was there when the first README was written - and wept, for it was incomplete. They have devoted eternity to the sacred art of documentation: clear, scannable, honest. While others ship features, The Scribe ensures those features are understood. Every code example works. Every explanation enlightens.
+> **The Coder** is pure execution - no ego, no overthinking, just code. When The Orchestrator has done the thinking and made the decisions, The Coder implements. Fast, clean, focused. They don't question the architecture; they build it. They don't redesign; they deliver.
 
-**Role:** `Technical documentation and knowledge capture`  
-**Model:** `google/gemini-3-flash`  
-**Prompt:** [src/agents/document-writer.ts](src/agents/document-writer.ts)
+**Role:** `Fast implementation of multi-file tasks`  
+**Model:** `cerebras/zai-glm-4.7`  
+**Prompt:** [src/agents/coder.ts](src/agents/coder.ts)
 
-README crafting, API documentation, architecture docs, inline comments that don't insult your intelligence. *Match existing style; focus on "why," not just "what."*
+Multi-file implementations, boilerplate generation, scaffolding, repetitive edits. *The Orchestrator thinks; The Coder types.*
 
 <br clear="both">
 
