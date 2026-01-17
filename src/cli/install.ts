@@ -7,6 +7,7 @@ import {
   getOpenCodeVersion,
   addAuthPlugins,
   addProviderConfig,
+  addServerConfig,
   detectCurrentConfig,
   isTmuxInstalled,
   generateLiteConfig,
@@ -256,7 +257,11 @@ async function runInstall(config: InstallConfig): Promise<number> {
 
   printHeader(isUpdate)
 
-  const totalSteps = config.hasAntigravity ? 5 : 3
+  // Calculate total steps dynamically
+  let totalSteps = 3 // Base: check opencode, add plugin, write lite config
+  if (config.hasAntigravity) totalSteps += 2 // auth plugins + provider config
+  if (config.hasTmux) totalSteps += 1 // server config
+  
   let step = 1
 
   // Step 1: Check OpenCode
@@ -280,7 +285,14 @@ async function runInstall(config: InstallConfig): Promise<number> {
     if (!handleStepResult(providerResult, "Providers configured")) return 1
   }
 
-  // Step 5: Write lite config
+  // Server config (if Tmux enabled)
+  if (config.hasTmux) {
+    printStep(step++, totalSteps, "Configuring OpenCode HTTP server for tmux...")
+    const serverResult = addServerConfig(config)
+    if (!handleStepResult(serverResult, "Server configured")) return 1
+  }
+
+  // Write lite config
   printStep(step++, totalSteps, "Writing oh-my-opencode-slim configuration...")
   const liteResult = writeLiteConfig(config)
   if (!handleStepResult(liteResult, "Config written")) return 1
@@ -308,10 +320,6 @@ async function runInstall(config: InstallConfig): Promise<number> {
   console.log()
 
   if (config.hasTmux) {
-    console.log(`  ${nextStep++}. Enable OpenCode HTTP server for tmux integration:`)
-    console.log(`     Add the following to ${DIM}${liteResult.configPath.replace("oh-my-opencode-slim.json", "opencode.json")}${RESET}:`)
-    console.log(`     ${BLUE}{ "server": { "port": 4096 } }${RESET}`)
-    console.log()
     console.log(`  ${nextStep++}. Run OpenCode inside tmux:`)
     console.log(`     ${BLUE}$ tmux${RESET}`)
     console.log(`     ${BLUE}$ opencode${RESET}`)
