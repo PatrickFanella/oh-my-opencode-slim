@@ -97,8 +97,8 @@ export interface SkillArgs {
  * Args for the skill_mcp tool
  */
 export interface SkillMcpArgs {
-  skill_name: string;
-  mcp_name: string;
-  tool_name: string;
-  tool_args?: Record<string, unknown>;
+  skillName: string;
+  mcpName: string;
+  toolName: string;
+  toolArgs?: Record<string, unknown>;
 }

@@ -15,12 +15,14 @@ This skill provides browser automation capabilities via the Playwright MCP serve
   },
 };
 
-const builtinSkills: SkillDefinition[] = [playwrightSkill];
+const builtinSkillsMap = new Map<string, SkillDefinition>([
+  [playwrightSkill.name, playwrightSkill],
+]);
 
 export function getBuiltinSkills(): SkillDefinition[] {
-  return builtinSkills;
+  return Array.from(builtinSkillsMap.values());
 }
 
 export function getSkillByName(name: string): SkillDefinition | undefined {
-  return builtinSkills.find(skill => skill.name === name);
+  return builtinSkillsMap.get(name);
 }

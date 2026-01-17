@@ -12,26 +12,55 @@ import type {
 } from "./types";
 
 function getConnectionType(config: McpServerConfig): ConnectionType {
-  if ("type" in config && config.type === "http") {
-    return "http";
-  }
-  if ("type" in config && config.type === "sse") {
-    return "http";
-  }
-  if ("type" in config && config.type === "stdio") {
-    return "stdio";
-  }
-  if ("url" in config) {
-    return "http";
-  }
-  return "stdio";
+  return "url" in config ? "http" : "stdio";
 }
 
 export class SkillMcpManager {
+  private static instance: SkillMcpManager;
   private clients: Map<string, ManagedClient> = new Map();
   private pendingConnections: Map<string, Promise<Client>> = new Map();
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
   private readonly IDLE_TIMEOUT = 5 * 60 * 1000;
+
+  private constructor() {
+    this.startCleanupTimer();
+    this.registerProcessCleanup();
+  }
+
+  static getInstance(): SkillMcpManager {
+    if (!SkillMcpManager.instance) {
+      SkillMcpManager.instance = new SkillMcpManager();
+    }
+    return SkillMcpManager.instance;
+  }
+
+  private registerProcessCleanup(): void {
+    const cleanup = () => {
+      for (const [, managed] of this.clients) {
+        try {
+          managed.client.close();
+        } catch {}
+        try {
+          managed.transport.close();
+        } catch {}
+      }
+      this.clients.clear();
+      if (this.cleanupInterval) {
+        clearInterval(this.cleanupInterval);
+        this.cleanupInterval = null;
+      }
+    };
+
+    process.on("exit", cleanup);
+    process.on("SIGINT", () => {
+      cleanup();
+      process.exit(0);
+    });
+    process.on("SIGTERM", () => {
+      cleanup();
+      process.exit(0);
+    });
+  }
 
   private getClientKey(info: SkillMcpClientInfo): string {
     return `${info.sessionId}:${info.skillName}:${info.serverName}`;

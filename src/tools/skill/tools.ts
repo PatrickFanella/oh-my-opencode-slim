@@ -148,41 +148,41 @@ export function createSkillTools(
   const skill_mcp: ToolDefinition = tool({
     description: SKILL_MCP_TOOL_DESCRIPTION,
     args: {
-      skill_name: tool.schema.string().describe("Skill name that provides the MCP"),
-      mcp_name: tool.schema.string().describe("MCP server name"),
-      tool_name: tool.schema.string().describe("Tool name to invoke"),
-      tool_args: tool.schema.record(tool.schema.any(), tool.schema.any()).optional(),
+      skillName: tool.schema.string().describe("Skill name that provides the MCP"),
+      mcpName: tool.schema.string().describe("MCP server name"),
+      toolName: tool.schema.string().describe("Tool name to invoke"),
+      toolArgs: tool.schema.record(tool.schema.string(), tool.schema.any()).optional(),
     },
     async execute(args: SkillMcpArgs, toolContext) {
-      const _sessionId = toolContext?.sessionID
+      const sessionId = toolContext?.sessionID
         ? String(toolContext.sessionID)
         : "unknown";
-      const skillDefinition = getSkillByName(args.skill_name);
+      const skillDefinition = getSkillByName(args.skillName);
       if (!skillDefinition) {
         const available = skills.map(s => s.name).join(", ");
         throw new Error(
-          `Skill "${args.skill_name}" not found. Available skills: ${available || "none"}`
+          `Skill "${args.skillName}" not found. Available skills: ${available || "none"}`
         );
       }
 
-      if (!skillDefinition.mcpConfig || !skillDefinition.mcpConfig[args.mcp_name]) {
+      if (!skillDefinition.mcpConfig || !skillDefinition.mcpConfig[args.mcpName]) {
         throw new Error(
-          `Skill "${args.skill_name}" has no MCP named "${args.mcp_name}".`
+          `Skill "${args.skillName}" has no MCP named "${args.mcpName}".`
         );
       }
 
-      const config = skillDefinition.mcpConfig[args.mcp_name];
+      const config = skillDefinition.mcpConfig[args.mcpName];
       const info = {
-        serverName: args.mcp_name,
+        serverName: args.mcpName,
         skillName: skillDefinition.name,
-        sessionId: _sessionId,
+        sessionId,
       };
 
       const result = await manager.callTool(
         info,
         config,
-        args.tool_name,
-        args.tool_args || {}
+        args.toolName,
+        args.toolArgs || {}
       );
 
       if (typeof result === "string") {

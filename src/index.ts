@@ -45,7 +45,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   const backgroundManager = new BackgroundTaskManager(ctx, tmuxConfig);
   const backgroundTools = createBackgroundTools(ctx, backgroundManager, tmuxConfig);
   const mcps = createBuiltinMcps(config.disabled_mcps);
-  const skillMcpManager = new SkillMcpManager();
+  const skillMcpManager = SkillMcpManager.getInstance();
   const skillTools = createSkillTools(skillMcpManager);
 
   // Initialize TmuxSessionManager to handle OpenCode's built-in Task tool sessions

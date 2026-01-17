@@ -1,3 +1,8 @@
 export { createSkillTools } from "./tools";
 export { SkillMcpManager } from "./mcp-manager";
-export * from "./types";
+export type {
+  SkillDefinition,
+  SkillArgs,
+  SkillMcpArgs,
+  McpServerConfig,
+} from "./types";
