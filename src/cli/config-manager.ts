@@ -224,6 +224,36 @@ export function addProviderConfig(installConfig: InstallConfig): ConfigMergeResu
   }
 }
 
+/**
+ * Add server configuration to opencode.json for tmux integration
+ */
+export function addServerConfig(installConfig: InstallConfig): ConfigMergeResult {
+  const configPath = getConfigJson()
+
+  try {
+    ensureConfigDir()
+    let config = parseConfig(configPath) ?? {}
+
+    if (installConfig.hasTmux) {
+      const server = (config.server ?? {}) as Record<string, unknown>
+      // Only set port if not already configured
+      if (server.port === undefined) {
+        server.port = 4096
+      }
+      config.server = server
+    }
+
+    writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n")
+    return { success: true, configPath }
+  } catch (err) {
+    return {
+      success: false,
+      configPath,
+      error: `Failed to add server config: ${err}`,
+    }
+  }
+}
+
 // Model mappings by provider priority
 const MODEL_MAPPINGS = {
   antigravity: {
