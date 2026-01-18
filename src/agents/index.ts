@@ -74,5 +74,5 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
 
 export function getAgentConfigs(config?: PluginConfig): Record<string, SDKAgentConfig> {
   const agents = createAgents(config);
-  return Object.fromEntries(agents.map((a) => [a.name, a.config]));
+  return Object.fromEntries(agents.map((a) => [a.name, { ...a.config, description: a.description }]));
 }

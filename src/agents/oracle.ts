@@ -3,6 +3,7 @@ import type { AgentDefinition } from "./orchestrator";
 export function createOracleAgent(model: string): AgentDefinition {
   return {
     name: "oracle",
+    description: "Strategic technical advisor. Use for architecture decisions, complex debugging, code review, and engineering guidance.",
     config: {
       model,
       temperature: 0.1,
