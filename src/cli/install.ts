@@ -8,6 +8,7 @@ import {
   addAuthPlugins,
   addProviderConfig,
   addServerConfig,
+  disableDefaultAgents,
   detectCurrentConfig,
   isTmuxInstalled,
   generateLiteConfig,
@@ -154,14 +155,15 @@ async function runInteractiveMode(detected: DetectedConfig): Promise<InstallConf
     const cerebras = await askYesNo(rl, "Do you have access to Cerebras API?", detected.hasCerebras ? "yes" : "no")
     console.log()
 
+    // TODO: tmux has a bug, disabled for now
     let tmux: BooleanArg = "no"
-    if (tmuxInstalled) {
-      console.log(`${BOLD}Question 4/4:${RESET}`)
-      printInfo(`${BOLD}Tmux detected!${RESET} We can enable tmux integration for you.`)
-      printInfo("This will spawn new panes for sub-agents, letting you watch them work in real-time.")
-      tmux = await askYesNo(rl, "Enable tmux integration?", detected.hasTmux ? "yes" : "no")
-      console.log()
-    }
+    // if (tmuxInstalled) {
+    //   console.log(`${BOLD}Question 4/4:${RESET}`)
+    //   printInfo(`${BOLD}Tmux detected!${RESET} We can enable tmux integration for you.`)
+    //   printInfo("This will spawn new panes for sub-agents, letting you watch them work in real-time.")
+    //   tmux = await askYesNo(rl, "Enable tmux integration?", detected.hasTmux ? "yes" : "no")
+    //   console.log()
+    // }
 
     return {
       hasAntigravity: antigravity === "yes",
@@ -181,9 +183,10 @@ async function runInstall(config: InstallConfig): Promise<number> {
   printHeader(isUpdate)
 
   // Calculate total steps dynamically
-  let totalSteps = 3 // Base: check opencode, add plugin, write lite config
+  let totalSteps = 4 // Base: check opencode, add plugin, disable default agents, write lite config
   if (config.hasAntigravity) totalSteps += 2 // auth plugins + provider config
-  if (config.hasTmux) totalSteps += 1 // server config
+  // TODO: tmux has a bug, disabled for now
+  // if (config.hasTmux) totalSteps += 1 // server config
 
   let step = 1
 
@@ -195,6 +198,10 @@ async function runInstall(config: InstallConfig): Promise<number> {
   const pluginResult = await addPluginToOpenCodeConfig()
   if (!handleStepResult(pluginResult, "Plugin added")) return 1
 
+  printStep(step++, totalSteps, "Disabling OpenCode default agents...")
+  const agentResult = disableDefaultAgents()
+  if (!handleStepResult(agentResult, "Default agents disabled")) return 1
+
   if (config.hasAntigravity) {
     printStep(step++, totalSteps, "Adding auth plugins...")
     const authResult = await addAuthPlugins(config)
@@ -205,11 +212,12 @@ async function runInstall(config: InstallConfig): Promise<number> {
     if (!handleStepResult(providerResult, "Providers configured")) return 1
   }
 
-  if (config.hasTmux) {
-    printStep(step++, totalSteps, "Configuring OpenCode HTTP server for tmux...")
-    const serverResult = addServerConfig(config)
-    if (!handleStepResult(serverResult, "Server configured")) return 1
-  }
+  // TODO: tmux has a bug, disabled for now
+  // if (config.hasTmux) {
+  //   printStep(step++, totalSteps, "Configuring OpenCode HTTP server for tmux...")
+  //   const serverResult = addServerConfig(config)
+  //   if (!handleStepResult(serverResult, "Server configured")) return 1
+  // }
 
   printStep(step++, totalSteps, "Writing oh-my-opencode-slim configuration...")
   const liteResult = writeLiteConfig(config)
@@ -237,14 +245,15 @@ async function runInstall(config: InstallConfig): Promise<number> {
   console.log(`     ${BLUE}$ opencode auth login${RESET}`)
   console.log()
 
-  if (config.hasTmux) {
-    console.log(`  ${nextStep++}. Run OpenCode inside tmux:`)
-    console.log(`     ${BLUE}$ tmux${RESET}`)
-    console.log(`     ${BLUE}$ opencode${RESET}`)
-  } else {
-    console.log(`  ${nextStep++}. Start OpenCode:`)
-    console.log(`     ${BLUE}$ opencode${RESET}`)
-  }
+  // TODO: tmux has a bug, disabled for now
+  // if (config.hasTmux) {
+  //   console.log(`  ${nextStep++}. Run OpenCode inside tmux:`)
+  //   console.log(`     ${BLUE}$ tmux${RESET}`)
+  //   console.log(`     ${BLUE}$ opencode${RESET}`)
+  // } else {
+  console.log(`  ${nextStep++}. Start OpenCode:`)
+  console.log(`     ${BLUE}$ opencode${RESET}`)
+  // }
   console.log()
 
   return 0
