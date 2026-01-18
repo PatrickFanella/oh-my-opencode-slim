@@ -7,7 +7,7 @@ export function createDocumentWriterAgent(model: string): AgentDefinition {
     config: {
       model,
       temperature: 0.3,
-      system: DOCUMENT_WRITER_PROMPT,
+      prompt: DOCUMENT_WRITER_PROMPT,
     },
   };
 }

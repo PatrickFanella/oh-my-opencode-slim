@@ -7,7 +7,7 @@ export function createFrontendAgent(model: string): AgentDefinition {
     config: {
       model,
       temperature: 0.7,
-      system: FRONTEND_PROMPT,
+      prompt: FRONTEND_PROMPT,
     },
   };
 }

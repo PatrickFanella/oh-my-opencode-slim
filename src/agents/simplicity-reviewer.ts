@@ -7,7 +7,7 @@ export function createSimplicityReviewerAgent(model: string): AgentDefinition {
     config: {
       model,
       temperature: 0.1,
-      system: SIMPLICITY_REVIEWER_PROMPT,
+      prompt: SIMPLICITY_REVIEWER_PROMPT,
     },
   };
 }

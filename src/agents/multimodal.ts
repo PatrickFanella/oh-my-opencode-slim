@@ -7,7 +7,7 @@ export function createMultimodalAgent(model: string): AgentDefinition {
     config: {
       model,
       temperature: 0.1,
-      system: MULTIMODAL_PROMPT,
+      prompt: MULTIMODAL_PROMPT,
     },
   };
 }

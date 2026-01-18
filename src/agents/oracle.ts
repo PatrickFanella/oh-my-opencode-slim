@@ -7,7 +7,7 @@ export function createOracleAgent(model: string): AgentDefinition {
     config: {
       model,
       temperature: 0.1,
-      system: ORACLE_PROMPT,
+      prompt: ORACLE_PROMPT,
     },
   };
 }

@@ -16,9 +16,9 @@ type AgentFactory = (model: string) => AgentDefinition;
 function applyOverrides(agent: AgentDefinition, override: AgentOverrideConfig): void {
   if (override.model) agent.config.model = override.model;
   if (override.temperature !== undefined) agent.config.temperature = override.temperature;
-  if (override.prompt) agent.config.system = override.prompt;
+  if (override.prompt) agent.config.prompt = override.prompt;
   if (override.prompt_append) {
-    agent.config.system = `${agent.config.system}\n\n${override.prompt_append}`;
+    agent.config.prompt = `${agent.config.prompt}\n\n${override.prompt_append}`;
   }
 }
 

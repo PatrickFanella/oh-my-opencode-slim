@@ -7,7 +7,7 @@ export function createExploreAgent(model: string): AgentDefinition {
     config: {
       model,
       temperature: 0.1,
-      system: EXPLORE_PROMPT,
+      prompt: EXPLORE_PROMPT,
     },
   };
 }

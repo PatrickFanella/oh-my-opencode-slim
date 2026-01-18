@@ -7,7 +7,7 @@ export function createLibrarianAgent(model: string): AgentDefinition {
     config: {
       model,
       temperature: 0.1,
-      system: LIBRARIAN_PROMPT,
+      prompt: LIBRARIAN_PROMPT,
     },
   };
 }
