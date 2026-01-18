@@ -138,8 +138,10 @@ async function askYesNo(
 
 async function runInteractiveMode(detected: DetectedConfig): Promise<InstallConfig> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
-  const tmuxInstalled = await isTmuxInstalled()
-  const totalQuestions = tmuxInstalled ? 4 : 3
+  // TODO: tmux has a bug, disabled for now
+  // const tmuxInstalled = await isTmuxInstalled()
+  // const totalQuestions = tmuxInstalled ? 4 : 3
+  const totalQuestions = 3
 
   try {
     console.log(`${BOLD}Question 1/${totalQuestions}:${RESET}`)
@@ -156,7 +158,7 @@ async function runInteractiveMode(detected: DetectedConfig): Promise<InstallConf
     console.log()
 
     // TODO: tmux has a bug, disabled for now
-    let tmux: BooleanArg = "no"
+    // let tmux: BooleanArg = "no"
     // if (tmuxInstalled) {
     //   console.log(`${BOLD}Question 4/4:${RESET}`)
     //   printInfo(`${BOLD}Tmux detected!${RESET} We can enable tmux integration for you.`)
@@ -169,7 +171,7 @@ async function runInteractiveMode(detected: DetectedConfig): Promise<InstallConf
       hasAntigravity: antigravity === "yes",
       hasOpenAI: openai === "yes",
       hasCerebras: cerebras === "yes",
-      hasTmux: tmux === "yes",
+      hasTmux: false,
     }
   } finally {
     rl.close()
