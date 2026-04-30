@@ -11,12 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { URL } from 'node:url';
 import { log } from '../utils';
-import {
-  extractSummarySection,
-  extractTitle,
-  parseFrontmatter,
-  slugify,
-} from './document';
+import { parseFrontmatter, slugify } from './document';
 import {
   extractResumeSlug,
   isValidId,
@@ -325,18 +320,13 @@ export function createDashboardServer(config: DashboardConfig): {
           continue;
         }
 
-        // Extract title and summary using shared extractors
-        const title = extractTitle(content) || entry.replace(/\.md$/, '');
-        const summary = extractSummarySection(content);
         const baseName = entry.replace(/\.md$/, '');
         const fm = parseFrontmatter(content);
 
         items.push({
           fileName: entry,
           resumeCommand: `/interview ${baseName}`,
-          title,
-          summary:
-            summary.length > 120 ? `${summary.slice(0, 120)}\u2026` : summary,
+          title: baseName,
           sessionID: fm?.sessionID,
           directory: dir,
         });
@@ -377,10 +367,6 @@ export function createDashboardServer(config: DashboardConfig): {
         const fm = parseFrontmatter(content);
         if (!fm?.sessionID) continue;
 
-        // Extract title and summary using shared extractors
-        const title = extractTitle(content) || entry.replace(/\.md$/, '');
-        const summary = extractSummarySection(content);
-
         // Generate a stable interview ID from slugified filename
         const baseName = entry.replace(/\.md$/, '');
         const interviewId = `recovered-${slugify(baseName) || baseName}`;
@@ -395,10 +381,8 @@ export function createDashboardServer(config: DashboardConfig): {
         stateCache.set(interviewId, {
           interviewId,
           sessionID: fm.sessionID,
-          idea: title,
+          idea: baseName,
           mode: 'session-disconnected',
-          summary,
-          title,
           questions: [],
           pendingAnswers: null,
           lastUpdatedAt: fm.updatedAt
@@ -661,8 +645,6 @@ export function createDashboardServer(config: DashboardConfig): {
         sessionID,
         idea,
         mode: 'awaiting-agent',
-        summary: 'Interview created.',
-        title: idea,
         questions: [],
         pendingAnswers: null,
         lastUpdatedAt: Date.now(),
@@ -707,8 +689,6 @@ export function createDashboardServer(config: DashboardConfig): {
       if (existing) {
         // Merge state update
         if (state.mode) existing.mode = state.mode;
-        if (state.summary) existing.summary = state.summary;
-        if (state.title) existing.title = state.title;
         if (state.questions) existing.questions = state.questions;
         if (state.filePath) existing.filePath = state.filePath;
         existing.lastUpdatedAt = Date.now();
@@ -720,8 +700,6 @@ export function createDashboardServer(config: DashboardConfig): {
           sessionID: state.sessionID ?? '',
           idea: state.idea ?? '',
           mode: state.mode ?? 'awaiting-agent',
-          summary: state.summary ?? '',
-          title: state.title ?? '',
           questions: state.questions ?? [],
           pendingAnswers: null,
           lastUpdatedAt: Date.now(),
@@ -805,7 +783,7 @@ export function createDashboardServer(config: DashboardConfig): {
         markdownPath,
         mode: entry.mode,
         isBusy: entry.mode === 'awaiting-agent',
-        summary: entry.summary,
+        summary: '',
         questions: entry.questions,
         document,
         lastUpdatedAt: entry.lastUpdatedAt,

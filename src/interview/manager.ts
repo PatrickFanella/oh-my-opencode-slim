@@ -135,8 +135,6 @@ export function createInterviewManager(
             sessionID: interview.sessionID,
             idea: interview.idea,
             mode: 'awaiting-agent',
-            summary: 'Interview created.',
-            title: interview.idea,
             questions: [],
             pendingAnswers: null,
             lastUpdatedAt: Date.now(),
@@ -432,8 +430,6 @@ function stateToEntry(
     sessionID: state.interview.sessionID,
     idea: state.interview.idea,
     mode: state.mode,
-    summary: state.summary,
-    title: state.interview.idea,
     questions: state.questions.map((q) => ({
       id: q.id,
       question: q.question,

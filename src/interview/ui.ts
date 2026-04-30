@@ -182,7 +182,7 @@ export function renderDashboardPage(
             <span class="card-status status-file">saved</span>
           </div>
           ${item.directory ? `<div class="card-dir">${escapeHtml(item.directory)}</div>` : ''}
-          <div class="card-summary">${escapeHtml(item.summary)}</div>
+          <div class="card-summary">${escapeHtml(item.summary ?? '')}</div>
           <div class="resume-row">
             <code class="resume-cmd">${escapeHtml(item.resumeCommand)}</code>
             <button class="copy-btn" data-cmd="${escapeHtml(item.resumeCommand)}" title="Copy command">Copy</button>
