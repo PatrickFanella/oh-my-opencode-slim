@@ -7,9 +7,8 @@ The installer generates both `openai` and `opencode-go` presets. OpenAI stays
 active by default unless you select OpenCode Go during install or switch to it
 later.
 
-Because the `opencode-go` preset uses GLM-5.1 for Orchestrator and GLM is not
-multimodal, installing with `--preset=opencode-go` also enables the Observer
-agent and configures it with `opencode-go/kimi-k2.6` for visual analysis.
+The `opencode-go` preset uses Kimi K2.6 for the Orchestrator, which is multimodal
+capable for visual analysis tasks.
 
 ## Install with OpenCode Go Active
 
@@ -32,14 +31,7 @@ If both presets are already in your config, switch from inside OpenCode:
 /preset opencode-go
 ```
 
-See [Preset Switching](preset-switching.md) for the full runtime switching
-workflow. If you originally installed with the default OpenAI preset, also add
-`"disabled_agents": []` to your config and restart OpenCode so Observer is
-available before switching to `opencode-go`.
-
-`disabled_agents` is global, not per-preset. If you later switch back to OpenAI
-and restart while keeping `"disabled_agents": []`, Observer will remain enabled
-and use the default Observer model unless you configure one explicitly.
+See [Preset Switching](preset-switching.md) for the full runtime switching workflow.
 
 ## Bundled Model Mapping
 
@@ -48,14 +40,13 @@ role:
 
 | Agent | Model |
 |-------|-------|
-| Orchestrator | `opencode-go/glm-5.1` |
+| Orchestrator | `opencode-go/kimi-k2.6` |
 | Oracle | `opencode-go/deepseek-v4-pro` (`max`) |
 | Council | `opencode-go/deepseek-v4-pro` (`high`) |
 | Librarian | `opencode-go/minimax-m2.7` |
 | Explorer | `opencode-go/minimax-m2.7` |
 | Designer | `opencode-go/kimi-k2.6` (`medium`) |
-| Fixer | `opencode-go/deepseek-v4-flash` (`high`) |
-| Observer | `opencode-go/kimi-k2.6` |
+| Fixer | `opencode-go/deepseek-v4-flash` |
 
 ## Generated Config Shape
 
@@ -65,10 +56,9 @@ setting the top-level `preset` field:
 ```jsonc
 {
   "preset": "opencode-go",
-  "disabled_agents": [],
   "presets": {
     "opencode-go": {
-      "orchestrator": { "model": "opencode-go/glm-5.1" },
+      "orchestrator": { "model": "opencode-go/kimi-k2.6" },
       "oracle": {
         "model": "opencode-go/deepseek-v4-pro",
         "variant": "max"
@@ -83,11 +73,7 @@ setting the top-level `preset` field:
         "model": "opencode-go/kimi-k2.6",
         "variant": "medium"
       },
-      "fixer": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "variant": "high"
-      },
-      "observer": { "model": "opencode-go/kimi-k2.6" }
+      "fixer": { "model": "opencode-go/deepseek-v4-flash" }
     }
   }
 }
