@@ -1,12 +1,19 @@
 export const SUBAGENT_CONTEXT_HYGIENE_REMINDER =
   'Context warning reached; focus only on request-relevant files and finalize when ready.';
+export const SUBAGENT_CONTEXT_HYGIENE_ALERT =
+  'Context ALERT: focus only on request-relevant files and finalize when ready.';
 
 export const SUBAGENT_CONTEXT_HYGIENE_INSTRUCTION_OPEN =
   '<instruction name="subagent_context_hygiene">';
 
 const INSTRUCTION_CLOSE = '</instruction>';
-const CONTEXT_WARNING_THRESHOLD = 0.45;
-const GENERATED_INSTRUCTION = `${SUBAGENT_CONTEXT_HYGIENE_INSTRUCTION_OPEN}\n${SUBAGENT_CONTEXT_HYGIENE_REMINDER}\n${INSTRUCTION_CLOSE}`;
+const CONTEXT_WARNING_THRESHOLD = 0.5;
+const CONTEXT_ALERT_THRESHOLD = 0.7;
+const REMINDER_BY_LEVEL = {
+  warning: SUBAGENT_CONTEXT_HYGIENE_REMINDER,
+  alert: SUBAGENT_CONTEXT_HYGIENE_ALERT,
+} as const;
+type ReminderLevel = keyof typeof REMINDER_BY_LEVEL;
 
 interface Tokens {
   input?: unknown;
@@ -89,25 +96,33 @@ function usedContextTokens(tokens: Tokens | undefined): number | undefined {
   );
 }
 
-function stripInstruction(text: string): string {
-  const trimmed = text.trimEnd();
-  if (!trimmed.endsWith(GENERATED_INSTRUCTION)) {
-    return trimmed;
-  }
-
-  return trimmed.slice(0, -GENERATED_INSTRUCTION.length).trimEnd();
+function generatedInstruction(reminder: string): string {
+  return `${SUBAGENT_CONTEXT_HYGIENE_INSTRUCTION_OPEN}\n${reminder}\n${INSTRUCTION_CLOSE}`;
 }
 
-function appendInstruction(message: ChatTransformMessage): void {
+function stripInstruction(text: string): string {
+  const trimmed = text.trimEnd();
+  for (const reminder of Object.values(REMINDER_BY_LEVEL)) {
+    const instruction = generatedInstruction(reminder);
+    if (trimmed.endsWith(instruction)) {
+      return trimmed.slice(0, -instruction.length).trimEnd();
+    }
+  }
+  return text;
+}
+
+function appendInstruction(
+  message: ChatTransformMessage,
+  level: ReminderLevel,
+): void {
   const textPart = [...message.parts]
     .reverse()
     .find((part) => part.type === 'text' && typeof part.text === 'string');
   if (!textPart) return;
 
   const baseText = stripInstruction(textPart.text ?? '');
-  textPart.text = baseText
-    ? `${baseText}\n\n${GENERATED_INSTRUCTION}`
-    : GENERATED_INSTRUCTION;
+  const instruction = generatedInstruction(REMINDER_BY_LEVEL[level]);
+  textPart.text = baseText ? `${baseText}\n\n${instruction}` : instruction;
 }
 
 function stripInstructionFromMessage(message: ChatTransformMessage): void {
@@ -176,13 +191,15 @@ function getLastExternalUserMessage(
 }
 
 export function createSubagentContextHygiene(options: Options) {
-  const pending = new Set<string>();
+  const pending = new Map<string, ReminderLevel>();
+  const emitted = new Map<string, Set<ReminderLevel>>();
   const sessionAgents = new Map<string, string>();
   const usageBySession = new Map<string, UsageState>();
   const requestSignatureBySession = new Map<string, string>();
 
   function clear(sessionID: string): void {
     pending.delete(sessionID);
+    emitted.delete(sessionID);
     usageBySession.delete(sessionID);
     requestSignatureBySession.delete(sessionID);
     sessionAgents.delete(sessionID);
@@ -193,19 +210,35 @@ export function createSubagentContextHygiene(options: Options) {
     return Boolean(resolved && resolved !== 'orchestrator');
   }
 
-  async function isOverThreshold(sessionID: string): Promise<boolean> {
+  async function reminderLevel(
+    sessionID: string,
+  ): Promise<ReminderLevel | undefined> {
     const usage = usageBySession.get(sessionID);
-    if (!usage) return false;
+    if (!usage) return undefined;
 
     const limit = await options.getContextLimit(
       usage.providerID,
       usage.modelID,
     );
     if (!isFinitePositiveNumber(limit)) {
-      return false;
+      return undefined;
     }
 
-    return usage.used / limit >= CONTEXT_WARNING_THRESHOLD;
+    const ratio = usage.used / limit;
+    if (ratio >= CONTEXT_ALERT_THRESHOLD) return 'alert';
+    if (ratio >= CONTEXT_WARNING_THRESHOLD) return 'warning';
+    return undefined;
+  }
+
+  function hasEmitted(sessionID: string, level: ReminderLevel): boolean {
+    return emitted.get(sessionID)?.has(level) ?? false;
+  }
+
+  function markEmitted(sessionID: string, level: ReminderLevel): void {
+    const levels = emitted.get(sessionID) ?? new Set<ReminderLevel>();
+    levels.add(level);
+    if (level === 'alert') levels.add('warning');
+    emitted.set(sessionID, levels);
   }
 
   return {
@@ -219,11 +252,13 @@ export function createSubagentContextHygiene(options: Options) {
         return;
       }
 
-      if (await isOverThreshold(input.sessionID)) {
-        pending.add(input.sessionID);
+      const level = await reminderLevel(input.sessionID);
+      if (level && !hasEmitted(input.sessionID, level)) {
+        pending.set(input.sessionID, level);
         options.log?.('Armed subagent context hygiene reminder', {
           sessionID: input.sessionID,
           tool: input.tool,
+          level,
         });
       }
     },
@@ -252,8 +287,10 @@ export function createSubagentContextHygiene(options: Options) {
         return;
       }
 
-      if (pending.has(sessionID)) {
-        appendInstruction(lastUserMessage.message);
+      const level = pending.get(sessionID);
+      if (level) {
+        appendInstruction(lastUserMessage.message, level);
+        markEmitted(sessionID, level);
         pending.delete(sessionID);
       } else {
         stripInstructionFromMessage(lastUserMessage.message);
