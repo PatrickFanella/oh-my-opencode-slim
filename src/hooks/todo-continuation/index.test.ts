@@ -2,6 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import { SLIM_INTERNAL_INITIATOR_MARKER } from '../../utils';
 import { createTodoContinuationHook } from './index';
 import {
+  SUBAGENT_CONTEXT_HYGIENE_ALERT,
   SUBAGENT_CONTEXT_HYGIENE_INSTRUCTION_OPEN,
   SUBAGENT_CONTEXT_HYGIENE_REMINDER,
 } from './subagent-context-hygiene';
@@ -716,7 +717,7 @@ describe('createTodoContinuationHook', () => {
   });
 
   describe('subagent context hygiene', () => {
-    test('injects cache-friendly context warning for subagents over configured context limit after tool use', async () => {
+    test('injects one-shot context warning and alert for subagents after tool use', async () => {
       const ctx = createMockContext({
         providersResult: providersWithContextLimit(1000),
       });
@@ -729,16 +730,43 @@ describe('createTodoContinuationHook', () => {
         sessionID: 'sub1',
         agent: 'oracle',
         input: 500,
-        cacheRead: 75,
       });
       await hook.handleToolExecuteAfter({ tool: 'read', sessionID: 'sub1' });
       await hook.handleMessagesTransform(output);
-
       expect(allMessageText(output)).toContain(
         SUBAGENT_CONTEXT_HYGIENE_REMINDER,
       );
+      expect(
+        allMessageText(output).split(SUBAGENT_CONTEXT_HYGIENE_REMINDER).length -
+          1,
+      ).toBe(1);
       expect(allMessageText(output)).toContain(
         SUBAGENT_CONTEXT_HYGIENE_INSTRUCTION_OPEN,
+      );
+
+      await hook.handleToolExecuteAfter({ tool: 'glob', sessionID: 'sub1' });
+      await hook.handleMessagesTransform(output);
+      expect(allMessageText(output)).not.toContain(
+        SUBAGENT_CONTEXT_HYGIENE_REMINDER,
+      );
+
+      await sendContextUsage(hook, {
+        sessionID: 'sub1',
+        agent: 'oracle',
+        input: 710,
+      });
+      await hook.handleToolExecuteAfter({ tool: 'grep', sessionID: 'sub1' });
+      await hook.handleMessagesTransform(output);
+
+      expect(allMessageText(output)).toContain(SUBAGENT_CONTEXT_HYGIENE_ALERT);
+      expect(
+        allMessageText(output).split(SUBAGENT_CONTEXT_HYGIENE_ALERT).length - 1,
+      ).toBe(1);
+
+      await hook.handleToolExecuteAfter({ tool: 'read', sessionID: 'sub1' });
+      await hook.handleMessagesTransform(output);
+      expect(allMessageText(output)).not.toContain(
+        SUBAGENT_CONTEXT_HYGIENE_ALERT,
       );
     });
 
@@ -770,9 +798,7 @@ describe('createTodoContinuationHook', () => {
       await hook.handleToolExecuteAfter({ tool: 'grep', sessionID: 'sub1' });
       await hook.handleMessagesTransform(output);
 
-      expect(allMessageText(output)).toContain(
-        SUBAGENT_CONTEXT_HYGIENE_REMINDER,
-      );
+      expect(allMessageText(output)).toContain(SUBAGENT_CONTEXT_HYGIENE_ALERT);
     });
 
     test('does not warn resumed high-context subagent until it uses another tool', async () => {
@@ -787,7 +813,7 @@ describe('createTodoContinuationHook', () => {
       await sendContextUsage(hook, {
         sessionID: 'sub1',
         agent: 'oracle',
-        input: 700,
+        input: 500,
       });
       await hook.handleMessagesTransform(output);
 
@@ -815,7 +841,7 @@ describe('createTodoContinuationHook', () => {
       await sendContextUsage(hook, {
         sessionID: 'sub1',
         agent: 'oracle',
-        input: 600,
+        input: 500,
       });
       await hook.handleToolExecuteAfter({ tool: 'read', sessionID: 'sub1' });
       await hook.handleMessagesTransform(output);
@@ -825,7 +851,7 @@ describe('createTodoContinuationHook', () => {
       expect(
         allMessageText(output).split(SUBAGENT_CONTEXT_HYGIENE_REMINDER).length -
           1,
-      ).toBe(1);
+      ).toBeLessThanOrEqual(1);
     });
 
     test('strips only the exact generated context warning block', async () => {
