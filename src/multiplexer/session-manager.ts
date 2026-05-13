@@ -18,6 +18,8 @@ interface TrackedSession {
   directory: string;
   createdAt: number;
   lastSeenAt: number;
+  hasBeenBusy?: boolean;
+  idleSince?: number;
   missingSince?: number;
 }
 
@@ -25,6 +27,7 @@ interface KnownSession {
   parentId: string;
   title: string;
   directory: string;
+  hasBeenBusy?: boolean;
 }
 
 interface SessionEvent {
@@ -44,6 +47,7 @@ interface SessionEvent {
 type CloseReason = 'idle' | 'deleted' | 'missing' | 'timeout';
 
 const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
+const SESSION_IDLE_GRACE_MS = POLL_INTERVAL_BACKGROUND_MS * 3;
 const SESSION_MISSING_GRACE_MS = POLL_INTERVAL_BACKGROUND_MS * 3;
 
 /**
@@ -110,10 +114,12 @@ export class MultiplexerSessionManager {
 
     if (this.isTrackedOrSpawning(sessionId)) return;
 
+    const previousKnown = this.knownSessions.get(sessionId);
     this.knownSessions.set(sessionId, {
       parentId,
       title,
       directory,
+      hasBeenBusy: previousKnown?.hasBeenBusy,
     });
 
     this.spawningSessions.add(sessionId);
@@ -176,6 +182,7 @@ export class MultiplexerSessionManager {
         title,
         directory,
         createdAt: now,
+        hasBeenBusy: this.knownSessions.get(sessionId)?.hasBeenBusy,
         lastSeenAt: now,
       });
 
@@ -197,12 +204,15 @@ export class MultiplexerSessionManager {
     const sessionId = event.properties?.sessionID;
     if (!sessionId) return;
 
-    if (event.properties?.status?.type === 'idle') {
-      await this.closeSession(sessionId, 'idle');
+    const status = event.properties?.status?.type;
+
+    if (status === 'idle') {
+      this.markSessionIdle(sessionId);
       return;
     }
 
-    if (event.properties?.status?.type === 'busy') {
+    if (status === 'busy') {
+      this.markSessionBusy(sessionId);
       await this.respawnIfKnown(sessionId);
     }
   }
@@ -263,19 +273,35 @@ export class MultiplexerSessionManager {
         if (status) {
           tracked.lastSeenAt = now;
           tracked.missingSince = undefined;
+          if (isIdle) {
+            tracked.idleSince ??= now;
+          } else if (status.type === 'busy') {
+            this.markSessionBusy(sessionId);
+            tracked.idleSince = undefined;
+          } else {
+            // Other status types (e.g. 'retry') are not terminal and do not
+            // indicate the session has actually begun work, so don't flip
+            // hasBeenBusy. Just clear idle tracking so an unrelated transient
+            // status doesn't accumulate idle time.
+            tracked.idleSince = undefined;
+          }
         } else if (!tracked.missingSince) {
           tracked.missingSince = now;
         }
 
+        const idleTooLong =
+          tracked.hasBeenBusy &&
+          !!tracked.idleSince &&
+          now - tracked.idleSince >= SESSION_IDLE_GRACE_MS;
         const missingTooLong =
           !!tracked.missingSince &&
           now - tracked.missingSince >= SESSION_MISSING_GRACE_MS;
         const isTimedOut = now - tracked.createdAt > SESSION_TIMEOUT_MS;
 
-        if (isIdle || missingTooLong || isTimedOut) {
+        if (idleTooLong || missingTooLong || isTimedOut) {
           sessionsToClose.push({
             sessionId,
-            reason: isIdle ? 'idle' : isTimedOut ? 'timeout' : 'missing',
+            reason: idleTooLong ? 'idle' : isTimedOut ? 'timeout' : 'missing',
           });
         }
       }
@@ -406,6 +432,7 @@ export class MultiplexerSessionManager {
         title: known.title,
         directory: known.directory,
         createdAt: now,
+        hasBeenBusy: known.hasBeenBusy,
         lastSeenAt: now,
       });
 
@@ -422,6 +449,30 @@ export class MultiplexerSessionManager {
 
   private isTrackedOrSpawning(sessionId: string): boolean {
     return this.sessions.has(sessionId) || this.spawningSessions.has(sessionId);
+  }
+
+  private markSessionIdle(sessionId: string): void {
+    const tracked = this.sessions.get(sessionId);
+    if (!tracked) return;
+
+    const now = Date.now();
+    tracked.lastSeenAt = now;
+    tracked.idleSince ??= now;
+    this.startPolling();
+  }
+
+  private markSessionBusy(sessionId: string): void {
+    const known = this.knownSessions.get(sessionId);
+    if (known) {
+      known.hasBeenBusy = true;
+    }
+
+    const tracked = this.sessions.get(sessionId);
+    if (tracked) {
+      tracked.hasBeenBusy = true;
+      tracked.idleSince = undefined;
+      tracked.lastSeenAt = Date.now();
+    }
   }
 
   private updatePolling(): void {
