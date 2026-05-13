@@ -275,8 +275,14 @@ export class MultiplexerSessionManager {
           tracked.missingSince = undefined;
           if (isIdle) {
             tracked.idleSince ??= now;
-          } else {
+          } else if (status.type === 'busy') {
             this.markSessionBusy(sessionId);
+            tracked.idleSince = undefined;
+          } else {
+            // Other status types (e.g. 'retry') are not terminal and do not
+            // indicate the session has actually begun work, so don't flip
+            // hasBeenBusy. Just clear idle tracking so an unrelated transient
+            // status doesn't accumulate idle time.
             tracked.idleSince = undefined;
           }
         } else if (!tracked.missingSince) {
