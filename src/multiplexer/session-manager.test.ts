@@ -209,6 +209,98 @@ describe('MultiplexerSessionManager', () => {
   });
 
   describe('polling and closure', () => {
+    test('does not close pane on immediate idle status after create (#460)', async () => {
+      const ctx = createMockContext();
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: {
+          info: {
+            id: 'child-early-idle',
+            parentID: 'parent-early-idle',
+            title: 'Early Idle Worker',
+          },
+        },
+      });
+
+      await manager.onSessionStatus({
+        type: 'session.status',
+        properties: {
+          sessionID: 'child-early-idle',
+          status: { type: 'idle' },
+        },
+      });
+
+      expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(1);
+      expect(mockMultiplexer.closePane).not.toHaveBeenCalled();
+    });
+
+    test('does not close startup idle that never became busy (#460)', async () => {
+      const ctx = createMockContext();
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: {
+          info: {
+            id: 'child-startup-idle',
+            parentID: 'parent-startup-idle',
+            title: 'Startup Idle Worker',
+          },
+        },
+      });
+
+      ctx.client.session.status.mockResolvedValue({
+        data: { 'child-startup-idle': { type: 'idle' } },
+      });
+      (manager as any).sessions.get('child-startup-idle').idleSince = 1;
+
+      await (manager as any).pollSessions();
+
+      expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(1);
+      expect(mockMultiplexer.closePane).not.toHaveBeenCalled();
+    });
+
+    test('closes pane after busy→idle past idle grace window', async () => {
+      const ctx = createMockContext();
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: {
+          info: {
+            id: 'child-busy-idle',
+            parentID: 'parent-busy-idle',
+            title: 'Busy Then Idle Worker',
+          },
+        },
+      });
+
+      // Mark the session as having been busy at some point.
+      (manager as any).markSessionBusy('child-busy-idle');
+
+      ctx.client.session.status.mockResolvedValue({
+        data: { 'child-busy-idle': { type: 'idle' } },
+      });
+
+      // Force idleSince well past the grace window so the close fires.
+      (manager as any).sessions.get('child-busy-idle').idleSince = 1;
+
+      await (manager as any).pollSessions();
+
+      expect(mockMultiplexer.closePane).toHaveBeenCalledTimes(1);
+    });
+
     test('closes pane when session becomes idle', async () => {
       const ctx = createMockContext();
       mockMultiplexer.spawnPane.mockResolvedValue({
@@ -231,10 +323,54 @@ describe('MultiplexerSessionManager', () => {
       ctx.client.session.status.mockResolvedValue({
         data: { c1: { type: 'idle' } },
       });
+      (manager as any).sessions.get('c1').hasBeenBusy = true;
+      (manager as any).sessions.get('c1').idleSince = 1;
 
       await (manager as any).pollSessions();
 
       expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-1');
+    });
+
+    test('keeps pane when early idle is followed by busy', async () => {
+      const ctx = createMockContext();
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: {
+          info: {
+            id: 'child-idle-then-busy',
+            parentID: 'parent-idle-then-busy',
+            title: 'Idle Then Busy Worker',
+          },
+        },
+      });
+
+      await manager.onSessionStatus({
+        type: 'session.status',
+        properties: {
+          sessionID: 'child-idle-then-busy',
+          status: { type: 'idle' },
+        },
+      });
+      await manager.onSessionStatus({
+        type: 'session.status',
+        properties: {
+          sessionID: 'child-idle-then-busy',
+          status: { type: 'busy' },
+        },
+      });
+
+      ctx.client.session.status.mockResolvedValue({
+        data: { 'child-idle-then-busy': { type: 'busy' } },
+      });
+      await (manager as any).pollSessions();
+
+      expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(1);
+      expect(mockMultiplexer.closePane).not.toHaveBeenCalled();
     });
 
     test('does not close on transient status absence', async () => {
@@ -287,6 +423,8 @@ describe('MultiplexerSessionManager', () => {
       ctx.client.session.status.mockResolvedValue({
         data: { 'child-789': { type: 'idle' } },
       });
+      (manager as any).sessions.get('child-789').hasBeenBusy = true;
+      (manager as any).sessions.get('child-789').idleSince = 1;
       await (manager as any).pollSessions();
 
       await manager.onSessionStatus({
@@ -306,6 +444,15 @@ describe('MultiplexerSessionManager', () => {
       );
       expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-1');
       expect(mockMultiplexer.closePane).toHaveBeenCalledTimes(1);
+
+      ctx.client.session.status.mockResolvedValue({
+        data: { 'child-789': { type: 'idle' } },
+      });
+      (manager as any).sessions.get('child-789').idleSince = 1;
+      await (manager as any).pollSessions();
+
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-2');
+      expect(mockMultiplexer.closePane).toHaveBeenCalledTimes(2);
     });
 
     test('respawns after in-flight idle close when busy resumes same session', async () => {
@@ -340,13 +487,12 @@ describe('MultiplexerSessionManager', () => {
         },
       });
 
-      const idlePromise = manager.onSessionStatus({
-        type: 'session.status',
-        properties: {
-          sessionID: 'child-close-race',
-          status: { type: 'idle' },
-        },
+      ctx.client.session.status.mockResolvedValue({
+        data: { 'child-close-race': { type: 'idle' } },
       });
+      (manager as any).sessions.get('child-close-race').hasBeenBusy = true;
+      (manager as any).sessions.get('child-close-race').idleSince = 1;
+      const idlePromise = (manager as any).pollSessions();
 
       await Promise.resolve();
 
@@ -571,6 +717,14 @@ describe('MultiplexerSessionManager', () => {
       await createPromise;
 
       expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(1);
+
+      ctx.client.session.status.mockResolvedValue({
+        data: { 'child-busy-race': { type: 'idle' } },
+      });
+      (manager as any).sessions.get('child-busy-race').idleSince = 1;
+      await (manager as any).pollSessions();
+
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-busy-race');
     });
   });
 

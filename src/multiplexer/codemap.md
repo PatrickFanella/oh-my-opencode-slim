@@ -43,7 +43,8 @@
   - Initialized once from plugin context and config.
   - Subscribes to lifecycle events:
     - `session.created`: spawn pane if enabled and not already tracked,
-    - `session.status`: close on `idle`, respawn on `busy` when known,
+    - `session.status`: mark `idle` and close after busy-seen grace, respawn on
+      `busy` when known,
     - `session.deleted`: close pane and clear tracking.
   - Tracks:
     - active panes (`sessions` map),
@@ -70,8 +71,9 @@
   - spawns a new pane,
   - starts background polling.
 - On `session.status`:
-  - `idle` → `closeSession` (close pane + remove mapping),
-  - `busy` → `respawnIfKnown` if session was previously known.
+  - `idle` → mark idle; close only after the session has been observed `busy`
+    and idle persists past the grace window,
+  - `busy` → mark busy and `respawnIfKnown` if session was previously known.
 - On `session.deleted`:
   - close and remove pane, clear known-session mapping.
 - `cleanup()` closes all panes and clears tracking maps.
