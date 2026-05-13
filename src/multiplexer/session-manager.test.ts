@@ -239,7 +239,7 @@ describe('MultiplexerSessionManager', () => {
       expect(mockMultiplexer.closePane).not.toHaveBeenCalled();
     });
 
-    test('does not close startup idle even after idle grace (#460)', async () => {
+    test('does not close startup idle that never became busy (#460)', async () => {
       const ctx = createMockContext();
       const manager = new MultiplexerSessionManager(
         ctx,
@@ -266,6 +266,39 @@ describe('MultiplexerSessionManager', () => {
 
       expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(1);
       expect(mockMultiplexer.closePane).not.toHaveBeenCalled();
+    });
+
+    test('closes pane after busy→idle past idle grace window', async () => {
+      const ctx = createMockContext();
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: {
+          info: {
+            id: 'child-busy-idle',
+            parentID: 'parent-busy-idle',
+            title: 'Busy Then Idle Worker',
+          },
+        },
+      });
+
+      // Mark the session as having been busy at some point.
+      (manager as any).markSessionBusy('child-busy-idle');
+
+      ctx.client.session.status.mockResolvedValue({
+        data: { 'child-busy-idle': { type: 'idle' } },
+      });
+
+      // Force idleSince well past the grace window so the close fires.
+      (manager as any).sessions.get('child-busy-idle').idleSince = 1;
+
+      await (manager as any).pollSessions();
+
+      expect(mockMultiplexer.closePane).toHaveBeenCalledTimes(1);
     });
 
     test('closes pane when session becomes idle', async () => {

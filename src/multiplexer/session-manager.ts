@@ -114,10 +114,12 @@ export class MultiplexerSessionManager {
 
     if (this.isTrackedOrSpawning(sessionId)) return;
 
+    const previousKnown = this.knownSessions.get(sessionId);
     this.knownSessions.set(sessionId, {
       parentId,
       title,
       directory,
+      hasBeenBusy: previousKnown?.hasBeenBusy,
     });
 
     this.spawningSessions.add(sessionId);
