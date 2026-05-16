@@ -503,6 +503,30 @@
               }
             },
             "additionalProperties": false
+          },
+          "toolkits": {
+            "type": "object",
+            "properties": {
+              "pluginHealth": {
+                "type": "boolean"
+              },
+              "github": {
+                "type": "boolean"
+              },
+              "review": {
+                "type": "boolean"
+              },
+              "observe": {
+                "type": "boolean"
+              },
+              "caveman": {
+                "type": "boolean"
+              },
+              "rtk": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -784,6 +808,30 @@
         },
         "councilEscalation": {
           "default": true,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "toolkits": {
+      "type": "object",
+      "properties": {
+        "pluginHealth": {
+          "type": "boolean"
+        },
+        "github": {
+          "type": "boolean"
+        },
+        "review": {
+          "type": "boolean"
+        },
+        "observe": {
+          "type": "boolean"
+        },
+        "caveman": {
+          "type": "boolean"
+        },
+        "rtk": {
           "type": "boolean"
         }
       },

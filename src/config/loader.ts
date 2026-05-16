@@ -206,6 +206,7 @@ export function mergePluginConfigs(
     fallback: deepMerge(base.fallback, override.fallback),
     council: deepMerge(base.council, override.council),
     board: deepMerge(base.board, override.board),
+    toolkits: deepMerge(base.toolkits, override.toolkits),
     packageDefinitions: deepMerge(
       base.packageDefinitions,
       override.packageDefinitions,
@@ -231,6 +232,7 @@ function mergePackageIntoConfig(
     presets: deepMerge(base.presets, packageDefinition.presets),
     agents: deepMerge(base.agents, packageDefinition.agents),
     board: deepMerge(base.board, packageDefinition.board),
+    toolkits: deepMerge(base.toolkits, packageDefinition.toolkits),
     disabled_agents: mergeUnique(
       base.disabled_agents,
       packageDefinition.disabled_agents,
@@ -299,6 +301,7 @@ function applyPackageDefinitions(
     presets: deepMerge(packageConfig.presets, config.presets),
     agents: deepMerge(packageConfig.agents, config.agents),
     board: deepMerge(packageConfig.board, config.board),
+    toolkits: deepMerge(packageConfig.toolkits, config.toolkits),
     disabled_agents: mergeUnique(
       packageConfig.disabled_agents,
       config.disabled_agents,

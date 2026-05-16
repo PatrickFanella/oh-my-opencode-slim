@@ -51,6 +51,65 @@ describe('loadPluginConfig', () => {
     expect(config.agents?.oracle?.model).toBe('test/model');
   });
 
+  test('loads integrated toolkit config', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        toolkits: {
+          pluginHealth: true,
+          github: true,
+          review: false,
+          observe: true,
+          caveman: true,
+          rtk: true,
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.toolkits?.pluginHealth).toBe(true);
+    expect(config.toolkits?.github).toBe(true);
+    expect(config.toolkits?.review).toBe(false);
+    expect(config.toolkits?.observe).toBe(true);
+    expect(config.toolkits?.caveman).toBe(true);
+    expect(config.toolkits?.rtk).toBe(true);
+  });
+
+  test('merges only explicit integrated toolkit flags', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        packages: ['personal-tools'],
+        packageDefinitions: {
+          'personal-tools': {
+            toolkits: {
+              github: true,
+              review: true,
+            },
+          },
+        },
+        toolkits: {
+          pluginHealth: true,
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.toolkits).toEqual({
+      github: true,
+      review: true,
+      pluginHealth: true,
+    });
+  });
+
   test('loads scoringEngineVersion flag when configured', () => {
     const projectDir = path.join(tempDir, 'project');
     const projectConfigDir = path.join(projectDir, '.opencode');
