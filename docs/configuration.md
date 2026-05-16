@@ -129,7 +129,7 @@ root disables, so a package disable remains disabled.
     "core": {
       "presets": {
         "dev": {
-          "orchestrator": { "skills": ["*"], "mcps": ["*", "!context7"] },
+          "orchestrator": { "skills": ["*"], "mcps": ["websearch", "grep_app"] },
           "oracle": { "skills": ["review-quality", "systematic-debugging"] },
           "librarian": { "mcps": ["websearch", "context7", "grep_app"] }
         }
@@ -166,6 +166,7 @@ Package fields:
 | `agents` | object | Root agent fragments, including custom Board agents |
 | `disabled_agents` | string[] | Agents disabled when the package is selected |
 | `disabled_mcps` | string[] | MCPs disabled when the package is selected |
+| `enabled_mcps` | string[] | Opt-in MCPs enabled when the package is selected |
 
 Missing packages and package cycles are non-fatal warnings. Direct root config is
 kept so a typo does not erase existing agent settings.
@@ -214,6 +215,7 @@ Presets can also be switched at runtime without restarting using the `/preset` c
 | `sessionManager.readContextMinLines` | integer | `10` | Minimum number of lines read from a file before it appears in resumable-session context (0–1000) |
 | `sessionManager.readContextMaxFiles` | integer | `8` | Maximum number of recent read-context files shown per remembered child session (0–50) |
 | `disabled_mcps` | string[] | `[]` | MCP server IDs to disable globally |
+| `enabled_mcps` | string[] | `[]` | MCP server IDs to opt into when a built-in MCP is registered disabled by default |
 | `fallback.enabled` | boolean | `false` | Enable model failover on timeout/error |
 | `fallback.timeoutMs` | number | `15000` | Time before aborting and trying next model |
 | `fallback.retryDelayMs` | number | `500` | Delay between retry attempts |

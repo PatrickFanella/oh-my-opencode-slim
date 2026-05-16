@@ -252,7 +252,11 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
         )
       : {};
 
-    mcps = createBuiltinMcps(config.disabled_mcps, config.websearch);
+    mcps = createBuiltinMcps(
+      config.disabled_mcps,
+      config.websearch,
+      config.enabled_mcps,
+    );
     webfetch = createWebfetchTool(ctx);
 
     // Initialize MultiplexerSessionManager to handle OpenCode's built-in

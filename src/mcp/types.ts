@@ -3,6 +3,7 @@
 export type RemoteMcpConfig = {
   type: 'remote';
   url: string;
+  enabled?: boolean;
   headers?: Record<string, string>;
   oauth?: false;
 };
@@ -10,6 +11,7 @@ export type RemoteMcpConfig = {
 export type LocalMcpConfig = {
   type: 'local';
   command: string[];
+  enabled?: boolean;
   environment?: Record<string, string>;
 };
 

@@ -14,15 +14,18 @@ describe('parseList', () => {
     ]);
   });
 
-  test('orchestrator wildcard excludes context7 but includes custom mcps', () => {
+  test('orchestrator defaults to safe search MCPs only', () => {
     expect(
       parseList(DEFAULT_AGENT_MCPS.orchestrator, [
+        'github',
+        'playwright',
+        'chrome-devtools',
         'websearch',
         'context7',
         'grep_app',
         'custom-mcp',
       ]),
-    ).toEqual(['websearch', 'grep_app', 'custom-mcp']);
+    ).toEqual(['websearch', 'grep_app']);
   });
 
   test('wildcard with exclusions', () => {

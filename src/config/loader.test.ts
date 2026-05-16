@@ -997,6 +997,8 @@ describe('package resolution', () => {
         preset: 'dev',
         packageDefinitions: {
           engineering: {
+            disabled_mcps: ['sentry'],
+            enabled_mcps: ['playwright'],
             presets: {
               dev: {
                 oracle: {
@@ -1026,6 +1028,8 @@ describe('package resolution', () => {
     expect(config.agents?.['backend-architect']?.prompt).toBe(
       'You are Backend Architect.',
     );
+    expect(config.disabled_mcps).toEqual(['sentry']);
+    expect(config.enabled_mcps).toEqual(['playwright']);
   });
 
   test('root config overrides package-provided agent and preset values', () => {
