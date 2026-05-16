@@ -58,6 +58,38 @@ describe('custom-agent creation', () => {
     ).toBeLessThan(prompt.indexOf('</Agents>'));
   });
 
+  test('injects board runtime section from board config', () => {
+    const agents = createAgents({
+      board: {
+        enabled: true,
+        defaultMode: 'route',
+        councilEscalation: true,
+        roles: {
+          'backend-architect': {
+            title: 'Backend Architect',
+            purpose: 'API and service-boundary design',
+            when: ['API contract changes'],
+            outputs: ['recommendation', 'risks'],
+            agent: 'backend-architect',
+            priority: 80,
+          },
+        },
+      },
+      agents: {
+        'backend-architect': {
+          model: 'openai/gpt-5.5',
+          prompt: 'You are Backend Architect.',
+        },
+      },
+    });
+
+    const orchestrator = agents.find((agent) => agent.name === 'orchestrator');
+
+    expect(orchestrator?.config.prompt).toContain('<Board Runtime>');
+    expect(orchestrator?.config.prompt).toContain('@backend-architect');
+    expect(orchestrator?.config.prompt).toContain('API contract changes');
+  });
+
   test('skips custom agents without a model', () => {
     const warnSpy = spyOn(console, 'warn').mockImplementation(() => {});
 

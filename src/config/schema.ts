@@ -65,6 +65,10 @@ export type ManualAgentPlan = z.infer<typeof ManualAgentPlanSchema>;
 export type ManualPlan = z.infer<typeof ManualPlanSchema>;
 
 const AgentModelChainSchema = z.array(z.string()).min(1);
+const SafeAgentAliasSchema = z
+  .string()
+  .min(1)
+  .regex(/^[a-z][a-z0-9_-]*$/i, 'Expected a safe agent alias');
 
 const FallbackChainsSchema = z
   .object({
@@ -156,6 +160,31 @@ export const PresetSchema = z.record(z.string(), AgentOverrideConfigSchema);
 
 export type Preset = z.infer<typeof PresetSchema>;
 
+export const BoardRoleConfigSchema = z
+  .object({
+    title: z.string().min(1),
+    purpose: z.string().min(1),
+    when: z.array(z.string().min(1)).default([]),
+    outputs: z.array(z.string().min(1)).default([]),
+    agent: SafeAgentAliasSchema,
+    priority: z.number().int().min(0).max(100).default(50),
+    mcps: z.array(z.string()).optional(),
+    skills: z.array(z.string()).optional(),
+  })
+  .strict();
+
+export const BoardConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    defaultMode: z.enum(['off', 'route', 'advise', 'decide']).default('route'),
+    roles: z.record(z.string(), BoardRoleConfigSchema).default({}),
+    councilEscalation: z.boolean().default(true),
+  })
+  .strict();
+
+export type BoardRoleConfig = z.infer<typeof BoardRoleConfigSchema>;
+export type BoardConfig = z.infer<typeof BoardConfigSchema>;
+
 export const PackageDefinitionSchema = z
   .object({
     description: z.string().optional(),
@@ -170,6 +199,7 @@ export const PackageDefinitionSchema = z
       .describe(
         'MCP server IDs to opt into when a built-in MCP is registered disabled by default.',
       ),
+    board: BoardConfigSchema.optional(),
   })
   .strict();
 
@@ -374,6 +404,7 @@ export const PluginConfigSchema = z
       .describe(
         'MCP server IDs to opt into when a built-in MCP is registered disabled by default.',
       ),
+    board: BoardConfigSchema.optional(),
     // Multiplexer config (new unified config - preferred)
     multiplexer: MultiplexerConfigSchema.optional(),
     // Legacy tmux config (for backward compatibility)

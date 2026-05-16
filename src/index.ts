@@ -1,6 +1,7 @@
 import type { Plugin } from '@opencode-ai/plugin';
 import { createAgents, getAgentConfigs, getDisabledAgents } from './agents';
 import { buildOrchestratorPrompt } from './agents/orchestrator';
+import { type BoardRuntime, createBoardRuntime } from './board';
 import {
   type AgentOverrideConfig,
   deepMerge,
@@ -148,6 +149,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   >;
   let subtaskCommandManager: ReturnType<typeof createSubtaskCommandManager>;
   let subtaskState: ReturnType<typeof createSubtaskState>;
+  let _boardRuntime: BoardRuntime | undefined;
 
   // Counters for post-init health check (set inside try, checked outside)
   let toolCount = 0;
@@ -174,6 +176,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
     }
 
     disabledAgents = getDisabledAgents(config);
+    _boardRuntime = createBoardRuntime(config.board);
     rewriteDisplayNameMentions = createDisplayNameMentionRewriter(config);
     agentDefs = createAgents(config);
     agents = getAgentConfigs(config);
