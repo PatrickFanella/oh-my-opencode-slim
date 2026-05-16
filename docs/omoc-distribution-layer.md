@@ -50,9 +50,37 @@ External systems stay external:
 6. Keep DCP and quota concerns outside OMOC.
 7. Validate with `bun run check:ci`, `bun run typecheck`, `bun test` before release.
 
+## MCP Registry Merge
+
+OMOC's built-in MCP registry is allowed to absorb shared `.agents` MCP entries
+when the entry has a portable OpenCode representation. Remote MCPs can usually
+be copied directly. Local MCPs must avoid user-specific absolute paths and
+secrets; prefer stable commands such as `npx`, `docker`, `gh`, or `sp-mcp` and
+document host prerequisites instead.
+
+Merged entries currently include GitHub, Playwright, Chrome DevTools, Context7,
+Microsoft Learn, Sentry, Stripe, Hugging Face, Super Productivity, Exa
+websearch, and grep.app.
+
+Host-dependent local MCPs and auth/product remotes remain opt-in through
+`enabled_mcps`; merging the registry should not silently start local processes,
+connect to product services, or broaden default agent permissions.
+
 ## Decision Rules
 
 Bundle a skill when it is core to OMOC workflow and maintained in this repo.
 
 Keep a skill external when it belongs to DCP/quota, depends on an external
 runtime/release process, or is user-private/harness-agnostic.
+
+## Future Skill Migration Prep
+
+Skill migration is intentionally skipped for now. The repo is prepared by
+keeping the packaging policy explicit:
+
+- core OMOC workflow skills belong in `src/skills/` and the `CUSTOM_SKILLS`
+  installer registry;
+- externally maintained skills stay in the recommended-skill installer path;
+- user-private, DCP, and quota skills stay outside OMOC or permission-only;
+- any future migration should start with an inventory of real workflow usage,
+  not a bulk copy of every `.agents` skill.

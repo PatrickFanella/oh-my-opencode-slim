@@ -407,6 +407,13 @@
             "items": {
               "type": "string"
             }
+          },
+          "enabled_mcps": {
+            "description": "MCP server IDs to opt into when a built-in MCP is registered disabled by default.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": false
@@ -592,6 +599,13 @@
       }
     },
     "disabled_mcps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "enabled_mcps": {
+      "description": "MCP server IDs to opt into when a built-in MCP is registered disabled by default.",
       "type": "array",
       "items": {
         "type": "string"

@@ -237,6 +237,10 @@ function mergePackageIntoConfig(
       base.disabled_mcps,
       packageDefinition.disabled_mcps,
     ),
+    enabled_mcps: mergeUnique(
+      base.enabled_mcps,
+      packageDefinition.enabled_mcps,
+    ),
   };
 }
 
@@ -300,6 +304,7 @@ function applyPackageDefinitions(
       packageConfig.disabled_mcps,
       config.disabled_mcps,
     ),
+    enabled_mcps: mergeUnique(packageConfig.enabled_mcps, config.enabled_mcps),
   };
 }
 

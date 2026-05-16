@@ -164,6 +164,12 @@ export const PackageDefinitionSchema = z
     agents: z.record(z.string(), AgentOverrideConfigSchema).optional(),
     disabled_agents: z.array(z.string()).optional(),
     disabled_mcps: z.array(z.string()).optional(),
+    enabled_mcps: z
+      .array(z.string())
+      .optional()
+      .describe(
+        'MCP server IDs to opt into when a built-in MCP is registered disabled by default.',
+      ),
   })
   .strict();
 
@@ -176,7 +182,19 @@ export const WebsearchConfigSchema = z.object({
 export type WebsearchConfig = z.infer<typeof WebsearchConfigSchema>;
 
 // MCP names
-export const McpNameSchema = z.enum(['websearch', 'context7', 'grep_app']);
+export const McpNameSchema = z.enum([
+  'github',
+  'playwright',
+  'chrome-devtools',
+  'context7',
+  'microsoft-learn',
+  'sentry',
+  'stripe',
+  'huggingface',
+  'super-productivity',
+  'websearch',
+  'grep_app',
+]);
 export type McpName = z.infer<typeof McpNameSchema>;
 
 export const InterviewConfigSchema = z.object({
@@ -350,6 +368,12 @@ export const PluginConfigSchema = z
           "By default, 'observer' is disabled. Remove it from this list and configure a vision-capable model to enable.",
       ),
     disabled_mcps: z.array(z.string()).optional(),
+    enabled_mcps: z
+      .array(z.string())
+      .optional()
+      .describe(
+        'MCP server IDs to opt into when a built-in MCP is registered disabled by default.',
+      ),
     // Multiplexer config (new unified config - preferred)
     multiplexer: MultiplexerConfigSchema.optional(),
     // Legacy tmux config (for backward compatibility)
