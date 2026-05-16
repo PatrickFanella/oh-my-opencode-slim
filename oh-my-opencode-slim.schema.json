@@ -414,6 +414,95 @@
             "items": {
               "type": "string"
             }
+          },
+          "board": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "default": false,
+                "type": "boolean"
+              },
+              "defaultMode": {
+                "default": "route",
+                "type": "string",
+                "enum": [
+                  "off",
+                  "route",
+                  "advise",
+                  "decide"
+                ]
+              },
+              "roles": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "purpose": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "when": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "outputs": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "agent": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[a-z][a-z0-9_-]*$"
+                    },
+                    "priority": {
+                      "default": 50,
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "mcps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "skills": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "purpose",
+                    "agent"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "councilEscalation": {
+                "default": true,
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -610,6 +699,95 @@
       "items": {
         "type": "string"
       }
+    },
+    "board": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "defaultMode": {
+          "default": "route",
+          "type": "string",
+          "enum": [
+            "off",
+            "route",
+            "advise",
+            "decide"
+          ]
+        },
+        "roles": {
+          "default": {},
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1
+              },
+              "when": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "outputs": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "agent": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_-]*$"
+              },
+              "priority": {
+                "default": 50,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "mcps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "skills": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "title",
+              "purpose",
+              "agent"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "councilEscalation": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     },
     "multiplexer": {
       "type": "object",

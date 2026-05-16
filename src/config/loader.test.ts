@@ -1114,6 +1114,67 @@ describe('package resolution', () => {
     );
   });
 
+  test('loads board runtime config', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        board: {
+          enabled: true,
+          defaultMode: 'route',
+          roles: {
+            'backend-architect': {
+              title: 'Backend Architect',
+              purpose: 'API and service-boundary design',
+              when: ['API contract changes', 'auth boundary changes'],
+              outputs: ['recommendation', 'risks', 'next step'],
+              agent: 'backend-architect',
+              priority: 80,
+            },
+          },
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.board?.enabled).toBe(true);
+    expect(config.board?.defaultMode).toBe('route');
+    expect(config.board?.roles?.['backend-architect']?.priority).toBe(80);
+  });
+
+  test('rejects unsafe board agent aliases', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        board: {
+          enabled: true,
+          roles: {
+            unsafe: {
+              title: 'Unsafe',
+              purpose: 'Unsafe alias',
+              agent: 'unsafe/name',
+            },
+          },
+        },
+      }),
+    );
+
+    const warnings: ConfigLoadWarning[] = [];
+    const config = loadPluginConfig(projectDir, {
+      silent: true,
+      onWarning: (warning) => warnings.push(warning),
+    });
+
+    expect(config.board).toBeUndefined();
+    expect(warnings[0]?.kind).toBe('invalid-schema');
+  });
+
   test('missing package warns and keeps direct config', () => {
     const projectDir = path.join(tempDir, 'project');
     const projectConfigDir = path.join(projectDir, '.opencode');

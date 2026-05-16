@@ -1,4 +1,5 @@
 import type { AgentConfig as SDKAgentConfig } from '@opencode-ai/sdk/v2';
+import { createBoardRegistry, renderBoardPromptSection } from '../board';
 import { getSkillPermissionsForAgent } from '../cli/skills';
 import {
   type AgentOverrideConfig,
@@ -170,6 +171,24 @@ function injectDisplayNames(
   }
 
   orchestrator.config.prompt = prompt;
+}
+
+function injectPromptSections(
+  orchestrator: AgentDefinition,
+  sections: string[],
+): void {
+  if (sections.length === 0 || !orchestrator.config.prompt) return;
+
+  const prompt = orchestrator.config.prompt;
+  const joinedSections = `\n\n${sections.join('\n\n')}`;
+  const promptWithSections = prompt.replace(
+    /\n*<\/Agents>/,
+    `${joinedSections}\n\n</Agents>`,
+  );
+  orchestrator.config.prompt =
+    promptWithSections === prompt
+      ? `${prompt}${joinedSections}`
+      : promptWithSections;
 }
 
 /**
@@ -428,21 +447,24 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
     }
   }
 
+  const boardPromptSection = renderBoardPromptSection(
+    createBoardRegistry(config?.board),
+  );
+  const legacyBoardSection = customOrchestratorPrompts.length
+    ? `<Board Consultants>\n${customOrchestratorPrompts.join(
+        '\n\n',
+      )}\n</Board Consultants>`
+    : '';
+
+  injectPromptSections(
+    orchestrator,
+    [boardPromptSection, legacyBoardSection].filter(
+      (section) => section.length,
+    ),
+  );
+
   // Inject display names into orchestrator prompt (complete map)
   injectDisplayNames(orchestrator, displayNameMap);
-
-  if (customOrchestratorPrompts.length > 0 && orchestrator.config.prompt) {
-    const boardSection = `\n\n<Board Consultants>\n${customOrchestratorPrompts.join(
-      '\n\n',
-    )}\n</Board Consultants>`;
-    const prompt = orchestrator.config.prompt;
-    const promptWithBoard = prompt.replace(
-      /\n*<\/Agents>/,
-      `${boardSection}\n\n</Agents>`,
-    );
-    orchestrator.config.prompt =
-      promptWithBoard === prompt ? `${prompt}${boardSection}` : promptWithBoard;
-  }
 
   return [orchestrator, ...allSubAgents];
 }

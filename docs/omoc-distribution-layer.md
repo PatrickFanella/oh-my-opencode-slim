@@ -3,6 +3,10 @@
 OMOC can be the main OpenCode plugin/distribution layer when you want one
 config-driven orchestration surface and do not need multiple harnesses.
 
+This repository is being re-founded around Board Runtime. OMOC
+distribution-layer docs describe the migration foundation, not a permanent
+constraint to preserve fork identity.
+
 ## Ownership Model
 
 OpenCode owns:
