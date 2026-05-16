@@ -112,6 +112,27 @@ function hasCustomAgentModel(
   return !Array.isArray(override.model) || override.model.length > 0;
 }
 
+function validateCustomOrchestratorPromptTarget(
+  agent: AgentDefinition,
+  prompt: string,
+): void {
+  const match = prompt.match(/^@([a-z][a-z0-9_-]*)\b/i);
+  const allowedTargets = new Set([agent.name]);
+  if (agent.displayName) {
+    allowedTargets.add(normalizeDisplayName(agent.displayName));
+  }
+
+  const allowedText = Array.from(allowedTargets)
+    .map((target) => `@${target}`)
+    .join(' or ');
+
+  if (!match || !allowedTargets.has(match[1])) {
+    throw new Error(
+      `Custom agent '${agent.name}' orchestratorPrompt must start with ${allowedText}`,
+    );
+  }
+}
+
 function buildCustomAgentDefinition(
   name: string,
   override: AgentOverrideConfig,
@@ -360,11 +381,23 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
     }
   }
 
-  // 3b. Append custom orchestrator hints from custom agent overrides.
+  // 3b. Prepare custom board-agent hints for first-class placement in <Agents>.
   const customOrchestratorPrompts = customSubAgents
     .map((agent) => {
       const override = getAgentOverride(config, agent.name);
-      return override?.orchestratorPrompt;
+      const promptText = override?.orchestratorPrompt;
+      if (!promptText) return undefined;
+
+      validateCustomOrchestratorPromptTarget(agent, promptText);
+
+      let text = promptText;
+      for (const [internalName, displayName] of displayNameMap) {
+        text = text.replace(
+          new RegExp(`@${escapeRegExp(internalName)}\\b`, 'g'),
+          `@${normalizeDisplayName(displayName)}`,
+        );
+      }
+      return text;
     })
     .filter((prompt): prompt is string => Boolean(prompt));
 
@@ -398,21 +431,17 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
   // Inject display names into orchestrator prompt (complete map)
   injectDisplayNames(orchestrator, displayNameMap);
 
-  if (customOrchestratorPrompts.length > 0) {
-    const rewrittenPrompts = customOrchestratorPrompts.map((promptText) => {
-      let text = promptText;
-      for (const [internalName, displayName] of displayNameMap) {
-        text = text.replace(
-          new RegExp(`@${escapeRegExp(internalName)}\\b`, 'g'),
-          `@${normalizeDisplayName(displayName)}`,
-        );
-      }
-      return text;
-    });
-
-    orchestrator.config.prompt = `${orchestrator.config.prompt}\n\n${rewrittenPrompts.join(
+  if (customOrchestratorPrompts.length > 0 && orchestrator.config.prompt) {
+    const boardSection = `\n\n<Board Consultants>\n${customOrchestratorPrompts.join(
       '\n\n',
-    )}`;
+    )}\n</Board Consultants>`;
+    const prompt = orchestrator.config.prompt;
+    const promptWithBoard = prompt.replace(
+      /\n*<\/Agents>/,
+      `${boardSection}\n\n</Agents>`,
+    );
+    orchestrator.config.prompt =
+      promptWithBoard === prompt ? `${prompt}${boardSection}` : promptWithBoard;
   }
 
   return [orchestrator, ...allSubAgents];

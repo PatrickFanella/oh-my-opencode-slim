@@ -156,6 +156,19 @@ export const PresetSchema = z.record(z.string(), AgentOverrideConfigSchema);
 
 export type Preset = z.infer<typeof PresetSchema>;
 
+export const PackageDefinitionSchema = z
+  .object({
+    description: z.string().optional(),
+    extends: z.array(z.string()).optional(),
+    presets: z.record(z.string(), PresetSchema).optional(),
+    agents: z.record(z.string(), AgentOverrideConfigSchema).optional(),
+    disabled_agents: z.array(z.string()).optional(),
+    disabled_mcps: z.array(z.string()).optional(),
+  })
+  .strict();
+
+export type PackageDefinition = z.infer<typeof PackageDefinitionSchema>;
+
 // Websearch provider configuration
 export const WebsearchConfigSchema = z.object({
   provider: z.enum(['exa', 'tavily']).default('exa'),
@@ -313,6 +326,18 @@ export const PluginConfigSchema = z
         'Disable automatic installation of plugin updates when false. Defaults to true.',
       ),
     manualPlan: ManualPlanSchema.optional(),
+    packages: z
+      .array(z.string())
+      .optional()
+      .describe(
+        'Named package definitions to compose before applying root config overrides.',
+      ),
+    packageDefinitions: z
+      .record(z.string(), PackageDefinitionSchema)
+      .optional()
+      .describe(
+        'Reusable config packages that can contribute presets, agents, and global disables.',
+      ),
     presets: z.record(z.string(), PresetSchema).optional(),
     agents: z.record(z.string(), AgentOverrideConfigSchema).optional(),
     disabled_agents: z
@@ -346,6 +371,33 @@ export const PluginConfigSchema = z
     if (value.presets) {
       for (const [presetName, preset] of Object.entries(value.presets)) {
         validateCustomOnlyPromptFields(preset, ctx, ['presets', presetName]);
+      }
+    }
+
+    if (value.packageDefinitions) {
+      for (const [packageName, packageDefinition] of Object.entries(
+        value.packageDefinitions,
+      )) {
+        if (packageDefinition.agents) {
+          validateCustomOnlyPromptFields(packageDefinition.agents, ctx, [
+            'packageDefinitions',
+            packageName,
+            'agents',
+          ]);
+        }
+
+        if (packageDefinition.presets) {
+          for (const [presetName, preset] of Object.entries(
+            packageDefinition.presets,
+          )) {
+            validateCustomOnlyPromptFields(preset, ctx, [
+              'packageDefinitions',
+              packageName,
+              'presets',
+              presetName,
+            ]);
+          }
+        }
       }
     }
   });

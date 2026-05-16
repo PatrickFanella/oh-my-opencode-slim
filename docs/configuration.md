@@ -19,6 +19,35 @@ If OmO-slim detects an invalid plugin config for the current project, the TUI si
 
 ---
 
+## OMOC as Distribution Layer
+
+For a single-plugin setup, keep OpenCode host config minimal:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["oh-my-opencode-slim"]
+}
+```
+
+Ownership split:
+
+- OpenCode host config (`~/.config/opencode/opencode.json`) owns auth,
+  provider registration, model refresh, and host runtime behavior.
+- OMOC behavior belongs in
+  `~/.config/opencode/oh-my-opencode-slim.jsonc` (agents, presets, MCP
+  assignments, multiplexer/session behavior, council, bundled skill
+  permissions).
+
+DCP and quota systems are intentionally separate from OMOC. Keep them outside
+OMOC config unless a future integration defines a narrow, explicit contract.
+
+For this distribution path, prefer config-first behavior in
+`~/.config/opencode/oh-my-opencode-slim.jsonc`, not new behavior environment
+variables.
+
+---
+
 ## Prompt Overriding
 
 Customize agent prompts without modifying source code. Create markdown files in `~/.config/opencode/oh-my-opencode-slim/`:
@@ -79,18 +108,78 @@ All config files support **JSONC** (JSON with Comments):
 
 ---
 
-## Full Option Reference
+## Package Composition
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `preset` | string | — | Active preset name (e.g. `"openai"`, `"best"`) |
+Use `packages` and `packageDefinitions` to keep reusable agent, preset, skill,
+and MCP assignments in one config file while still emitting normal OmO-slim
+`presets` and `agents` behavior at runtime.
+
+Packages are resolved before the active `preset` is applied. Package contents are
+lower precedence than direct root config for `presets` and `agents`: explicit
+root values win over package-provided values. Global disables are additive:
+`disabled_agents` and `disabled_mcps` from selected packages are merged with
+root disables, so a package disable remains disabled.
+
+```jsonc
+{
+  "packages": ["core", "board-engineering"],
+  "preset": "dev",
+
+  "packageDefinitions": {
+    "core": {
+      "presets": {
+        "dev": {
+          "orchestrator": { "skills": ["*"], "mcps": ["*", "!context7"] },
+          "oracle": { "skills": ["review-quality", "systematic-debugging"] },
+          "librarian": { "mcps": ["websearch", "context7", "grep_app"] }
+        }
+      }
+    },
+    "board-engineering": {
+      "extends": ["core"],
+      "agents": {
+        "backend-architect": {
+          "model": "openai/gpt-5.5",
+          "skills": ["architecture-patterns", "api-design-principles"],
+          "mcps": [],
+          "prompt": "You are Backend Architect...",
+          "orchestratorPrompt": "@backend-architect\n- Role: Backend architecture advisor\n- Delegate when: API design, auth boundaries, service architecture\n- Output: recommendation, risks, next step"
+        }
+      }
+    }
+  },
+
+  // Direct root overrides still win over package defaults.
+  "agents": {
+    "oracle": { "temperature": 0.2 }
+  }
+}
+```
+
+Package fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `description` | string | Human-readable package note |
+| `extends` | string[] | Parent packages resolved before this package |
+| `presets` | object | Preset fragments using normal `presets.<name>.<agent>` shape |
+| `agents` | object | Root agent fragments, including custom Board agents |
+| `disabled_agents` | string[] | Agents disabled when the package is selected |
+| `disabled_mcps` | string[] | MCPs disabled when the package is selected |
+
+Missing packages and package cycles are non-fatal warnings. Direct root config is
+kept so a typo does not erase existing agent settings.
 
 ### Runtime Preset Switching
 
 Presets can also be switched at runtime without restarting using the `/preset` command. See [Preset Switching](preset-switching.md) for details.
 
+## Full Option Reference
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `preset` | string | — | Active preset name (e.g. `"openai"`, `"best"`) |
 | `presets` | object | — | Named preset configurations |
-|-----------|--------|---|-----------------------------|
 | `presets.<name>.<agent>.model` | string | — | Model ID in `provider/model` format |
 | `presets.<name>.<agent>.temperature` | number | — | Temperature (0–2) |
 | `presets.<name>.<agent>.variant` | string | — | Reasoning effort: `"low"`, `"medium"`, `"high"` |
@@ -98,9 +187,11 @@ Presets can also be switched at runtime without restarting using the `/preset` c
 | `presets.<name>.<agent>.skills` | string[] | — | Skills the agent can use (`"*"`, `"!item"`, explicit list) |
 | `presets.<name>.<agent>.mcps` | string[] | — | MCPs the agent can use (`"*"`, `"!item"`, explicit list) |
 | `presets.<name>.<agent>.options` | object | — | Provider-specific model options passed to the AI SDK (e.g., `textVerbosity`, `thinking` budget) |
+| `packages` | string[] | — | Package names to compose before preset resolution |
+| `packageDefinitions.<name>` | object | — | Reusable package fragments for presets, agents, and global disables |
 | `agents.<customAgent>.model` | string\|array | — | Required for custom agents inferred from unknown `agents` keys |
 | `agents.<customAgent>.prompt` | string | — | Full execution prompt for a custom agent |
-| `agents.<customAgent>.orchestratorPrompt` | string | — | Exact `@agent` block injected into the orchestrator prompt; must start with `@<agent-name>` |
+| `agents.<customAgent>.orchestratorPrompt` | string | — | Compact `@agent` block injected into the orchestrator prompt's Board Consultants section; must start with `@<agent-name>` or its `displayName` |
 | `agents.<agent>.displayName` | string | — | Custom user-facing alias for the agent in the active config |
 | `disabled_agents` | string[] | `["observer"]` | Agent names to disable globally. Set to `[]` to enable Observer; this is global, not per-preset |
 | `autoUpdate` | boolean | `true` | Automatically install plugin updates in the background; set to `false` for notification-only mode |
@@ -278,7 +369,8 @@ Notes:
 
 Unknown keys under `agents` are treated as custom subagents. A custom agent needs
 its own `model`, a normal `prompt`, and optionally an `orchestratorPrompt` that
-teaches the orchestrator exactly when to delegate to it.
+teaches the orchestrator exactly when to delegate to it. Keep this block compact:
+it is injected into the orchestrator prompt's Board Consultants section.
 
 ```jsonc
 {
@@ -286,7 +378,7 @@ teaches the orchestrator exactly when to delegate to it.
     "janitor": {
       "model": "github-copilot/gpt-5.5",
       "prompt": "You are Janitor. Audit codebase entropy, dead code, docs drift, naming inconsistencies, and unnecessary complexity. Prefer analysis and plans over direct edits.",
-      "orchestratorPrompt": "@janitor\n- Role: Maintenance specialist for codebase cleanup and entropy reduction\n- **Delegate when:** after large refactors • cleanup/technical-debt review • dead code or docs drift is suspected\n- **Don't delegate when:** feature implementation • urgent debugging • UI/UX work"
+      "orchestratorPrompt": "@janitor\n- Role: Maintenance specialist for codebase cleanup and entropy reduction\n- Delegate when: cleanup/technical-debt review • dead code or docs drift suspected\n- Don't delegate when: feature implementation • urgent debugging • UI/UX work\n- Output: findings, risk, recommended next step"
     }
   }
 }
@@ -297,3 +389,5 @@ Notes:
 - Custom agent names must be safe identifiers such as `janitor` or `security-reviewer`
 - Custom agents without a `model` are skipped with a warning
 - Disabled custom agents are not registered or injected into the orchestrator prompt
+- `orchestratorPrompt` must start with the custom agent name (for example `@janitor`) or its configured `displayName`
+- Board consultant blocks should describe routing, not duplicate the full agent execution prompt

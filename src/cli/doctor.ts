@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { z } from 'zod';
-import { findPluginConfigPaths, mergePluginConfigs } from '../config/loader';
+import { findPluginConfigPaths, loadPluginConfig } from '../config/loader';
 import { type PluginConfig, PluginConfigSchema } from '../config/schema';
 import { stripJsonComments } from './config-io';
 
@@ -167,15 +167,6 @@ function checkPreset(
   return { preset: presetName, ok: true };
 }
 
-function getMergedConfig(
-  userConfig?: PluginConfig,
-  projectConfig?: PluginConfig,
-): PluginConfig {
-  return projectConfig
-    ? mergePluginConfigs(userConfig ?? {}, projectConfig)
-    : (userConfig ?? {});
-}
-
 export function runDoctorCheck(cwd: string): DoctorResult {
   const { userConfigPath, projectConfigPath } = findPluginConfigPaths(cwd);
 
@@ -188,7 +179,7 @@ export function runDoctorCheck(cwd: string): DoctorResult {
 
   let presetCheckResult: DoctorResult['presetCheck'] | undefined;
   if (!hasInvalidConfig) {
-    const mergedConfig = getMergedConfig(userCheck.config, projectCheck.config);
+    const mergedConfig = loadPluginConfig(cwd, { silent: true });
     presetCheckResult = checkPreset(mergedConfig);
   }
 

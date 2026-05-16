@@ -66,7 +66,7 @@ const AGENT_DESCRIPTIONS: Record<string, string> = {
 - Permissions: Read/write files
 - Stats: 2x faster code edits, 1/2 cost of orchestrator, 0.8x quality of orchestrator
 - Tools/Constraints: Execution-focused—no research, no architectural decisions
-- **Delegate when:** For implementation work, think and triage first. If the change is non-trivial or multi-file, hand bounded execution to @fixer • Writing or updating tests • Tasks that touch test files, fixtures, mocks, or test helpers. Parallelization benefits: Task involves multiple folders and multiple files modificaiton, scoping work per folder and spawning parallel @fixers for each folder.
+- **Delegate when:** For implementation work, think and triage first. If the change is non-trivial or multi-file, hand bounded execution to @fixer • Writing or updating tests • Tasks that touch test files, fixtures, mocks, or test helpers. Parallelization benefits: Task involves multiple folders and multiple files modification, scoping work per folder and spawning parallel @fixers for each folder.
 - **Don't delegate when:** Needs discovery/research/decisions • Single small change (<20 lines, one file) • Unclear requirements needing iteration • Explaining to fixer > doing • Tight integration with your current work • Sequential dependencies
 - **Rule of thumb:** Explaining > doing? → yourself. Test file modifications and bounded implementation work usually go to @fixer. Bigger or lots of edits, splitting makes sense, parallelized by spawning @fixers per certain scope.`,
 
@@ -114,12 +114,23 @@ const PARALLEL_DELEGATION_EXAMPLES = [
  * @param disabledAgents - Set of disabled agent names to exclude from the prompt
  * @returns The complete orchestrator prompt string
  */
-export function buildOrchestratorPrompt(disabledAgents?: Set<string>): string {
+export function buildOrchestratorPrompt(
+  disabledAgents?: Set<string>,
+  customAgentPrompts: string[] = [],
+): string {
   // Filter agent descriptions
   const enabledAgents = Object.entries(AGENT_DESCRIPTIONS)
     .filter(([name]) => !disabledAgents?.has(name))
     .map(([, desc]) => desc)
     .join('\n\n');
+
+  const customAgentSection = customAgentPrompts.length
+    ? `\n\n<Board Consultants>\n${customAgentPrompts.join('\n\n')}\n</Board Consultants>`
+    : '';
+
+  const councilRouting = disabledAgents?.has('council')
+    ? 'Use multi-model consensus only when configured, not as the default way to ask one expert.'
+    : 'Use @council only for multi-model consensus, not as the default way to ask one expert.';
 
   // Filter validation routing lines — remove lines mentioning any disabled agent
   const enabledValidationRouting = VALIDATION_ROUTING.filter((line) => {
@@ -143,7 +154,7 @@ You are an AI coding orchestrator that optimizes for quality, speed, cost, and r
 
 <Agents>
 
-${enabledAgents}
+${enabledAgents}${customAgentSection}
 
 </Agents>
 
@@ -167,6 +178,8 @@ Choose the path that optimizes all four.
 - Brief user on delegation goal before each call
 - Skip delegation if overhead ≥ doing it yourself
 
+**Board routing:** Board consultants advise; executors implement. Use consultants for domain judgment, risk, and trade-offs. Use @fixer/self for bounded edits. ${councilRouting}
+
 ## 4. Split and Parallelize
 Can tasks be split into subtasks and run in parallel?
 ${enabledParallelExamples}
@@ -176,6 +189,8 @@ Balance: respect dependencies, avoid parallelizing what must be sequential.
 ### Context Isolation
 If no specialist delegation is needed, consider \`subtask\` before doing
 context-heavy work directly.
+
+Named specialists and board consultants take precedence over \`subtask\` when a domain fit exists.
 
 Ask whether the parent context needs the details or only the result. Use
 \`subtask\` when the work is bounded, context-heavy, and the parent only needs a
@@ -206,7 +221,7 @@ relevant files. Wait for the summary, then integrate and verify it.
 5. Adjust if needed
 
 ### Session Reuse
-- Smartly reuse an available specialist session - constext reuse saves time and tokens
+- Smartly reuse an available specialist session when the same agent and problem domain fit - context reuse saves time and tokens
 - When too much unrelated, and really needed, start a fresh session with the specialist
 - If multiple remembered sessions fit, prefer the most recently used matching session.
 - Prefer re-uses over creating new sessions all the time
@@ -272,8 +287,12 @@ export function createOrchestratorAgent(
   customPrompt?: string,
   customAppendPrompt?: string,
   disabledAgents?: Set<string>,
+  customAgentPrompts: string[] = [],
 ): AgentDefinition {
-  const basePrompt = buildOrchestratorPrompt(disabledAgents);
+  const basePrompt = buildOrchestratorPrompt(
+    disabledAgents,
+    customAgentPrompts,
+  );
   const prompt = resolvePrompt(basePrompt, customPrompt, customAppendPrompt);
 
   const definition: AgentDefinition = {
