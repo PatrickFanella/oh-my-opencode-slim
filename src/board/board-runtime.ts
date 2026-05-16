@@ -2,11 +2,13 @@ import type { BoardConfig } from '../config/schema';
 import { decideBoardAction } from './board-policy';
 import { createBoardRegistry } from './board-registry';
 import { routeBoardRequest } from './board-router';
+import type { BoardRegistry } from './board-schema';
 import { type BoardDecisionRecord, createBoardState } from './board-state';
 
 export type BoardRuntime = {
   route(input: string): BoardDecisionRecord;
   getRecentDecisions(): BoardDecisionRecord[];
+  getStatus(): BoardRegistry;
 };
 
 export function createBoardRuntime(
@@ -23,6 +25,12 @@ export function createBoardRuntime(
     },
     getRecentDecisions() {
       return state.recent();
+    },
+    getStatus() {
+      return {
+        ...registry,
+        roles: [...registry.roles],
+      };
     },
   };
 }

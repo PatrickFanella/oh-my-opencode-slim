@@ -1,3 +1,5 @@
+export type { BoardCommandManager } from './board-command';
+export { createBoardCommandManager } from './board-command';
 export type { BoardAction } from './board-policy';
 export { decideBoardAction } from './board-policy';
 export { renderBoardPromptSection } from './board-prompts';

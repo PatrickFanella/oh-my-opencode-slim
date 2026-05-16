@@ -32,3 +32,24 @@ behavior swap:
 - structured slash/runtime commands;
 - deeper executor handoff;
 - product rename and package identity migration.
+
+## Commands
+
+Board Runtime exposes a read-only `/board` command for inspection.
+
+- `/board status` shows runtime state (`enabled`, mode, council escalation,
+  role count, recent decision count).
+- `/board roles` lists configured board roles with id, title, agent, and
+  priority.
+- `/board route <request>` previews routing on a request and records one
+  in-memory decision so you can inspect action, reason, and candidates.
+
+This command is intentionally read-only in this phase.
+
+- no config mutation;
+- no persistent state writes;
+- no live auto-routing changes;
+- no TUI integration changes.
+
+Future role editing and mutation commands come after this read-only surface is
+stable.
