@@ -51,6 +51,11 @@ describe('custom-agent creation', () => {
     expect(orchestrator?.config.prompt).toContain(
       '@test-auditor\n- Role: Compliance audit specialist',
     );
+    expect(orchestrator?.config.prompt).toContain('<Board Consultants>');
+    const prompt = orchestrator?.config.prompt ?? '';
+    expect(
+      prompt.indexOf('@test-auditor\n- Role: Compliance audit specialist'),
+    ).toBeLessThan(prompt.indexOf('</Agents>'));
   });
 
   test('skips custom agents without a model', () => {
@@ -109,7 +114,7 @@ describe('custom-agent creation', () => {
     expect(() => createAgents(config)).toThrow();
   });
 
-  test('accepts arbitrary orchestratorPrompt text for custom agents', () => {
+  test('rejects orchestratorPrompt that targets a different agent', () => {
     const config: PluginConfig = {
       agents: {
         janitor: {
@@ -119,10 +124,47 @@ describe('custom-agent creation', () => {
       },
     };
 
+    expect(() => createAgents(config)).toThrow(
+      "Custom agent 'janitor' orchestratorPrompt must start with @janitor",
+    );
+  });
+
+  test('accepts orchestratorPrompt that starts with displayName', () => {
+    const config: PluginConfig = {
+      agents: {
+        janitor: {
+          model: 'openai/gpt-5.4-mini',
+          displayName: 'cleanup',
+          orchestratorPrompt: '@cleanup\n- Role: Cleanup specialist',
+        },
+      },
+    };
+
     const agents = createAgents(config);
     const orchestrator = agents.find((agent) => agent.name === 'orchestrator');
     expect(orchestrator?.config.prompt).toContain(
       '@cleanup\n- Role: Cleanup specialist',
+    );
+  });
+
+  test('rewrites custom orchestratorPrompt target to displayName', () => {
+    const config: PluginConfig = {
+      agents: {
+        janitor: {
+          model: 'openai/gpt-5.4-mini',
+          displayName: 'cleanup',
+          orchestratorPrompt: '@janitor\n- Role: Cleanup specialist',
+        },
+      },
+    };
+
+    const agents = createAgents(config);
+    const orchestrator = agents.find((agent) => agent.name === 'orchestrator');
+    expect(orchestrator?.config.prompt).toContain(
+      '@cleanup\n- Role: Cleanup specialist',
+    );
+    expect(orchestrator?.config.prompt).not.toContain(
+      '@janitor\n- Role: Cleanup specialist',
     );
   });
 });

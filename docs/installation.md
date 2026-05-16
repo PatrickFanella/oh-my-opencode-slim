@@ -81,6 +81,20 @@ ping all agents
 
 > **💡 Tip: Models are fully customizable.** The installer sets sensible defaults, but you can assign *any* model to *any* agent. Edit `~/.config/opencode/oh-my-opencode-slim.json` (or `.jsonc` for comments support) to override models, adjust reasoning effort, or disable agents entirely.
 
+### Single-plugin setup
+
+If OpenCode is your only harness, OMOC can be your main distribution layer:
+
+1. Install OMOC normally.
+2. Keep `~/.config/opencode/opencode.json` focused on plugin registration and
+   OpenCode host settings.
+3. Put OMOC behavior in `~/.config/opencode/oh-my-opencode-slim.jsonc`.
+4. Keep DCP and quota tooling separate from OMOC.
+5. Migrate only the skills and MCPs you actually use.
+
+Rollback path: remove `oh-my-opencode-slim` from OpenCode's `plugin` array,
+then restart OpenCode.
+
 ### Alternative: Ask Any Coding Agent
 
 Paste this into Claude Code, AmpCode, Cursor, or any coding agent:

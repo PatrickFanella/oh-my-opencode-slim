@@ -970,6 +970,171 @@ describe('preset resolution', () => {
   });
 });
 
+describe('package resolution', () => {
+  let tempDir: string;
+  let originalEnv: typeof process.env;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'package-test-'));
+    originalEnv = { ...process.env };
+    delete process.env.OPENCODE_CONFIG_DIR;
+    process.env.XDG_CONFIG_HOME = path.join(tempDir, 'user-config');
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    process.env = originalEnv;
+  });
+
+  test('selected packages contribute agents and presets before preset resolution', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        packages: ['engineering'],
+        preset: 'dev',
+        packageDefinitions: {
+          engineering: {
+            presets: {
+              dev: {
+                oracle: {
+                  model: 'openai/gpt-5.5',
+                  skills: ['review-quality'],
+                },
+              },
+            },
+            agents: {
+              'backend-architect': {
+                model: 'openai/gpt-5.5',
+                skills: ['architecture-patterns'],
+                prompt: 'You are Backend Architect.',
+                orchestratorPrompt:
+                  '@backend-architect\n- Role: Backend advisor',
+              },
+            },
+          },
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.oracle?.model).toBe('openai/gpt-5.5');
+    expect(config.agents?.oracle?.skills).toEqual(['review-quality']);
+    expect(config.agents?.['backend-architect']?.prompt).toBe(
+      'You are Backend Architect.',
+    );
+  });
+
+  test('root config overrides package-provided agent and preset values', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        packages: ['engineering'],
+        preset: 'dev',
+        packageDefinitions: {
+          engineering: {
+            presets: {
+              dev: {
+                oracle: {
+                  model: 'package/model',
+                  options: { textVerbosity: 'low' },
+                },
+              },
+            },
+            agents: {
+              oracle: { temperature: 0.1 },
+            },
+          },
+        },
+        presets: {
+          dev: {
+            oracle: {
+              options: { reasoningEffort: 'high' },
+            },
+          },
+        },
+        agents: {
+          oracle: { temperature: 0.8 },
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.oracle?.model).toBe('package/model');
+    expect(config.agents?.oracle?.temperature).toBe(0.8);
+    expect(config.agents?.oracle?.options).toEqual({
+      textVerbosity: 'low',
+      reasoningEffort: 'high',
+    });
+  });
+
+  test('package extends resolves parents before children', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        packages: ['board-engineering'],
+        packageDefinitions: {
+          core: {
+            agents: {
+              oracle: { skills: ['review-quality'] },
+            },
+          },
+          'board-engineering': {
+            extends: ['core'],
+            agents: {
+              'database-advisor': {
+                model: 'openai/gpt-5.4-mini',
+                prompt: 'You are Database Advisor.',
+              },
+            },
+          },
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.oracle?.skills).toEqual(['review-quality']);
+    expect(config.agents?.['database-advisor']?.model).toBe(
+      'openai/gpt-5.4-mini',
+    );
+  });
+
+  test('missing package warns and keeps direct config', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        packages: ['missing'],
+        packageDefinitions: {},
+        agents: { oracle: { model: 'root/model' } },
+      }),
+    );
+
+    const warnings: ConfigLoadWarning[] = [];
+    const config = loadPluginConfig(projectDir, {
+      silent: true,
+      onWarning: (warning) => warnings.push(warning),
+    });
+
+    expect(config.agents?.oracle?.model).toBe('root/model');
+    expect(warnings[0]?.kind).toBe('missing-package');
+    expect(warnings[0]?.message).toContain('Package "missing" not found');
+  });
+});
+
 describe('environment variable preset override', () => {
   let tempDir: string;
   let originalEnv: typeof process.env;

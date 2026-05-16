@@ -2,7 +2,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { stripJsonComments } from '../cli/config-io';
 import { getConfigSearchDirs } from '../cli/paths';
-import { type PluginConfig, PluginConfigSchema } from './schema';
+import {
+  type PackageDefinition,
+  type PluginConfig,
+  PluginConfigSchema,
+} from './schema';
 
 /**
  * Warning kinds produced during config loading.
@@ -11,7 +15,9 @@ export type ConfigLoadWarningKind =
   | 'invalid-json'
   | 'invalid-schema'
   | 'read-error'
-  | 'missing-preset';
+  | 'missing-preset'
+  | 'missing-package'
+  | 'package-cycle';
 
 /**
  * A warning emitted while loading plugin configuration.
@@ -199,6 +205,101 @@ export function mergePluginConfigs(
     divoom: deepMerge(base.divoom, override.divoom),
     fallback: deepMerge(base.fallback, override.fallback),
     council: deepMerge(base.council, override.council),
+    packageDefinitions: deepMerge(
+      base.packageDefinitions,
+      override.packageDefinitions,
+    ),
+  };
+}
+
+function mergeUnique(
+  base: string[] | undefined,
+  override: string[] | undefined,
+): string[] | undefined {
+  if (!base?.length) return override;
+  if (!override?.length) return base;
+  return Array.from(new Set([...base, ...override]));
+}
+
+function mergePackageIntoConfig(
+  base: PluginConfig,
+  packageDefinition: PackageDefinition,
+): PluginConfig {
+  return {
+    ...base,
+    presets: deepMerge(base.presets, packageDefinition.presets),
+    agents: deepMerge(base.agents, packageDefinition.agents),
+    disabled_agents: mergeUnique(
+      base.disabled_agents,
+      packageDefinition.disabled_agents,
+    ),
+    disabled_mcps: mergeUnique(
+      base.disabled_mcps,
+      packageDefinition.disabled_mcps,
+    ),
+  };
+}
+
+function applyPackageDefinitions(
+  config: PluginConfig,
+  options?: LoadPluginConfigOptions,
+  warningPath = '',
+): PluginConfig {
+  if (!config.packages?.length || !config.packageDefinitions) {
+    return config;
+  }
+
+  const packageDefinitions = config.packageDefinitions;
+  const resolved = new Set<string>();
+  const resolving = new Set<string>();
+  let packageConfig: PluginConfig = {};
+
+  const warn = (kind: ConfigLoadWarningKind, message: string): void => {
+    options?.onWarning?.({ path: warningPath, kind, message });
+    if (!options?.silent) {
+      console.warn(`[oh-my-opencode-slim] ${message}`);
+    }
+  };
+
+  const visit = (packageName: string): void => {
+    if (resolved.has(packageName)) return;
+    if (resolving.has(packageName)) {
+      warn('package-cycle', `Package cycle detected at "${packageName}"`);
+      return;
+    }
+
+    const packageDefinition = packageDefinitions[packageName];
+    if (!packageDefinition) {
+      warn('missing-package', `Package "${packageName}" not found`);
+      return;
+    }
+
+    resolving.add(packageName);
+    for (const parent of packageDefinition.extends ?? []) {
+      visit(parent);
+    }
+    resolving.delete(packageName);
+
+    packageConfig = mergePackageIntoConfig(packageConfig, packageDefinition);
+    resolved.add(packageName);
+  };
+
+  for (const packageName of config.packages) {
+    visit(packageName);
+  }
+
+  return {
+    ...config,
+    presets: deepMerge(packageConfig.presets, config.presets),
+    agents: deepMerge(packageConfig.agents, config.agents),
+    disabled_agents: mergeUnique(
+      packageConfig.disabled_agents,
+      config.disabled_agents,
+    ),
+    disabled_mcps: mergeUnique(
+      packageConfig.disabled_mcps,
+      config.disabled_mcps,
+    ),
   };
 }
 
@@ -283,6 +384,12 @@ export function loadPluginConfig(
   if (envPreset) {
     config.preset = envPreset;
   }
+
+  config = applyPackageDefinitions(
+    config,
+    options,
+    projectConfigPath ?? userConfigPath ?? '',
+  );
 
   // Resolve preset and merge with root agents
   if (config.preset) {

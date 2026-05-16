@@ -6,6 +6,25 @@ Skills are installed via the `oh-my-opencode-slim` installer or manually with `n
 
 ---
 
+## Skill Packaging Policy
+
+OMOC treats skills in three categories:
+
+1. **Bundled custom skills** live in `src/skills/` and are copied into the
+   OpenCode config directory by the installer. Use this for skills that are
+   core to OMOC workflows and maintained with this repo.
+2. **Recommended external skills** are installed through the skills CLI during
+   setup. Use this only for skills with an upstream owner or external runtime
+   dependency.
+3. **Permission-only skills** are not installed by OMOC. OMOC only grants
+   agent permission for users who already have them.
+
+For OMOC as the distribution layer, prefer bundled custom skills for core
+orchestration workflows. Keep DCP/quota-related skills outside OMOC unless a
+future integration contract explicitly defines that boundary.
+
+---
+
 ## Available Skills
 
 ### Recommended (via installer)
@@ -134,3 +153,10 @@ Control which skills each agent can use in `~/.config/opencode/oh-my-opencode-sl
   }
 }
 ```
+
+For larger setups, define reusable skill sets through
+`packageDefinitions.<name>.presets` and select them with `packages`. Packages
+expand into the same per-agent `skills` arrays shown above, so the allow/deny
+syntax and least-privilege rules stay unchanged. See
+[Configuration](configuration.md#package-composition) for the full package
+shape.

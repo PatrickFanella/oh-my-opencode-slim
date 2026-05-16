@@ -54,7 +54,12 @@ The following fields are forwarded to the OpenCode SDK at runtime:
 | `variant` | Model variant (e.g. `"thinking"`) |
 | `options` | Provider-specific options (e.g. thinking budget) |
 
-Fields not forwarded (require restart): `prompt`, `skills`, `mcps`, `displayName`.
+Fields not forwarded (require restart): `prompt`, `skills`, `mcps`,
+`displayName`, `packages`, and `packageDefinitions`.
+
+Package changes are applied during config load, before preset resolution. Use
+packages to define startup skill/MCP/Board-agent composition, then use `/preset`
+only for live model, temperature, variant, and provider-option switches.
 
 ## Startup Preset vs Runtime Switching
 
