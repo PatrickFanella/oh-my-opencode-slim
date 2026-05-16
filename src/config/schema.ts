@@ -185,6 +185,19 @@ export const BoardConfigSchema = z
 export type BoardRoleConfig = z.infer<typeof BoardRoleConfigSchema>;
 export type BoardConfig = z.infer<typeof BoardConfigSchema>;
 
+export const ToolkitConfigSchema = z
+  .object({
+    pluginHealth: z.boolean().optional(),
+    github: z.boolean().optional(),
+    review: z.boolean().optional(),
+    observe: z.boolean().optional(),
+    caveman: z.boolean().optional(),
+    rtk: z.boolean().optional(),
+  })
+  .strict();
+
+export type ToolkitConfig = z.infer<typeof ToolkitConfigSchema>;
+
 export const PackageDefinitionSchema = z
   .object({
     description: z.string().optional(),
@@ -200,6 +213,7 @@ export const PackageDefinitionSchema = z
         'MCP server IDs to opt into when a built-in MCP is registered disabled by default.',
       ),
     board: BoardConfigSchema.optional(),
+    toolkits: ToolkitConfigSchema.optional(),
   })
   .strict();
 
@@ -405,6 +419,7 @@ export const PluginConfigSchema = z
         'MCP server IDs to opt into when a built-in MCP is registered disabled by default.',
       ),
     board: BoardConfigSchema.optional(),
+    toolkits: ToolkitConfigSchema.optional(),
     // Multiplexer config (new unified config - preferred)
     multiplexer: MultiplexerConfigSchema.optional(),
     // Legacy tmux config (for backward compatibility)

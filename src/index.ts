@@ -43,6 +43,14 @@ import {
   startAvailabilityCheck,
 } from './multiplexer';
 import {
+  createCavemanToolkit,
+  createGithubToolkit,
+  createObserveToolkit,
+  createPluginHealthToolkit,
+  createReviewToolkit,
+  createRtkToolkit,
+} from './toolkits';
+import {
   ast_grep_replace,
   ast_grep_search,
   createCouncilTool,
@@ -153,6 +161,14 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   >;
   let subtaskCommandManager: ReturnType<typeof createSubtaskCommandManager>;
   let subtaskState: ReturnType<typeof createSubtaskState>;
+  let pluginHealthToolkit:
+    | ReturnType<typeof createPluginHealthToolkit>
+    | undefined;
+  let cavemanToolkit: ReturnType<typeof createCavemanToolkit> | undefined;
+  let githubToolkit: ReturnType<typeof createGithubToolkit> | undefined;
+  let reviewToolkit: ReturnType<typeof createReviewToolkit> | undefined;
+  let observeToolkit: ReturnType<typeof createObserveToolkit> | undefined;
+  let rtkToolkit: Awaited<ReturnType<typeof createRtkToolkit>>;
   let _boardRuntime: BoardRuntime | undefined;
   let boardCommandManager:
     | ReturnType<typeof createBoardCommandManager>
@@ -180,6 +196,45 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
     } else if (runtimePreset) {
       // Preset was deleted from config since last switch — clear stale state
       setActiveRuntimePreset(null);
+    }
+
+    if (config.toolkits?.pluginHealth) {
+      pluginHealthToolkit = createPluginHealthToolkit({
+        directory: ctx.directory,
+        observeEnabled: Boolean(config.toolkits?.observe),
+      });
+    }
+
+    if (config.toolkits?.caveman) {
+      cavemanToolkit = createCavemanToolkit();
+    }
+
+    if (config.toolkits?.github) {
+      githubToolkit = createGithubToolkit({
+        $: (ctx as unknown as { $: unknown }).$,
+        directory: ctx.directory,
+      });
+    }
+
+    if (config.toolkits?.review) {
+      reviewToolkit = createReviewToolkit({
+        $: (ctx as unknown as { $: unknown }).$,
+        directory: ctx.directory,
+        client: ctx.client,
+      });
+    }
+
+    if (config.toolkits?.observe) {
+      observeToolkit = createObserveToolkit({
+        directory: ctx.directory,
+        client: ctx.client,
+      });
+    }
+
+    if (config.toolkits?.rtk) {
+      rtkToolkit = await createRtkToolkit({
+        $: (ctx as unknown as { $: unknown }).$,
+      });
     }
 
     disabledAgents = getDisabledAgents(config);
@@ -339,6 +394,11 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
     toolCount =
       Object.keys(councilTools).length +
       Object.keys(todoContinuationHook.tool).length +
+      Object.keys(pluginHealthToolkit?.tools ?? {}).length +
+      Object.keys(cavemanToolkit?.tools ?? {}).length +
+      Object.keys(githubToolkit?.tools ?? {}).length +
+      Object.keys(reviewToolkit?.tools ?? {}).length +
+      Object.keys(observeToolkit?.tools ?? {}).length +
       1 + // webfetch
       2 + // ast_grep_search, ast_grep_replace
       2; // subtask, read_session
@@ -409,6 +469,11 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       ...councilTools,
       webfetch,
       ...todoContinuationHook.tool,
+      ...(pluginHealthToolkit?.tools ?? {}),
+      ...(cavemanToolkit?.tools ?? {}),
+      ...(githubToolkit?.tools ?? {}),
+      ...(reviewToolkit?.tools ?? {}),
+      ...(observeToolkit?.tools ?? {}),
       ast_grep_search,
       ast_grep_replace,
       subtask: createSubtaskTool(ctx, subtaskState, depthTracker),
@@ -749,6 +814,11 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       interviewManager.registerCommand(opencodeConfig);
       presetManager.registerCommand(opencodeConfig);
       subtaskCommandManager.registerCommand(opencodeConfig);
+      pluginHealthToolkit?.registerCommands(opencodeConfig);
+      cavemanToolkit?.registerCommands(opencodeConfig);
+      githubToolkit?.registerCommands(opencodeConfig);
+      reviewToolkit?.registerCommands(opencodeConfig);
+      observeToolkit?.registerCommands(opencodeConfig);
       boardCommandManager?.registerCommand(opencodeConfig);
     },
 
@@ -802,6 +872,43 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
 
       // Handle auto-update checking
       await autoUpdateChecker.event(input);
+
+      await reviewToolkit?.handleEvent(
+        input as {
+          event: {
+            type: string;
+            properties?: {
+              sessionID?: string;
+              info?: { sessionID?: string; id?: string };
+            };
+          };
+        },
+      );
+
+      await cavemanToolkit?.handleEvent(
+        input as {
+          event: {
+            type: string;
+            properties?: {
+              sessionID?: string;
+              info?: { sessionID?: string; id?: string };
+            };
+          };
+        },
+      );
+
+      await observeToolkit?.handleEvent(
+        input as {
+          event: {
+            type: string;
+            properties?: {
+              sessionID?: string;
+              info?: { sessionID?: string; id?: string };
+              part?: { type?: string; text?: string; synthetic?: boolean };
+            };
+          };
+        },
+      );
 
       // Handle multiplexer pane spawning for OpenCode's Task tool sessions
       await multiplexerSessionManager.onSessionCreated(event);
@@ -930,6 +1037,11 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
         output as { args?: unknown },
       );
 
+      await rtkToolkit?.handleToolExecuteBefore(
+        input as { tool?: string },
+        output as { args?: unknown },
+      );
+
       if (input.tool.toLowerCase() === 'task') {
         divoomManager.onTaskStart({
           parentSessionId: input.sessionID,
@@ -1002,6 +1114,9 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       if (agent) {
         sessionAgentMap.set(input.sessionID, agent);
       }
+
+      await cavemanToolkit?.handleChatMessage(input, output ?? {});
+
       todoContinuationHook.handleChatMessage({
         sessionID: input.sessionID,
         agent,
@@ -1047,6 +1162,9 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
             (output.system[0] ? `\n\n${output.system[0]}` : '');
         }
       }
+
+      await cavemanToolkit?.handleSystemTransform(input, output);
+      await observeToolkit?.handleSystemTransform(input, output);
 
       // Collapse to single system message for provider compatibility.
       // Some providers (e.g. Qwen via VLLM/DashScope) reject multiple

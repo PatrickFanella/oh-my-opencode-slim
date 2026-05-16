@@ -167,6 +167,7 @@ Package fields:
 | `disabled_agents` | string[] | Agents disabled when the package is selected |
 | `disabled_mcps` | string[] | MCPs disabled when the package is selected |
 | `enabled_mcps` | string[] | Opt-in MCPs enabled when the package is selected |
+| `toolkits` | object | Toolkit enable flags merged like `board` (`pluginHealth`, `github`, `review`, `observe`, `caveman`, `rtk`) |
 
 Missing packages and package cycles are non-fatal warnings. Direct root config is
 kept so a typo does not erase existing agent settings.
@@ -174,6 +175,23 @@ kept so a typo does not erase existing agent settings.
 ### Runtime Preset Switching
 
 Presets can also be switched at runtime without restarting using the `/preset` command. See [Preset Switching](preset-switching.md) for details.
+
+### Toolkit Gates
+
+Toolkit flags are opt-in and default to `false`:
+
+```jsonc
+{
+  "toolkits": {
+    "pluginHealth": true,
+    "github": true,
+    "review": true,
+    "observe": true,
+    "caveman": true,
+    "rtk": true
+  }
+}
+```
 
 ## Full Option Reference
 
@@ -190,6 +208,12 @@ Presets can also be switched at runtime without restarting using the `/preset` c
 | `presets.<name>.<agent>.options` | object | — | Provider-specific model options passed to the AI SDK (e.g., `textVerbosity`, `thinking` budget) |
 | `packages` | string[] | — | Package names to compose before preset resolution |
 | `packageDefinitions.<name>` | object | — | Reusable package fragments for presets, agents, and global disables |
+| `toolkits.pluginHealth` | boolean | `false` | Enable integrated plugin health tools and command templates |
+| `toolkits.github` | boolean | `false` | Enable integrated GitHub toolkit |
+| `toolkits.review` | boolean | `false` | Enable integrated review toolkit |
+| `toolkits.observe` | boolean | `false` | Enable integrated observe toolkit |
+| `toolkits.caveman` | boolean | `false` | Enable integrated caveman toolkit |
+| `toolkits.rtk` | boolean | `false` | Enable integrated RTK toolkit |
 | `agents.<customAgent>.model` | string\|array | — | Required for custom agents inferred from unknown `agents` keys |
 | `agents.<customAgent>.prompt` | string | — | Full execution prompt for a custom agent |
 | `agents.<customAgent>.orchestratorPrompt` | string | — | Compact `@agent` block injected into the orchestrator prompt's Board Consultants section; must start with `@<agent-name>` or its `displayName` |
