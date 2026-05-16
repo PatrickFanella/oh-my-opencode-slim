@@ -1,7 +1,11 @@
 import type { Plugin } from '@opencode-ai/plugin';
 import { createAgents, getAgentConfigs, getDisabledAgents } from './agents';
 import { buildOrchestratorPrompt } from './agents/orchestrator';
-import { type BoardRuntime, createBoardRuntime } from './board';
+import {
+  type BoardRuntime,
+  createBoardCommandManager,
+  createBoardRuntime,
+} from './board';
 import {
   type AgentOverrideConfig,
   deepMerge,
@@ -150,6 +154,9 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   let subtaskCommandManager: ReturnType<typeof createSubtaskCommandManager>;
   let subtaskState: ReturnType<typeof createSubtaskState>;
   let _boardRuntime: BoardRuntime | undefined;
+  let boardCommandManager:
+    | ReturnType<typeof createBoardCommandManager>
+    | undefined;
 
   // Counters for post-init health check (set inside try, checked outside)
   let toolCount = 0;
@@ -177,6 +184,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
 
     disabledAgents = getDisabledAgents(config);
     _boardRuntime = createBoardRuntime(config.board);
+    boardCommandManager = createBoardCommandManager(_boardRuntime);
     rewriteDisplayNameMentions = createDisplayNameMentionRewriter(config);
     agentDefs = createAgents(config);
     agents = getAgentConfigs(config);
@@ -741,6 +749,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       interviewManager.registerCommand(opencodeConfig);
       presetManager.registerCommand(opencodeConfig);
       subtaskCommandManager.registerCommand(opencodeConfig);
+      boardCommandManager?.registerCommand(opencodeConfig);
     },
 
     event: async (input) => {
@@ -955,6 +964,14 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
         input as {
           command: string;
           sessionID: string;
+          arguments: string;
+        },
+        output as { parts: Array<{ type: string; text?: string }> },
+      );
+
+      await boardCommandManager?.handleCommandExecuteBefore(
+        input as {
+          command: string;
           arguments: string;
         },
         output as { parts: Array<{ type: string; text?: string }> },
