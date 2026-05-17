@@ -31,7 +31,7 @@ const RESET = '\x1b[0m';
 const OPTIONAL_PLUGINS = {
   dcp: '@tarquinen/opencode-dcp@latest',
   quota: '@slkiser/opencode-quota',
-  scheduledTasks: 'opencode-scheduled-tasks',
+  scheduledTasks: 'opencode-tasks',
 } as const;
 
 const OPENCODE_INSTALL_COMMAND =
@@ -39,10 +39,9 @@ const OPENCODE_INSTALL_COMMAND =
 const RTK_INSTALL_COMMAND =
   'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh';
 const RTK_INIT_COMMAND = 'rtk init -g --opencode --auto-patch';
-const SCHEDULED_TASKS_INSTALL_DAEMON_COMMAND =
-  'npx -y opencode-scheduled-tasks --install';
+const SCHEDULED_TASKS_INSTALL_DAEMON_COMMAND = 'bunx opencode-tasks --install';
 const SCHEDULED_TASKS_INSTALL_SKILL_COMMAND =
-  'npx -y opencode-scheduled-tasks --install-skill';
+  'bunx opencode-tasks --install-skill';
 const HELPER_START = '# >>> oh-my-opencode-slim tmux helper >>>';
 const HELPER_END = '# <<< oh-my-opencode-slim tmux helper <<<';
 

@@ -74,9 +74,9 @@ describe('bootstrap CLI helpers', () => {
   });
 
   test('addPluginsToConfig adds scheduled tasks plugin', () => {
-    const config = addPluginsToConfig({}, ['opencode-scheduled-tasks']);
+    const config = addPluginsToConfig({}, ['opencode-tasks']);
 
-    expect(config.plugin).toEqual(['opencode-scheduled-tasks']);
+    expect(config.plugin).toEqual(['opencode-tasks']);
   });
 
   test('tmuxHelperBlock defines omos with portable port selection', () => {
