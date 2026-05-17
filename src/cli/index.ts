@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 
 export { CUSTOM_SKILLS } from './custom-skills';
 
+import { agents, parseAgentsArgs, printAgentsCommandHelp } from './agents';
 import { bootstrap, parseBootstrapArgs } from './bootstrap';
 import { doctor, parseDoctorArgs } from './doctor';
 import { install } from './install';
@@ -49,6 +50,7 @@ oh-my-opencode-slim installer
 Usage:
   bunx oh-my-opencode-slim install [OPTIONS]
   bunx oh-my-opencode-slim bootstrap [OPTIONS]
+  bunx oh-my-opencode-slim agents <list|validate|create> [OPTIONS]
   bunx oh-my-opencode-slim doctor [OPTIONS]
 
 Options:
@@ -69,6 +71,12 @@ Bootstrap options:
   --opencode-install-cmd=<cmd>
                          Override OpenCode install/update command
 
+Agents commands:
+  agents list [--json]       List built-in and custom JSON agents
+  agents validate [--json]   Validate custom JSON agents
+  agents create <name> --model=<provider/model>
+                             Create a custom JSON agent definition
+
 Doctor options:
   --json                 Print diagnostics as JSON
 
@@ -84,6 +92,7 @@ Examples:
   bunx oh-my-opencode-slim install --preset=opencode-go
   bunx oh-my-opencode-slim install --reset
   bunx oh-my-opencode-slim bootstrap --with-dcp --with-quota
+  bunx oh-my-opencode-slim agents list
   bunx oh-my-opencode-slim doctor
 `);
 }
@@ -103,6 +112,14 @@ async function main(): Promise<void> {
     }
     const bootstrapArgs = parseBootstrapArgs(args.slice(1));
     const exitCode = await bootstrap(bootstrapArgs);
+    process.exit(exitCode);
+  } else if (args[0] === 'agents') {
+    if (args[1] === '-h' || args[1] === '--help') {
+      printAgentsCommandHelp();
+      process.exit(0);
+    }
+    const agentsArgs = parseAgentsArgs(args.slice(1));
+    const exitCode = await agents(agentsArgs);
     process.exit(exitCode);
   } else if (args[0] === 'doctor') {
     const doctorArgs = parseDoctorArgs(args.slice(1));

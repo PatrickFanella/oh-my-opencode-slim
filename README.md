@@ -528,6 +528,7 @@ Use this section as a map: start with installation, then jump to features, confi
 | Doc | What it covers |
 |-----|----------------|
 | **[Configuration](docs/configuration.md)** | Config file locations, JSONC support, prompt overrides, and full option reference |
+| **[Custom Agents](docs/custom-agents.md)** | JSON custom-agent definitions, CLI validation, recipes, and troubleshooting |
 | **[Board Runtime](docs/board-runtime.md)** | First-class Board routing, delegation policy, and future orchestration runtime |
 | **[OMOC Distribution Layer](docs/omoc-distribution-layer.md)** | Use OMOC as the main plugin layer while OpenCode keeps host runtime duties and DCP/quota stay separate |
 | **[Maintainer Guide](docs/maintainers.md)** | Issue triage rules, label meanings, support routing, and repo maintenance workflow |

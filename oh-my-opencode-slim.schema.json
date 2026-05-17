@@ -260,9 +260,7 @@
                                   "type": "string"
                                 }
                               },
-                              "required": [
-                                "id"
-                              ]
+                              "required": ["id"]
                             }
                           ]
                         }
@@ -344,9 +342,7 @@
                                 "type": "string"
                               }
                             },
-                            "required": [
-                              "id"
-                            ]
+                            "required": ["id"]
                           }
                         ]
                       }
@@ -592,9 +588,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "id"
-                        ]
+                        "required": ["id"]
                       }
                     ]
                   }
@@ -676,9 +670,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "id"
-                      ]
+                      "required": ["id"]
                     }
                   ]
                 }
@@ -1236,9 +1228,7 @@
           "description": "DEPRECATED — ignored. No separate master session."
         }
       },
-      "required": [
-        "presets"
-      ]
+      "required": ["presets"]
     }
   },
   "title": "oh-my-opencode-slim",

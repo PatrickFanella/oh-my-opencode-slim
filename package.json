@@ -46,6 +46,7 @@
     "scripts/audit_skills.py",
     "scripts/hub_doctor.py",
     "oh-my-opencode-slim.schema.json",
+    "custom-agent.schema.json",
     "README.md",
     "LICENSE"
   ],
