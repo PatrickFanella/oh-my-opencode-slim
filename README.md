@@ -44,7 +44,7 @@ and installs the tmux helper:
 ```bash
 git clone https://github.com/patrickfanella/oh-my-opencode-slim.git
 cd oh-my-opencode-slim
-bun run bootstrap --yes --with-dcp --with-quota
+bun run bootstrap --yes --with-dcp --with-quota --with-rtk --with-scheduled-tasks
 ```
 
 The installer also registers the companion TUI plugin in OpenCode's

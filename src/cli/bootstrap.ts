@@ -31,10 +31,18 @@ const RESET = '\x1b[0m';
 const OPTIONAL_PLUGINS = {
   dcp: '@tarquinen/opencode-dcp@latest',
   quota: '@slkiser/opencode-quota',
+  scheduledTasks: 'opencode-scheduled-tasks',
 } as const;
 
 const OPENCODE_INSTALL_COMMAND =
   'curl -fsSL https://opencode.ai/install | bash';
+const RTK_INSTALL_COMMAND =
+  'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh';
+const RTK_INIT_COMMAND = 'rtk init -g --opencode --auto-patch';
+const SCHEDULED_TASKS_INSTALL_DAEMON_COMMAND =
+  'npx -y opencode-scheduled-tasks --install';
+const SCHEDULED_TASKS_INSTALL_SKILL_COMMAND =
+  'npx -y opencode-scheduled-tasks --install-skill';
 const HELPER_START = '# >>> oh-my-opencode-slim tmux helper >>>';
 const HELPER_END = '# <<< oh-my-opencode-slim tmux helper <<<';
 
@@ -47,9 +55,17 @@ export interface BootstrapArgs {
   skipOpencode?: boolean;
   skipBuild?: boolean;
   skipShellHelper?: boolean;
+  skipRtkInit?: boolean;
+  skipScheduledTasksDaemon?: boolean;
+  skipScheduledTasksSkill?: boolean;
   withDcp?: boolean;
   withQuota?: boolean;
+  withRtk?: boolean;
+  withScheduledTasks?: boolean;
   opencodeInstallCommand?: string;
+  rtkInstallCommand?: string;
+  scheduledTasksDaemonCommand?: string;
+  scheduledTasksSkillCommand?: string;
 }
 
 interface StepResult {
@@ -67,10 +83,19 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
     else if (arg === '--skip-opencode') result.skipOpencode = true;
     else if (arg === '--skip-build') result.skipBuild = true;
     else if (arg === '--skip-shell-helper') result.skipShellHelper = true;
-    else if (arg === '--with-dcp') result.withDcp = true;
+    else if (arg === '--skip-rtk-init') result.skipRtkInit = true;
+    else if (arg === '--skip-scheduled-tasks-daemon') {
+      result.skipScheduledTasksDaemon = true;
+    } else if (arg === '--skip-scheduled-tasks-skill') {
+      result.skipScheduledTasksSkill = true;
+    } else if (arg === '--with-dcp') result.withDcp = true;
     else if (arg === '--with-quota') result.withQuota = true;
+    else if (arg === '--with-rtk') result.withRtk = true;
+    else if (arg === '--with-scheduled-tasks') result.withScheduledTasks = true;
     else if (arg === '--no-dcp') result.withDcp = false;
     else if (arg === '--no-quota') result.withQuota = false;
+    else if (arg === '--no-rtk') result.withRtk = false;
+    else if (arg === '--no-scheduled-tasks') result.withScheduledTasks = false;
     else if (arg.startsWith('--skills=')) {
       result.skills = arg.split('=')[1] as BooleanArg;
     } else if (arg.startsWith('--preset=')) {
@@ -78,6 +103,16 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
     } else if (arg.startsWith('--opencode-install-cmd=')) {
       result.opencodeInstallCommand = arg.slice(
         '--opencode-install-cmd='.length,
+      );
+    } else if (arg.startsWith('--rtk-install-cmd=')) {
+      result.rtkInstallCommand = arg.slice('--rtk-install-cmd='.length);
+    } else if (arg.startsWith('--scheduled-tasks-daemon-cmd=')) {
+      result.scheduledTasksDaemonCommand = arg.slice(
+        '--scheduled-tasks-daemon-cmd='.length,
+      );
+    } else if (arg.startsWith('--scheduled-tasks-skill-cmd=')) {
+      result.scheduledTasksSkillCommand = arg.slice(
+        '--scheduled-tasks-skill-cmd='.length,
       );
     } else {
       throw new Error(`Unknown bootstrap option: ${arg}`);
@@ -138,6 +173,8 @@ export async function backupOpenCodeConfig(
     getExistingTuiConfigPath(),
     getExistingLiteConfigPath(),
     join(configDir, 'oh-my-opencode-slim', 'agents'),
+    join(configDir, 'tasks'),
+    join(configDir, '.tasks.db'),
     join(configDir, 'dcp.jsonc'),
     join(configDir, 'dcp.json'),
   ];
@@ -179,6 +216,15 @@ async function runCommand(
     : { ok: false, message: `${command} exited with code ${proc.exitCode}` };
 }
 
+async function isCommandAvailable(command: string): Promise<boolean> {
+  const proc = crossSpawn(['bash', '-lc', `command -v ${command}`], {
+    stdout: 'ignore',
+    stderr: 'ignore',
+  });
+  await proc.exited;
+  return proc.exitCode === 0;
+}
+
 async function ensureOpenCode(args: BootstrapArgs): Promise<StepResult> {
   if (args.skipOpencode) {
     return { ok: true, message: 'Skipped OpenCode install/update' };
@@ -201,6 +247,82 @@ async function ensureRepoBuild(args: BootstrapArgs): Promise<StepResult> {
   );
   if (!installResult.ok) return installResult;
   return runCommand('bun run build', args.dryRun);
+}
+
+async function installAndInitRtk(args: BootstrapArgs): Promise<StepResult> {
+  if (!args.withRtk) return { ok: true, message: 'RTK not selected' };
+
+  if (args.dryRun) {
+    const commands = [args.rtkInstallCommand ?? RTK_INSTALL_COMMAND];
+    if (!args.skipRtkInit) commands.push(`${RTK_INIT_COMMAND} --dry-run`);
+    return { ok: true, message: `Would run: ${commands.join(' && ')}` };
+  }
+
+  const installed = await isCommandAvailable('rtk');
+  if (!installed) {
+    const installResult = await runCommand(
+      args.rtkInstallCommand ?? RTK_INSTALL_COMMAND,
+      false,
+    );
+    if (!installResult.ok) return installResult;
+  } else {
+    renderInfo('rtk detected; skipping binary install');
+  }
+
+  if (args.skipRtkInit) {
+    return { ok: true, message: 'Skipped RTK OpenCode init' };
+  }
+
+  const initResult = await runCommand(RTK_INIT_COMMAND, false);
+  if (!initResult.ok) return initResult;
+
+  return {
+    ok: true,
+    message: installed
+      ? 'RTK OpenCode integration initialized'
+      : 'RTK installed and OpenCode integration initialized',
+  };
+}
+
+async function installScheduledTasksDaemon(
+  args: BootstrapArgs,
+): Promise<StepResult> {
+  if (!args.withScheduledTasks) {
+    return { ok: true, message: 'Scheduled tasks not selected' };
+  }
+
+  const commands: string[] = [];
+  if (!args.skipScheduledTasksDaemon) {
+    commands.push(
+      args.scheduledTasksDaemonCommand ??
+        SCHEDULED_TASKS_INSTALL_DAEMON_COMMAND,
+    );
+  }
+  if (!args.skipScheduledTasksSkill) {
+    commands.push(
+      args.scheduledTasksSkillCommand ?? SCHEDULED_TASKS_INSTALL_SKILL_COMMAND,
+    );
+  }
+
+  if (commands.length === 0) {
+    return { ok: true, message: 'Skipped scheduled tasks daemon and skill' };
+  }
+
+  if (args.dryRun) {
+    return { ok: true, message: `Would run: ${commands.join(' && ')}` };
+  }
+
+  for (const command of commands) {
+    const result = await runCommand(command, false);
+    if (!result.ok) return result;
+  }
+
+  return {
+    ok: true,
+    message: args.skipScheduledTasksDaemon
+      ? 'Scheduled tasks skill installed'
+      : 'Scheduled tasks daemon installed and initialized',
+  };
 }
 
 function getPluginSpec(entry: unknown): string | undefined {
@@ -232,6 +354,9 @@ async function installOptionalPlugins(
   const pluginSpecs: string[] = [];
   if (args.withDcp) pluginSpecs.push(OPTIONAL_PLUGINS.dcp);
   if (args.withQuota) pluginSpecs.push(OPTIONAL_PLUGINS.quota);
+  if (args.withScheduledTasks) {
+    pluginSpecs.push(OPTIONAL_PLUGINS.scheduledTasks);
+  }
 
   if (pluginSpecs.length === 0) {
     return { ok: true, message: 'No optional plugins selected' };
@@ -370,7 +495,7 @@ async function step(
 export async function bootstrap(args: BootstrapArgs): Promise<number> {
   printHeader();
 
-  const total = 7;
+  const total = 9;
   let index = 1;
 
   if (
@@ -406,6 +531,18 @@ export async function bootstrap(args: BootstrapArgs): Promise<number> {
   if (
     !(await step(index++, total, 'Install oh-my-opencode-slim', () =>
       runOmocInstall(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install and init RTK', () =>
+      installAndInitRtk(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install scheduled tasks daemon', () =>
+      installScheduledTasksDaemon(args),
     ))
   )
     return 1;
