@@ -1,5 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { copyFile } from 'node:fs/promises';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { copyFile, cp } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 import { crossSpawn } from '../utils/compat';
@@ -113,7 +119,12 @@ async function backupIfExists(
 ): Promise<boolean> {
   if (!existsSync(sourcePath)) return false;
   mkdirSync(backupDir, { recursive: true });
-  await copyFile(sourcePath, join(backupDir, basename(sourcePath)));
+  const targetPath = join(backupDir, basename(sourcePath));
+  if (statSync(sourcePath).isDirectory()) {
+    await cp(sourcePath, targetPath, { recursive: true });
+  } else {
+    await copyFile(sourcePath, targetPath);
+  }
   return true;
 }
 
@@ -126,6 +137,7 @@ export async function backupOpenCodeConfig(
     getExistingConfigPath(),
     getExistingTuiConfigPath(),
     getExistingLiteConfigPath(),
+    join(configDir, 'oh-my-opencode-slim', 'agents'),
     join(configDir, 'dcp.jsonc'),
     join(configDir, 'dcp.json'),
   ];

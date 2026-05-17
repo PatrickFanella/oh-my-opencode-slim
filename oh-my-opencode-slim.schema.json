@@ -46,12 +46,7 @@
               "pattern": "^[^/\\s]+\\/[^\\s]+$"
             }
           },
-          "required": [
-            "primary",
-            "fallback1",
-            "fallback2",
-            "fallback3"
-          ]
+          "required": ["primary", "fallback1", "fallback2", "fallback3"]
         },
         "oracle": {
           "type": "object",
@@ -73,12 +68,7 @@
               "pattern": "^[^/\\s]+\\/[^\\s]+$"
             }
           },
-          "required": [
-            "primary",
-            "fallback1",
-            "fallback2",
-            "fallback3"
-          ]
+          "required": ["primary", "fallback1", "fallback2", "fallback3"]
         },
         "designer": {
           "type": "object",
@@ -100,12 +90,7 @@
               "pattern": "^[^/\\s]+\\/[^\\s]+$"
             }
           },
-          "required": [
-            "primary",
-            "fallback1",
-            "fallback2",
-            "fallback3"
-          ]
+          "required": ["primary", "fallback1", "fallback2", "fallback3"]
         },
         "explorer": {
           "type": "object",
@@ -127,12 +112,7 @@
               "pattern": "^[^/\\s]+\\/[^\\s]+$"
             }
           },
-          "required": [
-            "primary",
-            "fallback1",
-            "fallback2",
-            "fallback3"
-          ]
+          "required": ["primary", "fallback1", "fallback2", "fallback3"]
         },
         "librarian": {
           "type": "object",
@@ -154,12 +134,7 @@
               "pattern": "^[^/\\s]+\\/[^\\s]+$"
             }
           },
-          "required": [
-            "primary",
-            "fallback1",
-            "fallback2",
-            "fallback3"
-          ]
+          "required": ["primary", "fallback1", "fallback2", "fallback3"]
         },
         "fixer": {
           "type": "object",
@@ -181,22 +156,10 @@
               "pattern": "^[^/\\s]+\\/[^\\s]+$"
             }
           },
-          "required": [
-            "primary",
-            "fallback1",
-            "fallback2",
-            "fallback3"
-          ]
+          "required": ["primary", "fallback1", "fallback2", "fallback3"]
         }
       },
-      "required": [
-        "orchestrator",
-        "oracle",
-        "designer",
-        "explorer",
-        "librarian",
-        "fixer"
-      ],
+      "required": ["orchestrator", "oracle", "designer", "explorer", "librarian", "fixer"],
       "additionalProperties": false
     },
     "packages": {
@@ -485,11 +448,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "title",
-                    "purpose",
-                    "agent"
-                  ],
+                  "required": ["title", "purpose", "agent"],
                   "additionalProperties": false
                 }
               },
@@ -814,11 +773,7 @@
                 }
               }
             },
-            "required": [
-              "title",
-              "purpose",
-              "agent"
-            ],
+            "required": ["title", "purpose", "agent"],
             "additionalProperties": false
           }
         },

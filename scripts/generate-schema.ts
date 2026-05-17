@@ -33,8 +33,14 @@ const jsonSchema = {
 
 function stringifySchema(value: unknown): string {
   return JSON.stringify(value, null, 2).replace(
-    /"required": \[\n\s+"([^"]+)"\n\s+\]/g,
-    '"required": ["$1"]',
+    /"required": \[\n((?:\s+"[^"]+",?\n)+)\s+\]/g,
+    (_match, entries: string) => {
+      const names = entries
+        .trim()
+        .split(/,?\n/)
+        .map((entry) => entry.trim().replace(/,$/, ''));
+      return `"required": [${names.join(', ')}]`;
+    },
   );
 }
 

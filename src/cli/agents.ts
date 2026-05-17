@@ -4,6 +4,7 @@ import {
   getAgentDefinitionDirs,
   listCustomAgentDefinitionFiles,
 } from '../agents/custom-definitions';
+import { createAgents } from '../agents/index';
 import { BUILTIN_AGENT_MANIFESTS } from '../agents/registry';
 
 type AgentsCommand = 'list' | 'validate' | 'create';
@@ -111,6 +112,14 @@ function buildAgentDefinition(args: AgentsArgs): Record<string, unknown> {
   if (!/^[^/\s]+\/[^\s]+$/.test(args.model)) {
     throw new Error('Model must use provider/model format');
   }
+  if (
+    args.temperature !== undefined &&
+    (!Number.isFinite(args.temperature) ||
+      args.temperature < 0 ||
+      args.temperature > 2)
+  ) {
+    throw new Error('Temperature must be a finite number between 0 and 2');
+  }
 
   const title = args.name
     .split('-')
@@ -176,16 +185,23 @@ async function listAgents(args: AgentsArgs): Promise<number> {
 async function validateAgents(args: AgentsArgs): Promise<number> {
   const customFiles = listCustomAgentDefinitionFiles();
   const invalid = customFiles.filter((file) => !file.valid);
+  let runtimeError: string | undefined;
+
+  if (invalid.length === 0) {
+    try {
+      createAgents({});
+    } catch (error) {
+      runtimeError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  const valid = invalid.length === 0 && !runtimeError;
 
   if (args.json) {
     console.log(
-      JSON.stringify(
-        { valid: invalid.length === 0, files: customFiles },
-        null,
-        2,
-      ),
+      JSON.stringify({ valid, files: customFiles, runtimeError }, null, 2),
     );
-    return invalid.length === 0 ? 0 : 1;
+    return valid ? 0 : 1;
   }
 
   if (customFiles.length === 0) {
@@ -197,12 +213,22 @@ async function validateAgents(args: AgentsArgs): Promise<number> {
     console.log(`${file.valid ? '[ok]' : '[x]'} ${file.path}`);
     if (file.error) console.log(`  ${file.error}`);
   }
+  if (runtimeError) {
+    console.log(`[x] Runtime registry assembly`);
+    console.log(`  ${runtimeError}`);
+  }
 
-  return invalid.length === 0 ? 0 : 1;
+  return valid ? 0 : 1;
 }
 
 async function createAgent(args: AgentsArgs): Promise<number> {
-  const definition = buildAgentDefinition(args);
+  let definition: Record<string, unknown>;
+  try {
+    definition = buildAgentDefinition(args);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    return 1;
+  }
   const targetPath = getCreateTargetPath(args.name ?? '');
   const content = `${JSON.stringify(definition, null, 2)}\n`;
 
