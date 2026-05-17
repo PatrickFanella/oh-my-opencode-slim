@@ -205,6 +205,8 @@ describe('custom-agent creation', () => {
 
   test('loads custom agents from JSON definition directory', () => {
     const previousConfigDir = process.env.OPENCODE_CONFIG_DIR;
+    const previousEnable =
+      process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST;
     const root = mkdtempSync(join(tmpdir(), 'omoc-agent-defs-'));
     const configDir = join(root, 'opencode');
     const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
@@ -212,6 +214,7 @@ describe('custom-agent creation', () => {
     try {
       mkdirSync(agentDir, { recursive: true });
       process.env.OPENCODE_CONFIG_DIR = configDir;
+      process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST = '1';
       writeFileSync(
         join(agentDir, 'researcher.json'),
         JSON.stringify({
@@ -247,6 +250,12 @@ describe('custom-agent creation', () => {
         delete process.env.OPENCODE_CONFIG_DIR;
       } else {
         process.env.OPENCODE_CONFIG_DIR = previousConfigDir;
+      }
+      if (previousEnable === undefined) {
+        delete process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST;
+      } else {
+        process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST =
+          previousEnable;
       }
       rmSync(root, { recursive: true, force: true });
     }
