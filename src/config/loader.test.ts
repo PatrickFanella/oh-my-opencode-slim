@@ -1845,3 +1845,106 @@ describe('loadAgentPrompt', () => {
     fs.rmSync(customDir, { recursive: true, force: true });
   });
 });
+
+describe('env variable interpolation', () => {
+  let tempDir: string;
+  let originalEnv: typeof process.env;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'env-interp-test-'));
+    originalEnv = { ...process.env };
+    delete process.env.OPENCODE_CONFIG_DIR;
+    process.env.XDG_CONFIG_HOME = path.join(tempDir, 'user-config');
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    process.env = originalEnv;
+  });
+
+  function writeProjectConfig(config: unknown): string {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify(config),
+    );
+    return projectDir;
+  }
+
+  test('resolves {env:FOO} to environment variable value', () => {
+    process.env.FOO = 'openai/gpt-5.4-mini';
+    const projectDir = writeProjectConfig({
+      agents: { oracle: { model: '{env:FOO}' } },
+    });
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.oracle?.model).toBe('openai/gpt-5.4-mini');
+  });
+
+  test('resolves multiple env tokens', () => {
+    process.env.FOO = 'openai/gpt-5.4-mini';
+    process.env.BAR = 'openai/gpt-5.5';
+    const projectDir = writeProjectConfig({
+      agents: {
+        oracle: { model: '{env:FOO}' },
+        explorer: { model: '{env:BAR}' },
+      },
+    });
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.oracle?.model).toBe('openai/gpt-5.4-mini');
+    expect(config.agents?.explorer?.model).toBe('openai/gpt-5.5');
+  });
+
+  test('resolves undefined env tokens to empty string', () => {
+    delete process.env.NONEXISTENT;
+    const projectDir = writeProjectConfig({
+      agents: { oracle: { model: '{env:NONEXISTENT}' } },
+    });
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.oracle?.model).toBe('');
+  });
+
+  test('leaves configs without env tokens unchanged', () => {
+    const projectDir = writeProjectConfig({
+      agents: { oracle: { model: 'openai/gpt-5.4-mini' } },
+    });
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.oracle?.model).toBe('openai/gpt-5.4-mini');
+  });
+
+  test('resolves env tokens embedded in strings', () => {
+    process.env.FOO = 'middle';
+    const projectDir = writeProjectConfig({
+      agents: { oracle: { model: 'prefix-{env:FOO}-suffix' } },
+    });
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.oracle?.model).toBe('prefix-middle-suffix');
+  });
+
+  test('env values with JSON syntax characters stay string values', () => {
+    process.env.FOO = 'quoted " value \\ path';
+    const projectDir = writeProjectConfig({
+      agents: {
+        janitor: {
+          model: 'openai/gpt-5.4-mini',
+          prompt: '{env:FOO}',
+        },
+      },
+    });
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.agents?.janitor?.prompt).toBe('quoted " value \\ path');
+  });
+});
