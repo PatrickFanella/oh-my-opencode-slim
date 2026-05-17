@@ -34,7 +34,7 @@ For a full machine bootstrap from a cloned checkout:
 ```bash
 git clone https://github.com/patrickfanella/oh-my-opencode-slim.git
 cd oh-my-opencode-slim
-bun run bootstrap --yes --with-dcp --with-quota
+bun run bootstrap --yes --with-dcp --with-quota --with-rtk --with-scheduled-tasks
 ```
 
 The bootstrap command:
@@ -47,6 +47,12 @@ The bootstrap command:
 - runs the OMOC installer from the local checkout
 - optionally adds `@tarquinen/opencode-dcp@latest` and
   `@slkiser/opencode-quota` to OpenCode's plugin list
+- optionally installs RTK with its official install script, then runs
+  `rtk init -g --opencode --auto-patch` so OpenCode gets the RTK rewrite
+  integration
+- optionally adds `opencode-scheduled-tasks`, installs its launchd/systemd
+  scheduler daemon with `npx -y opencode-scheduled-tasks --install`, and
+  installs its agent skill with `npx -y opencode-scheduled-tasks --install-skill`
 - inserts a managed `omos` helper into `.zshrc`/`.bashrc` for launching
   OpenCode with a random `OPENCODE_PORT` for tmux panes
 
@@ -56,10 +62,18 @@ Useful bootstrap flags:
 |--------|-------------|
 | `--with-dcp` | Add `@tarquinen/opencode-dcp@latest` |
 | `--with-quota` | Add `@slkiser/opencode-quota` |
+| `--with-rtk` | Install RTK and run `rtk init -g --opencode --auto-patch` |
+| `--with-scheduled-tasks` | Add `opencode-scheduled-tasks`, install daemon, and install skill |
 | `--skip-opencode` | Do not run the OpenCode install/update command |
 | `--skip-build` | Do not run `bun install --yes` or `bun run build` |
 | `--skip-shell-helper` | Do not modify `.zshrc`/`.bashrc` |
+| `--skip-rtk-init` | Install RTK but do not run `rtk init` |
+| `--skip-scheduled-tasks-daemon` | Add plugin but skip launchd/systemd daemon install |
+| `--skip-scheduled-tasks-skill` | Add plugin/daemon but skip scheduled-tasks skill install |
 | `--opencode-install-cmd=<cmd>` | Override the OpenCode install/update command |
+| `--rtk-install-cmd=<cmd>` | Override the RTK install command |
+| `--scheduled-tasks-daemon-cmd=<cmd>` | Override scheduled-tasks daemon install command |
+| `--scheduled-tasks-skill-cmd=<cmd>` | Override scheduled-tasks skill install command |
 | `--dry-run` | Show intended actions without writing files |
 
 ### Configuration Options

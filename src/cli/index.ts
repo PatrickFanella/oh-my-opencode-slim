@@ -64,12 +64,25 @@ Options:
 Bootstrap options:
   --with-dcp             Add @tarquinen/opencode-dcp@latest to OpenCode plugins
   --with-quota           Add @slkiser/opencode-quota to OpenCode plugins
+  --with-rtk             Install rtk and run rtk init -g --opencode --auto-patch
+  --with-scheduled-tasks Add opencode-scheduled-tasks and install daemon/skill
   --yes, -y              Non-interactive bootstrap confirmation flag
   --skip-opencode        Skip OpenCode install/update
   --skip-build           Skip bun install and bun run build
   --skip-shell-helper    Skip omos tmux helper install
+  --skip-rtk-init        Install rtk but skip rtk init
+  --skip-scheduled-tasks-daemon
+                         Add plugin but skip launchd/systemd daemon install
+  --skip-scheduled-tasks-skill
+                         Add plugin/daemon but skip scheduled-tasks skill install
   --opencode-install-cmd=<cmd>
                          Override OpenCode install/update command
+  --rtk-install-cmd=<cmd>
+                         Override RTK install command
+  --scheduled-tasks-daemon-cmd=<cmd>
+                         Override scheduled-tasks daemon install command
+  --scheduled-tasks-skill-cmd=<cmd>
+                         Override scheduled-tasks skill install command
 
 Agents commands:
   agents list [--json]       List built-in and custom JSON agents
@@ -91,7 +104,7 @@ Examples:
   bunx oh-my-opencode-slim install --no-tui --skills=yes
   bunx oh-my-opencode-slim install --preset=opencode-go
   bunx oh-my-opencode-slim install --reset
-  bunx oh-my-opencode-slim bootstrap --with-dcp --with-quota
+  bunx oh-my-opencode-slim bootstrap --with-dcp --with-quota --with-rtk --with-scheduled-tasks
   bunx oh-my-opencode-slim agents list
   bunx oh-my-opencode-slim doctor
 `);
