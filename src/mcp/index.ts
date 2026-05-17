@@ -48,7 +48,11 @@ const allBuiltinMcps: Record<McpName, McpConfig> = {
   },
   'super-productivity': {
     type: 'local',
-    command: ['sp-mcp'],
+    command: createSuperProductivityCommand(),
+    environment: {
+      SP_MCP_DATA_DIR: `${process.env.HOME ?? ''}/.local/share/super-productivity-mcp`,
+      SP_MCP_LOG_LEVEL: 'info',
+    },
   },
   websearch,
   grep_app,
@@ -85,6 +89,16 @@ function createGithubMcpConfig(): LocalMcpConfig {
     type: 'local',
     command: ['bash', '-lc', command],
   };
+}
+
+function createSuperProductivityCommand(): string[] {
+  const command = [
+    'if [ -x "$HOME/.local/bin/sp-mcp" ]; then',
+    'exec "$HOME/.local/bin/sp-mcp"',
+    'fi',
+    'exec sp-mcp',
+  ].join('\n');
+  return ['bash', '-lc', command];
 }
 
 /**

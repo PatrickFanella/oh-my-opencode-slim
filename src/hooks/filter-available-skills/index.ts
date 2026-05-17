@@ -5,7 +5,7 @@
  */
 import type { PluginInput } from '@opencode-ai/plugin';
 import { getSkillPermissionsForAgent } from '../../cli/skills';
-import { getAgentOverride, type PluginConfig } from '../../config';
+import { type PluginConfig, resolveAgentSkills } from '../../config';
 
 interface MessageInfo {
   role: string;
@@ -115,7 +115,7 @@ export function createFilterAvailableSkillsHook(
       return cached;
     }
 
-    const configuredSkills = getAgentOverride(config, agentName)?.skills;
+    const configuredSkills = resolveAgentSkills(config, agentName);
     const permissionRules = getSkillPermissionsForAgent(
       agentName,
       configuredSkills,

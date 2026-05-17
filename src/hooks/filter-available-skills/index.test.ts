@@ -170,6 +170,47 @@ describe('createFilterAvailableSkillsHook', () => {
     expect(resultText).not.toContain('<name>skill2</name>');
   });
 
+  test('uses configured skill profile when agent has no explicit skills', async () => {
+    const config: PluginConfig = {
+      skillProfiles: {
+        global: ['core-skill'],
+        agents: {
+          explorer: ['explorer-skill'],
+        },
+      },
+    };
+
+    const hook = createFilterAvailableSkillsHook(mockCtx, config);
+    const output = {
+      messages: [
+        {
+          info: { role: 'system' },
+          parts: [
+            {
+              type: 'text',
+              text: availableSkillsBlock(
+                'core-skill',
+                'explorer-skill',
+                'other-skill',
+              ),
+            },
+          ],
+        },
+        {
+          info: { role: 'user', agent: 'explorer' },
+          parts: [{ type: 'text', text: 'check skills' }],
+        },
+      ],
+    };
+
+    await hook['experimental.chat.messages.transform']({}, output);
+
+    const resultText = output.messages[0].parts[0].text;
+    expect(resultText).toContain('<name>core-skill</name>');
+    expect(resultText).toContain('<name>explorer-skill</name>');
+    expect(resultText).not.toContain('<name>other-skill</name>');
+  });
+
   test('defaults to orchestrator deny-by-default when no agent is present', async () => {
     const hook = createFilterAvailableSkillsHook(mockCtx, {});
     const output = {

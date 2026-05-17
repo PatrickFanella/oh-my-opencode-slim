@@ -1,4 +1,4 @@
-import type { Plugin } from '@opencode-ai/plugin';
+import type { Plugin, PluginModule } from '@opencode-ai/plugin';
 import { createAgents, getAgentConfigs, getDisabledAgents } from './agents';
 import { buildOrchestratorPrompt } from './agents/orchestrator';
 import {
@@ -11,6 +11,7 @@ import {
   deepMerge,
   loadPluginConfig,
   type MultiplexerConfig,
+  type Preset,
 } from './config';
 import { parseList } from './config/agent-mcps';
 import { AGENT_ALIASES } from './config/constants';
@@ -99,6 +100,42 @@ const HEALTH_CHECK = {
   minTools: 5,
   minMcps: 1,
 } as const;
+
+function getPresetOverrideForResolvedAgent(
+  preset: Preset,
+  resolvedName: string,
+): AgentOverrideConfig | undefined {
+  for (const [agentName, override] of Object.entries(preset)) {
+    if ((AGENT_ALIASES[agentName] ?? agentName) === resolvedName) {
+      return override;
+    }
+  }
+
+  return undefined;
+}
+
+function applyRuntimePresetScalarField(
+  entry: Record<string, unknown>,
+  override: AgentOverrideConfig,
+  previousOverride: AgentOverrideConfig | undefined,
+  baseline: AgentOverrideConfig | undefined,
+  field: 'variant' | 'temperature',
+  expectedType: 'string' | 'number',
+): void {
+  if (typeof override[field] === expectedType) {
+    entry[field] = override[field];
+    return;
+  }
+
+  if (field in override || previousOverride?.[field] !== undefined) {
+    const baselineValue = baseline?.[field];
+    if (typeof baselineValue === expectedType) {
+      entry[field] = baselineValue;
+    } else {
+      delete entry[field];
+    }
+  }
+}
 
 /**
  * Probe jsdom at init time so the first webfetch call doesn't fail
@@ -612,6 +649,10 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       const runtimePresetName = getActiveRuntimePreset();
       if (runtimePresetName && config.presets?.[runtimePresetName]) {
         const runtimePreset = config.presets[runtimePresetName];
+        const prevPresetName = getPreviousRuntimePreset();
+        const prevPreset = prevPresetName
+          ? config.presets?.[prevPresetName]
+          : undefined;
         for (const [agentName, override] of Object.entries(runtimePreset)) {
           // Resolve legacy alias keys (e.g. "explore" → "explorer")
           // so presets using aliases work in this path.
@@ -620,6 +661,11 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
             | Record<string, unknown>
             | undefined;
           if (!entry) continue;
+          const baseline = config.agents?.[resolvedName];
+          const previousOverride = prevPreset
+            ? getPresetOverrideForResolvedAgent(prevPreset, resolvedName)
+            : undefined;
+          let inlineModelVariant: string | undefined;
 
           if (typeof override.model === 'string') {
             entry.model = override.model;
@@ -631,30 +677,44 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
             entry.model = typeof first === 'string' ? first : first.id;
             // Extract inline variant from array-form model entry
             if (typeof first !== 'string' && first.variant) {
-              entry.variant = first.variant;
+              inlineModelVariant = first.variant;
+              entry.variant = inlineModelVariant;
             }
           }
           // Explicitly set or clear scalar fields so switching from
           // Preset A (which sets a field) to Preset B (which doesn't)
           // doesn't leave stale values behind.
-          if (typeof override.variant === 'string') {
-            entry.variant = override.variant;
-          } else if ('variant' in override) {
-            delete entry.variant;
+          applyRuntimePresetScalarField(
+            entry,
+            override,
+            previousOverride,
+            baseline,
+            'variant',
+            'string',
+          );
+          if (override.variant === undefined && inlineModelVariant) {
+            entry.variant = inlineModelVariant;
           }
-          if (typeof override.temperature === 'number') {
-            entry.temperature = override.temperature;
-          } else if ('temperature' in override) {
-            delete entry.temperature;
-          }
+          applyRuntimePresetScalarField(
+            entry,
+            override,
+            previousOverride,
+            baseline,
+            'temperature',
+            'number',
+          );
           if (
             override.options &&
             typeof override.options === 'object' &&
             !Array.isArray(override.options)
           ) {
             entry.options = override.options;
-          } else if ('options' in override) {
-            delete entry.options;
+          } else if ('options' in override || previousOverride?.options) {
+            if (baseline?.options) {
+              entry.options = baseline.options;
+            } else {
+              delete entry.options;
+            }
           }
           log('[plugin] runtime preset override', {
             preset: runtimePresetName,
@@ -667,7 +727,6 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
         // The stale model resolution above overwrites the reset values sent
         // by preset-manager, so we re-apply them here from config-file
         // baseline.
-        const prevPresetName = getPreviousRuntimePreset();
         if (prevPresetName && config.presets?.[prevPresetName]) {
           const prevPreset = config.presets[prevPresetName];
           // Build resolved key set from new preset for correct comparison
@@ -1327,7 +1386,10 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   };
 };
 
-export default OhMyOpenCodeLite;
+export default {
+  id: 'oh-my-opencode-slim',
+  server: OhMyOpenCodeLite,
+} satisfies PluginModule;
 
 export { CUSTOM_SKILLS } from './cli/custom-skills';
 

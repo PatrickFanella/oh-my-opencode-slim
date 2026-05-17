@@ -73,6 +73,11 @@ opencode models --refresh
 Open your generated config at `~/.config/opencode/oh-my-opencode-slim.json`
 and adjust models if needed.
 
+The installer also registers the companion TUI sidebar plugin in
+`~/.config/opencode/tui.json`. If OpenCode shows the sidebar but the OMOC
+panel is absent, open the TUI plugin manager and enable the
+`oh-my-opencode-slim:tui` module once.
+
 Then run OpenCode and verify the agents:
 
 ```text

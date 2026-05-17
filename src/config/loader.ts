@@ -207,6 +207,7 @@ export function mergePluginConfigs(
     council: deepMerge(base.council, override.council),
     board: deepMerge(base.board, override.board),
     toolkits: deepMerge(base.toolkits, override.toolkits),
+    skillProfiles: deepMerge(base.skillProfiles, override.skillProfiles),
     packageDefinitions: deepMerge(
       base.packageDefinitions,
       override.packageDefinitions,
@@ -233,6 +234,10 @@ function mergePackageIntoConfig(
     agents: deepMerge(base.agents, packageDefinition.agents),
     board: deepMerge(base.board, packageDefinition.board),
     toolkits: deepMerge(base.toolkits, packageDefinition.toolkits),
+    skillProfiles: deepMerge(
+      base.skillProfiles,
+      packageDefinition.skillProfiles,
+    ),
     disabled_agents: mergeUnique(
       base.disabled_agents,
       packageDefinition.disabled_agents,
@@ -302,6 +307,7 @@ function applyPackageDefinitions(
     agents: deepMerge(packageConfig.agents, config.agents),
     board: deepMerge(packageConfig.board, config.board),
     toolkits: deepMerge(packageConfig.toolkits, config.toolkits),
+    skillProfiles: deepMerge(packageConfig.skillProfiles, config.skillProfiles),
     disabled_agents: mergeUnique(
       packageConfig.disabled_agents,
       config.disabled_agents,

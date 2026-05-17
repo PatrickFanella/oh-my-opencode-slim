@@ -167,6 +167,230 @@ describe('createPresetManager', () => {
       });
     });
 
+    test('rejects runtime switching for plugin-scoped preset fields', async () => {
+      const ctx = createMockContext();
+      const config: PluginConfig = {
+        presets: {
+          focused: {
+            orchestrator: {
+              model: 'openai/gpt-5.5',
+              skills: ['codemap'],
+            },
+          },
+        },
+      };
+      const manager = createPresetManager(ctx, config);
+      const output = createOutput();
+
+      await manager.handleCommandExecuteBefore(
+        { command: 'preset', sessionID: 's1', arguments: 'focused' },
+        output,
+      );
+
+      const text = getOutputText(output);
+      expect(text).toContain(
+        'Preset "focused" changes plugin-scoped fields (skills)',
+      );
+      expect(ctx.client.config.update).not.toHaveBeenCalled();
+    });
+
+    test('still switches generated-style presets with mcp assignments', async () => {
+      const ctx = createMockContext();
+      const config: PluginConfig = {
+        preset: 'openai',
+        presets: {
+          openai: {
+            orchestrator: {
+              model: 'openai/gpt-5.5',
+              mcps: ['websearch'],
+            },
+          },
+        },
+      };
+      const manager = createPresetManager(ctx, config);
+      const output = createOutput();
+
+      await manager.handleCommandExecuteBefore(
+        { command: 'preset', sessionID: 's1', arguments: 'openai' },
+        output,
+      );
+
+      expect(getOutputText(output)).toContain('Switched to preset "openai"');
+      expect(ctx.client.config.update).toHaveBeenCalledWith({
+        body: {
+          agent: {
+            orchestrator: { model: 'openai/gpt-5.5' },
+          },
+        },
+      });
+    });
+
+    test('rejects runtime switching when mcp assignments change', async () => {
+      const ctx = createMockContext();
+      const config: PluginConfig = {
+        preset: 'current',
+        presets: {
+          current: {
+            orchestrator: { model: 'openai/gpt-5.5', mcps: ['websearch'] },
+          },
+          different: {
+            orchestrator: { model: 'openai/gpt-5.4-mini', mcps: ['context7'] },
+          },
+        },
+      };
+      const manager = createPresetManager(ctx, config);
+      const output = createOutput();
+
+      await manager.handleCommandExecuteBefore(
+        { command: 'preset', sessionID: 's1', arguments: 'different' },
+        output,
+      );
+
+      expect(getOutputText(output)).toContain(
+        'Preset "different" changes plugin-scoped fields (mcps)',
+      );
+      expect(ctx.client.config.update).not.toHaveBeenCalled();
+    });
+
+    test('allows switch from explicit default mcps to omitted default mcps', async () => {
+      const ctx = createMockContext();
+      const config: PluginConfig = {
+        preset: 'generated',
+        presets: {
+          generated: {
+            orchestrator: {
+              model: 'openai/gpt-5.5',
+              mcps: ['websearch', 'grep_app'],
+            },
+          },
+          modelOnly: {
+            orchestrator: { model: 'openai/gpt-5.4-mini' },
+          },
+        },
+      };
+      const manager = createPresetManager(ctx, config);
+      const output = createOutput();
+
+      await manager.handleCommandExecuteBefore(
+        { command: 'preset', sessionID: 's1', arguments: 'modelOnly' },
+        output,
+      );
+
+      expect(getOutputText(output)).toContain('Switched to preset "modelOnly"');
+      expect(ctx.client.config.update).toHaveBeenCalledWith({
+        body: {
+          agent: {
+            orchestrator: { model: 'openai/gpt-5.4-mini' },
+          },
+        },
+      });
+    });
+
+    test('allows switch when explicit plugin-scoped fields are unchanged', async () => {
+      const ctx = createMockContext();
+      const config: PluginConfig = {
+        preset: 'primary',
+        presets: {
+          primary: {
+            oracle: {
+              model: 'openai/gpt-5.5',
+              skills: ['simplify'],
+            },
+          },
+          secondary: {
+            oracle: {
+              model: 'openai/gpt-5.4-mini',
+              skills: ['simplify'],
+            },
+          },
+        },
+      };
+      const manager = createPresetManager(ctx, config);
+      const output = createOutput();
+
+      await manager.handleCommandExecuteBefore(
+        { command: 'preset', sessionID: 's1', arguments: 'secondary' },
+        output,
+      );
+
+      expect(getOutputText(output)).toContain('Switched to preset "secondary"');
+      expect(ctx.client.config.update).toHaveBeenCalledWith({
+        body: {
+          agent: {
+            oracle: { model: 'openai/gpt-5.4-mini' },
+          },
+        },
+      });
+    });
+
+    test('uses configured skill profiles when comparing omitted preset skills', async () => {
+      const ctx = createMockContext();
+      const config: PluginConfig = {
+        preset: 'primary',
+        skillProfiles: {
+          global: ['summarization'],
+          agents: {
+            oracle: ['simplify'],
+          },
+        },
+        presets: {
+          primary: {
+            oracle: { model: 'openai/gpt-5.5' },
+          },
+          secondary: {
+            oracle: { model: 'openai/gpt-5.4-mini' },
+          },
+        },
+      };
+      const manager = createPresetManager(ctx, config);
+      const output = createOutput();
+
+      await manager.handleCommandExecuteBefore(
+        { command: 'preset', sessionID: 's1', arguments: 'secondary' },
+        output,
+      );
+
+      expect(getOutputText(output)).toContain('Switched to preset "secondary"');
+      expect(ctx.client.config.update).toHaveBeenCalledWith({
+        body: {
+          agent: {
+            oracle: { model: 'openai/gpt-5.4-mini' },
+          },
+        },
+      });
+    });
+
+    test('rejects runtime switch away from plugin-scoped active preset', async () => {
+      const ctx = createMockContext();
+      const config: PluginConfig = {
+        preset: 'focused',
+        presets: {
+          focused: {
+            orchestrator: {
+              model: 'openai/gpt-5.5',
+              skills: ['codemap'],
+            },
+          },
+          modelOnly: {
+            orchestrator: { model: 'openai/gpt-5.4-mini' },
+          },
+        },
+      };
+      const manager = createPresetManager(ctx, config);
+      const output = createOutput();
+
+      await manager.handleCommandExecuteBefore(
+        { command: 'preset', sessionID: 's1', arguments: 'modelOnly' },
+        output,
+      );
+
+      const text = getOutputText(output);
+      expect(text).toContain(
+        'Preset "modelOnly" changes plugin-scoped fields (skills)',
+      );
+      expect(ctx.client.config.update).not.toHaveBeenCalled();
+    });
+
     test('updates the TUI snapshot after a successful preset switch', async () => {
       recordTuiAgentModels({
         agentModels: {
