@@ -147,14 +147,13 @@ describe('providers', () => {
     });
 
     const agents = (config.presets as any).openai;
-    // Orchestrator should always have '*'
-    expect(agents.orchestrator.skills).toEqual(['*']);
+    expect(agents.orchestrator.skills).toEqual(['clonedeps', 'codemap']);
 
     // Oracle should have bundled simplify
     expect(agents.oracle.skills).toContain('simplify');
 
-    // Orchestrator should implicitly cover bundled codemap via '*'
-    expect(agents.orchestrator.skills).toContain('*');
+    // Orchestrator gets only explicitly default-granted bundled skills.
+    expect(agents.orchestrator.skills).toContain('codemap');
 
     // Designer should have 'agent-browser'
     expect(agents.designer.skills).toContain('agent-browser');

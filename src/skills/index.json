@@ -1,0 +1,909 @@
+{
+  "generated_by": "scripts/generate_skill_index.py",
+  "summary": {
+    "total_skills": 175,
+    "categories": {
+      "agent-ecosystem": 8,
+      "analytics-observability": 4,
+      "backend-architecture": 11,
+      "cloud-infra": 5,
+      "creative-media": 9,
+      "data-database": 5,
+      "debugging": 3,
+      "dev-workflows": 12,
+      "docs-documents": 7,
+      "frontend-ui": 2,
+      "games-interactive": 2,
+      "git-github": 2,
+      "growth-marketing": 16,
+      "language-go-rust": 2,
+      "language-js-ts": 1,
+      "language-python": 5,
+      "mobile-apps": 2,
+      "product-business": 4,
+      "quality-review": 6,
+      "security": 12,
+      "testing": 6,
+      "tooling-integrations": 13,
+      "worldbuilding-fiction": 14,
+      "writing-craft": 24
+    }
+  },
+  "skills": [
+    {
+      "name": "context-engineer",
+      "path": "skills/agent-ecosystem/context-engineer/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "llm-evaluation",
+      "path": "skills/agent-ecosystem/llm-evaluation/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "mcp-builder",
+      "path": "skills/agent-ecosystem/mcp-builder/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "prompt-craft",
+      "path": "skills/agent-ecosystem/prompt-craft/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "rag-implementation",
+      "path": "skills/agent-ecosystem/rag-implementation/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "setup-matt-pocock-skills",
+      "path": "skills/agent-ecosystem/setup-matt-pocock-skills/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "skill-creator",
+      "path": "skills/agent-ecosystem/skill-creator/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "skills-cli",
+      "path": "skills/agent-ecosystem/skills-cli/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "grafana-dashboards",
+      "path": "skills/analytics-observability/grafana-dashboards/SKILL.md",
+      "category": "analytics-observability"
+    },
+    {
+      "name": "prometheus-configuration",
+      "path": "skills/analytics-observability/prometheus-configuration/SKILL.md",
+      "category": "analytics-observability"
+    },
+    {
+      "name": "sentry",
+      "path": "skills/analytics-observability/sentry/SKILL.md",
+      "category": "analytics-observability"
+    },
+    {
+      "name": "slo-implementation",
+      "path": "skills/analytics-observability/slo-implementation/SKILL.md",
+      "category": "analytics-observability"
+    },
+    {
+      "name": "api-design-principles",
+      "path": "skills/backend-architecture/api-design-principles/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "architecture-patterns",
+      "path": "skills/backend-architecture/architecture-patterns/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "auth-implementation-patterns",
+      "path": "skills/backend-architecture/auth-implementation-patterns/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "cli-developer",
+      "path": "skills/backend-architecture/cli-developer/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "cqrs-implementation",
+      "path": "skills/backend-architecture/cqrs-implementation/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "develop-userscripts",
+      "path": "skills/backend-architecture/develop-userscripts/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "nodejs-backend-patterns",
+      "path": "skills/backend-architecture/nodejs-backend-patterns/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "openapi-spec-generation",
+      "path": "skills/backend-architecture/openapi-spec-generation/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "stripe-integration",
+      "path": "skills/backend-architecture/stripe-integration/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "websocket-engineer",
+      "path": "skills/backend-architecture/websocket-engineer/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "workflow-orchestration-patterns",
+      "path": "skills/backend-architecture/workflow-orchestration-patterns/SKILL.md",
+      "category": "backend-architecture"
+    },
+    {
+      "name": "cloudflare-deploy",
+      "path": "skills/cloud-infra/cloudflare-deploy/SKILL.md",
+      "category": "cloud-infra"
+    },
+    {
+      "name": "deployment-pipeline-design",
+      "path": "skills/cloud-infra/deployment-pipeline-design/SKILL.md",
+      "category": "cloud-infra"
+    },
+    {
+      "name": "helm-chart-scaffolding",
+      "path": "skills/cloud-infra/helm-chart-scaffolding/SKILL.md",
+      "category": "cloud-infra"
+    },
+    {
+      "name": "k8s-manifest-generator",
+      "path": "skills/cloud-infra/k8s-manifest-generator/SKILL.md",
+      "category": "cloud-infra"
+    },
+    {
+      "name": "terraform-module-library",
+      "path": "skills/cloud-infra/terraform-module-library/SKILL.md",
+      "category": "cloud-infra"
+    },
+    {
+      "name": "ebook-analysis",
+      "path": "skills/creative-media/ebook-analysis/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "humanizer",
+      "path": "skills/creative-media/humanizer/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "image",
+      "path": "skills/creative-media/image/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "musical-dna",
+      "path": "skills/creative-media/musical-dna/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "presentation-design",
+      "path": "skills/creative-media/presentation-design/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "subcult-brand-voice",
+      "path": "skills/creative-media/subcult-brand-voice/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "subcult-visual-design",
+      "path": "skills/creative-media/subcult-visual-design/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "subcult-worldbuilding",
+      "path": "skills/creative-media/subcult-worldbuilding/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "video",
+      "path": "skills/creative-media/video/SKILL.md",
+      "category": "creative-media"
+    },
+    {
+      "name": "database-migration",
+      "path": "skills/data-database/database-migration/SKILL.md",
+      "category": "data-database"
+    },
+    {
+      "name": "gdpr-data-handling",
+      "path": "skills/data-database/gdpr-data-handling/SKILL.md",
+      "category": "data-database"
+    },
+    {
+      "name": "hybrid-search-implementation",
+      "path": "skills/data-database/hybrid-search-implementation/SKILL.md",
+      "category": "data-database"
+    },
+    {
+      "name": "postgres-data-quality",
+      "path": "skills/data-database/postgres-data-quality/SKILL.md",
+      "category": "data-database"
+    },
+    {
+      "name": "postgres-pro",
+      "path": "skills/data-database/postgres-pro/SKILL.md",
+      "category": "data-database"
+    },
+    {
+      "name": "distributed-tracing",
+      "path": "skills/debugging/distributed-tracing/SKILL.md",
+      "category": "debugging"
+    },
+    {
+      "name": "systematic-debugging",
+      "path": "skills/debugging/systematic-debugging/SKILL.md",
+      "category": "debugging"
+    },
+    {
+      "name": "triage",
+      "path": "skills/debugging/triage/SKILL.md",
+      "category": "debugging"
+    },
+    {
+      "name": "cartography",
+      "path": "skills/dev-workflows/cartography/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "changelog-automation",
+      "path": "skills/dev-workflows/changelog-automation/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "deep-research",
+      "path": "skills/dev-workflows/deep-research/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "dependency-upgrade",
+      "path": "skills/dev-workflows/dependency-upgrade/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "observe-and-tune",
+      "path": "skills/dev-workflows/observe-and-tune/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "parallel-feature-development",
+      "path": "skills/dev-workflows/parallel-feature-development/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "refactor",
+      "path": "skills/dev-workflows/refactor/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "requirements-interview",
+      "path": "skills/dev-workflows/requirements-interview/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "session-handoff",
+      "path": "skills/dev-workflows/session-handoff/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "team-communication-protocols",
+      "path": "skills/dev-workflows/team-communication-protocols/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "team-composition-patterns",
+      "path": "skills/dev-workflows/team-composition-patterns/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "writing-plans",
+      "path": "skills/dev-workflows/writing-plans/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "doc",
+      "path": "skills/docs-documents/doc/SKILL.md",
+      "category": "docs-documents"
+    },
+    {
+      "name": "hads",
+      "path": "skills/docs-documents/hads/SKILL.md",
+      "category": "docs-documents"
+    },
+    {
+      "name": "pdf",
+      "path": "skills/docs-documents/pdf/SKILL.md",
+      "category": "docs-documents"
+    },
+    {
+      "name": "pptx-generator",
+      "path": "skills/docs-documents/pptx-generator/SKILL.md",
+      "category": "docs-documents"
+    },
+    {
+      "name": "readme-i18n",
+      "path": "skills/docs-documents/readme-i18n/SKILL.md",
+      "category": "docs-documents"
+    },
+    {
+      "name": "review-doc-consistency",
+      "path": "skills/docs-documents/review-doc-consistency/SKILL.md",
+      "category": "docs-documents"
+    },
+    {
+      "name": "spreadsheet",
+      "path": "skills/docs-documents/spreadsheet/SKILL.md",
+      "category": "docs-documents"
+    },
+    {
+      "name": "frontend-design",
+      "path": "skills/frontend-ui/frontend-design/SKILL.md",
+      "category": "frontend-ui"
+    },
+    {
+      "name": "react-pro",
+      "path": "skills/frontend-ui/react-pro/SKILL.md",
+      "category": "frontend-ui"
+    },
+    {
+      "name": "develop-web-game",
+      "path": "skills/games-interactive/develop-web-game/SKILL.md",
+      "category": "games-interactive"
+    },
+    {
+      "name": "game-design-theory",
+      "path": "skills/games-interactive/game-design-theory/SKILL.md",
+      "category": "games-interactive"
+    },
+    {
+      "name": "git-advanced-workflows",
+      "path": "skills/git-github/git-advanced-workflows/SKILL.md",
+      "category": "git-github"
+    },
+    {
+      "name": "github-pro",
+      "path": "skills/git-github/github-pro/SKILL.md",
+      "category": "git-github"
+    },
+    {
+      "name": "ab-test-setup",
+      "path": "skills/growth-marketing/ab-test-setup/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "book-marketing",
+      "path": "skills/growth-marketing/book-marketing/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "competitive-landscape",
+      "path": "skills/growth-marketing/competitive-landscape/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "competitor-alternatives",
+      "path": "skills/growth-marketing/competitor-alternatives/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "competitor-profiling",
+      "path": "skills/growth-marketing/competitor-profiling/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "content-strategy",
+      "path": "skills/growth-marketing/content-strategy/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "copywriting",
+      "path": "skills/growth-marketing/copywriting/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "customer-research",
+      "path": "skills/growth-marketing/customer-research/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "email-sequence",
+      "path": "skills/growth-marketing/email-sequence/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "launch-strategy",
+      "path": "skills/growth-marketing/launch-strategy/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "marketing-psychology",
+      "path": "skills/growth-marketing/marketing-psychology/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "page-cro",
+      "path": "skills/growth-marketing/page-cro/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "paid-ads",
+      "path": "skills/growth-marketing/paid-ads/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "sales-enablement",
+      "path": "skills/growth-marketing/sales-enablement/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "seo-pro",
+      "path": "skills/growth-marketing/seo-pro/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "social-content",
+      "path": "skills/growth-marketing/social-content/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "golang-pro",
+      "path": "skills/language-go-rust/golang-pro/SKILL.md",
+      "category": "language-go-rust"
+    },
+    {
+      "name": "rust-pro",
+      "path": "skills/language-go-rust/rust-pro/SKILL.md",
+      "category": "language-go-rust"
+    },
+    {
+      "name": "typescript-pro",
+      "path": "skills/language-js-ts/typescript-pro/SKILL.md",
+      "category": "language-js-ts"
+    },
+    {
+      "name": "python-configuration",
+      "path": "skills/language-python/python-configuration/SKILL.md",
+      "category": "language-python"
+    },
+    {
+      "name": "python-packaging",
+      "path": "skills/language-python/python-packaging/SKILL.md",
+      "category": "language-python"
+    },
+    {
+      "name": "python-testing-patterns",
+      "path": "skills/language-python/python-testing-patterns/SKILL.md",
+      "category": "language-python"
+    },
+    {
+      "name": "python-tooling-patterns",
+      "path": "skills/language-python/python-tooling-patterns/SKILL.md",
+      "category": "language-python"
+    },
+    {
+      "name": "uv-package-manager",
+      "path": "skills/language-python/uv-package-manager/SKILL.md",
+      "category": "language-python"
+    },
+    {
+      "name": "react-native-pro",
+      "path": "skills/mobile-apps/react-native-pro/SKILL.md",
+      "category": "mobile-apps"
+    },
+    {
+      "name": "wcag-audit-patterns",
+      "path": "skills/mobile-apps/wcag-audit-patterns/SKILL.md",
+      "category": "mobile-apps"
+    },
+    {
+      "name": "data-storytelling",
+      "path": "skills/product-business/data-storytelling/SKILL.md",
+      "category": "product-business"
+    },
+    {
+      "name": "internal-comms",
+      "path": "skills/product-business/internal-comms/SKILL.md",
+      "category": "product-business"
+    },
+    {
+      "name": "revops",
+      "path": "skills/product-business/revops/SKILL.md",
+      "category": "product-business"
+    },
+    {
+      "name": "startup-finance",
+      "path": "skills/product-business/startup-finance/SKILL.md",
+      "category": "product-business"
+    },
+    {
+      "name": "binary-analysis-patterns",
+      "path": "skills/quality-review/binary-analysis-patterns/SKILL.md",
+      "category": "quality-review"
+    },
+    {
+      "name": "improve-codebase-architecture",
+      "path": "skills/quality-review/improve-codebase-architecture/SKILL.md",
+      "category": "quality-review"
+    },
+    {
+      "name": "multi-reviewer-patterns",
+      "path": "skills/quality-review/multi-reviewer-patterns/SKILL.md",
+      "category": "quality-review"
+    },
+    {
+      "name": "protocol-reverse-engineering",
+      "path": "skills/quality-review/protocol-reverse-engineering/SKILL.md",
+      "category": "quality-review"
+    },
+    {
+      "name": "review-quality",
+      "path": "skills/quality-review/review-quality/SKILL.md",
+      "category": "quality-review"
+    },
+    {
+      "name": "simplify",
+      "path": "skills/quality-review/simplify/SKILL.md",
+      "category": "quality-review"
+    },
+    {
+      "name": "bash-defensive-patterns",
+      "path": "skills/security/bash-defensive-patterns/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "k8s-security-policies",
+      "path": "skills/security/k8s-security-policies/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "memory-forensics",
+      "path": "skills/security/memory-forensics/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "mtls-configuration",
+      "path": "skills/security/mtls-configuration/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "pci-compliance",
+      "path": "skills/security/pci-compliance/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "sast-configuration",
+      "path": "skills/security/sast-configuration/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "secrets-management",
+      "path": "skills/security/secrets-management/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "secure-linux-web-hosting",
+      "path": "skills/security/secure-linux-web-hosting/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "security-best-practices",
+      "path": "skills/security/security-best-practices/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "security-ownership-map",
+      "path": "skills/security/security-ownership-map/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "security-threat-model",
+      "path": "skills/security/security-threat-model/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "solidity-security",
+      "path": "skills/security/solidity-security/SKILL.md",
+      "category": "security"
+    },
+    {
+      "name": "backtesting-frameworks",
+      "path": "skills/testing/backtesting-frameworks/SKILL.md",
+      "category": "testing"
+    },
+    {
+      "name": "bats-testing-patterns",
+      "path": "skills/testing/bats-testing-patterns/SKILL.md",
+      "category": "testing"
+    },
+    {
+      "name": "shellcheck-configuration",
+      "path": "skills/testing/shellcheck-configuration/SKILL.md",
+      "category": "testing"
+    },
+    {
+      "name": "tdd",
+      "path": "skills/testing/tdd/SKILL.md",
+      "category": "testing"
+    },
+    {
+      "name": "temporal-python-testing",
+      "path": "skills/testing/temporal-python-testing/SKILL.md",
+      "category": "testing"
+    },
+    {
+      "name": "webapp-testing",
+      "path": "skills/testing/webapp-testing/SKILL.md",
+      "category": "testing"
+    },
+    {
+      "name": "agent-browser",
+      "path": "skills/tooling-integrations/agent-browser/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "caveman",
+      "path": "skills/tooling-integrations/caveman/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "obsidian-cli",
+      "path": "skills/tooling-integrations/obsidian-cli/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "omarchy",
+      "path": "skills/tooling-integrations/omarchy/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "opensource-guide-coach",
+      "path": "skills/tooling-integrations/opensource-guide-coach/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "opentui",
+      "path": "skills/tooling-integrations/opentui/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "screenshot",
+      "path": "skills/tooling-integrations/screenshot/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "stripe",
+      "path": "skills/tooling-integrations/stripe/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "super-productivity-mcp",
+      "path": "skills/tooling-integrations/super-productivity-mcp/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "use-my-browser",
+      "path": "skills/tooling-integrations/use-my-browser/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "vscode-ext-commands",
+      "path": "skills/tooling-integrations/vscode-ext-commands/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "vscode-ext-localization",
+      "path": "skills/tooling-integrations/vscode-ext-localization/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "web-search",
+      "path": "skills/tooling-integrations/web-search/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "adaptation-synthesis",
+      "path": "skills/worldbuilding-fiction/adaptation-synthesis/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "character-arc",
+      "path": "skills/worldbuilding-fiction/character-arc/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "cliche-transcendence",
+      "path": "skills/worldbuilding-fiction/cliche-transcendence/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "conlang",
+      "path": "skills/worldbuilding-fiction/conlang/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "dna-extraction",
+      "path": "skills/worldbuilding-fiction/dna-extraction/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "game-facilitator",
+      "path": "skills/worldbuilding-fiction/game-facilitator/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "interactive-fiction",
+      "path": "skills/worldbuilding-fiction/interactive-fiction/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "language-evolution",
+      "path": "skills/worldbuilding-fiction/language-evolution/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "list-builder",
+      "path": "skills/worldbuilding-fiction/list-builder/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "naming",
+      "path": "skills/worldbuilding-fiction/naming/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "shared-world",
+      "path": "skills/worldbuilding-fiction/shared-world/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "technology-impact",
+      "path": "skills/worldbuilding-fiction/technology-impact/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "world-fates",
+      "path": "skills/worldbuilding-fiction/world-fates/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "worldbuilding",
+      "path": "skills/worldbuilding-fiction/worldbuilding/SKILL.md",
+      "category": "worldbuilding-fiction"
+    },
+    {
+      "name": "blind-spot-detective",
+      "path": "skills/writing-craft/blind-spot-detective/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "chapter-drafter",
+      "path": "skills/writing-craft/chapter-drafter/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "claim-investigation",
+      "path": "skills/writing-craft/claim-investigation/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "dialogue",
+      "path": "skills/writing-craft/dialogue/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "drafting",
+      "path": "skills/writing-craft/drafting/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "fact-check",
+      "path": "skills/writing-craft/fact-check/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "genre-conventions",
+      "path": "skills/writing-craft/genre-conventions/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "gentle-teaching",
+      "path": "skills/writing-craft/gentle-teaching/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "good-thinking",
+      "path": "skills/writing-craft/good-thinking/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "joke-engineering",
+      "path": "skills/writing-craft/joke-engineering/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "lyric-diagnostic",
+      "path": "skills/writing-craft/lyric-diagnostic/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "prose-style",
+      "path": "skills/writing-craft/prose-style/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "reverse-outliner",
+      "path": "skills/writing-craft/reverse-outliner/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "revision",
+      "path": "skills/writing-craft/revision/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "sensitivity-check",
+      "path": "skills/writing-craft/sensitivity-check/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "speech-adaptation",
+      "path": "skills/writing-craft/speech-adaptation/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "statistical-distance",
+      "path": "skills/writing-craft/statistical-distance/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "story-coach",
+      "path": "skills/writing-craft/story-coach/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "story-collaborator",
+      "path": "skills/writing-craft/story-collaborator/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "story-idea-generator",
+      "path": "skills/writing-craft/story-idea-generator/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "story-sense",
+      "path": "skills/writing-craft/story-sense/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "summarization",
+      "path": "skills/writing-craft/summarization/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "table-tone",
+      "path": "skills/writing-craft/table-tone/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "voice-analysis",
+      "path": "skills/writing-craft/voice-analysis/SKILL.md",
+      "category": "writing-craft"
+    }
+  ]
+}

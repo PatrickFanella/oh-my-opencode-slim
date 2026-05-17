@@ -1,0 +1,2009 @@
+{
+  "generated_at": "2026-05-17T00:11:16.121317+00:00",
+  "last_batch": [
+    "skills/agent-ecosystem/context-engineer/SKILL.md",
+    "skills/agent-ecosystem/llm-evaluation/SKILL.md",
+    "skills/agent-ecosystem/mcp-builder/SKILL.md",
+    "skills/agent-ecosystem/prompt-craft/SKILL.md",
+    "skills/agent-ecosystem/rag-implementation/SKILL.md",
+    "skills/agent-ecosystem/setup-matt-pocock-skills/SKILL.md",
+    "skills/agent-ecosystem/skill-creator/SKILL.md",
+    "skills/agent-ecosystem/skills-cli/SKILL.md",
+    "skills/analytics-observability/grafana-dashboards/SKILL.md",
+    "skills/analytics-observability/prometheus-configuration/SKILL.md",
+    "skills/analytics-observability/sentry/SKILL.md",
+    "skills/analytics-observability/slo-implementation/SKILL.md",
+    "skills/backend-architecture/api-design-principles/SKILL.md",
+    "skills/backend-architecture/architecture-patterns/SKILL.md",
+    "skills/backend-architecture/auth-implementation-patterns/SKILL.md",
+    "skills/backend-architecture/cli-developer/SKILL.md",
+    "skills/backend-architecture/cqrs-implementation/SKILL.md",
+    "skills/backend-architecture/develop-userscripts/SKILL.md",
+    "skills/backend-architecture/nodejs-backend-patterns/SKILL.md",
+    "skills/backend-architecture/openapi-spec-generation/SKILL.md",
+    "skills/backend-architecture/stripe-integration/SKILL.md",
+    "skills/backend-architecture/websocket-engineer/SKILL.md",
+    "skills/backend-architecture/workflow-orchestration-patterns/SKILL.md",
+    "skills/cloud-infra/cloudflare-deploy/SKILL.md",
+    "skills/cloud-infra/deployment-pipeline-design/SKILL.md",
+    "skills/cloud-infra/helm-chart-scaffolding/SKILL.md",
+    "skills/cloud-infra/k8s-manifest-generator/SKILL.md",
+    "skills/cloud-infra/terraform-module-library/SKILL.md",
+    "skills/creative-media/ebook-analysis/SKILL.md",
+    "skills/creative-media/humanizer/SKILL.md",
+    "skills/creative-media/image/SKILL.md",
+    "skills/creative-media/musical-dna/SKILL.md",
+    "skills/creative-media/presentation-design/SKILL.md",
+    "skills/creative-media/subcult-brand-voice/SKILL.md",
+    "skills/creative-media/subcult-visual-design/SKILL.md",
+    "skills/creative-media/subcult-worldbuilding/SKILL.md",
+    "skills/creative-media/video/SKILL.md",
+    "skills/data-database/database-migration/SKILL.md",
+    "skills/data-database/gdpr-data-handling/SKILL.md",
+    "skills/data-database/hybrid-search-implementation/SKILL.md",
+    "skills/data-database/postgres-data-quality/SKILL.md",
+    "skills/data-database/postgres-pro/SKILL.md",
+    "skills/debugging/distributed-tracing/SKILL.md",
+    "skills/debugging/systematic-debugging/SKILL.md",
+    "skills/debugging/triage/SKILL.md",
+    "skills/dev-workflows/cartography/SKILL.md",
+    "skills/dev-workflows/changelog-automation/SKILL.md",
+    "skills/dev-workflows/deep-research/SKILL.md",
+    "skills/dev-workflows/dependency-upgrade/SKILL.md",
+    "skills/dev-workflows/observe-and-tune/SKILL.md",
+    "skills/dev-workflows/parallel-feature-development/SKILL.md",
+    "skills/dev-workflows/refactor/SKILL.md",
+    "skills/dev-workflows/requirements-interview/SKILL.md",
+    "skills/dev-workflows/session-handoff/SKILL.md",
+    "skills/dev-workflows/team-communication-protocols/SKILL.md",
+    "skills/dev-workflows/team-composition-patterns/SKILL.md",
+    "skills/dev-workflows/writing-plans/SKILL.md",
+    "skills/docs-documents/doc/SKILL.md",
+    "skills/docs-documents/hads/SKILL.md",
+    "skills/docs-documents/pdf/SKILL.md",
+    "skills/docs-documents/pptx-generator/SKILL.md",
+    "skills/docs-documents/readme-i18n/SKILL.md",
+    "skills/docs-documents/review-doc-consistency/SKILL.md",
+    "skills/docs-documents/spreadsheet/SKILL.md",
+    "skills/frontend-ui/frontend-design/SKILL.md",
+    "skills/frontend-ui/react-pro/SKILL.md",
+    "skills/games-interactive/develop-web-game/SKILL.md",
+    "skills/games-interactive/game-design-theory/SKILL.md",
+    "skills/git-github/git-advanced-workflows/SKILL.md",
+    "skills/git-github/github-pro/SKILL.md",
+    "skills/growth-marketing/ab-test-setup/SKILL.md",
+    "skills/growth-marketing/book-marketing/SKILL.md",
+    "skills/growth-marketing/competitive-landscape/SKILL.md",
+    "skills/growth-marketing/competitor-alternatives/SKILL.md",
+    "skills/growth-marketing/competitor-profiling/SKILL.md",
+    "skills/growth-marketing/content-strategy/SKILL.md",
+    "skills/growth-marketing/copywriting/SKILL.md",
+    "skills/growth-marketing/customer-research/SKILL.md",
+    "skills/growth-marketing/email-sequence/SKILL.md",
+    "skills/growth-marketing/launch-strategy/SKILL.md",
+    "skills/growth-marketing/marketing-psychology/SKILL.md",
+    "skills/growth-marketing/page-cro/SKILL.md",
+    "skills/growth-marketing/paid-ads/SKILL.md",
+    "skills/growth-marketing/sales-enablement/SKILL.md",
+    "skills/growth-marketing/seo-pro/SKILL.md",
+    "skills/growth-marketing/social-content/SKILL.md",
+    "skills/language-go-rust/golang-pro/SKILL.md",
+    "skills/language-go-rust/rust-pro/SKILL.md",
+    "skills/language-js-ts/typescript-pro/SKILL.md",
+    "skills/language-python/python-configuration/SKILL.md",
+    "skills/language-python/python-packaging/SKILL.md",
+    "skills/language-python/python-testing-patterns/SKILL.md",
+    "skills/language-python/python-tooling-patterns/SKILL.md",
+    "skills/language-python/uv-package-manager/SKILL.md",
+    "skills/mobile-apps/react-native-pro/SKILL.md",
+    "skills/mobile-apps/wcag-audit-patterns/SKILL.md",
+    "skills/product-business/data-storytelling/SKILL.md",
+    "skills/product-business/internal-comms/SKILL.md",
+    "skills/product-business/revops/SKILL.md",
+    "skills/product-business/startup-finance/SKILL.md",
+    "skills/quality-review/binary-analysis-patterns/SKILL.md",
+    "skills/quality-review/improve-codebase-architecture/SKILL.md",
+    "skills/quality-review/multi-reviewer-patterns/SKILL.md",
+    "skills/quality-review/protocol-reverse-engineering/SKILL.md",
+    "skills/quality-review/review-quality/SKILL.md",
+    "skills/quality-review/simplify/SKILL.md",
+    "skills/security/bash-defensive-patterns/SKILL.md",
+    "skills/security/k8s-security-policies/SKILL.md",
+    "skills/security/memory-forensics/SKILL.md",
+    "skills/security/mtls-configuration/SKILL.md",
+    "skills/security/pci-compliance/SKILL.md",
+    "skills/security/sast-configuration/SKILL.md",
+    "skills/security/secrets-management/SKILL.md",
+    "skills/security/secure-linux-web-hosting/SKILL.md",
+    "skills/security/security-best-practices/SKILL.md",
+    "skills/security/security-ownership-map/SKILL.md",
+    "skills/security/security-threat-model/SKILL.md",
+    "skills/security/solidity-security/SKILL.md",
+    "skills/testing/backtesting-frameworks/SKILL.md",
+    "skills/testing/bats-testing-patterns/SKILL.md",
+    "skills/testing/shellcheck-configuration/SKILL.md",
+    "skills/testing/tdd/SKILL.md",
+    "skills/testing/temporal-python-testing/SKILL.md",
+    "skills/testing/webapp-testing/SKILL.md",
+    "skills/tooling-integrations/agent-browser/SKILL.md",
+    "skills/tooling-integrations/caveman/SKILL.md",
+    "skills/tooling-integrations/obsidian-cli/SKILL.md",
+    "skills/tooling-integrations/omarchy/SKILL.md",
+    "skills/tooling-integrations/opensource-guide-coach/SKILL.md",
+    "skills/tooling-integrations/opentui/SKILL.md",
+    "skills/tooling-integrations/screenshot/SKILL.md",
+    "skills/tooling-integrations/stripe/SKILL.md",
+    "skills/tooling-integrations/super-productivity-mcp/SKILL.md",
+    "skills/tooling-integrations/use-my-browser/SKILL.md",
+    "skills/tooling-integrations/vscode-ext-commands/SKILL.md",
+    "skills/tooling-integrations/vscode-ext-localization/SKILL.md",
+    "skills/tooling-integrations/web-search/SKILL.md",
+    "skills/worldbuilding-fiction/adaptation-synthesis/SKILL.md",
+    "skills/worldbuilding-fiction/character-arc/SKILL.md",
+    "skills/worldbuilding-fiction/cliche-transcendence/SKILL.md",
+    "skills/worldbuilding-fiction/conlang/SKILL.md",
+    "skills/worldbuilding-fiction/dna-extraction/SKILL.md",
+    "skills/worldbuilding-fiction/game-facilitator/SKILL.md",
+    "skills/worldbuilding-fiction/interactive-fiction/SKILL.md",
+    "skills/worldbuilding-fiction/language-evolution/SKILL.md",
+    "skills/worldbuilding-fiction/list-builder/SKILL.md",
+    "skills/worldbuilding-fiction/naming/SKILL.md",
+    "skills/worldbuilding-fiction/shared-world/SKILL.md",
+    "skills/worldbuilding-fiction/technology-impact/SKILL.md",
+    "skills/worldbuilding-fiction/world-fates/SKILL.md",
+    "skills/worldbuilding-fiction/worldbuilding/SKILL.md",
+    "skills/writing-craft/blind-spot-detective/SKILL.md",
+    "skills/writing-craft/chapter-drafter/SKILL.md",
+    "skills/writing-craft/claim-investigation/SKILL.md",
+    "skills/writing-craft/dialogue/SKILL.md",
+    "skills/writing-craft/drafting/SKILL.md",
+    "skills/writing-craft/fact-check/SKILL.md",
+    "skills/writing-craft/genre-conventions/SKILL.md",
+    "skills/writing-craft/gentle-teaching/SKILL.md",
+    "skills/writing-craft/good-thinking/SKILL.md",
+    "skills/writing-craft/joke-engineering/SKILL.md",
+    "skills/writing-craft/lyric-diagnostic/SKILL.md",
+    "skills/writing-craft/prose-style/SKILL.md",
+    "skills/writing-craft/reverse-outliner/SKILL.md",
+    "skills/writing-craft/revision/SKILL.md",
+    "skills/writing-craft/sensitivity-check/SKILL.md",
+    "skills/writing-craft/speech-adaptation/SKILL.md",
+    "skills/writing-craft/statistical-distance/SKILL.md",
+    "skills/writing-craft/story-coach/SKILL.md",
+    "skills/writing-craft/story-collaborator/SKILL.md",
+    "skills/writing-craft/story-idea-generator/SKILL.md",
+    "skills/writing-craft/story-sense/SKILL.md",
+    "skills/writing-craft/summarization/SKILL.md",
+    "skills/writing-craft/table-tone/SKILL.md",
+    "skills/writing-craft/voice-analysis/SKILL.md"
+  ],
+  "last_batch_count": 175,
+  "skills": {
+    "skills/agent-ecosystem/context-engineer/SKILL.md": {
+      "category": "agent-ecosystem",
+      "findings": [
+        "SKILL.md is moderately large (166 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "context-engineer",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/agent-ecosystem/llm-evaluation/SKILL.md": {
+      "category": "agent-ecosystem",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "llm-evaluation",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/agent-ecosystem/mcp-builder/SKILL.md": {
+      "category": "agent-ecosystem",
+      "findings": [
+        "SKILL.md is moderately large (251 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "mcp-builder",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/agent-ecosystem/prompt-craft/SKILL.md": {
+      "category": "agent-ecosystem",
+      "findings": [
+        "SKILL.md is moderately large (199 lines); review for concise activation",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "prompt-craft",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/agent-ecosystem/rag-implementation/SKILL.md": {
+      "category": "agent-ecosystem",
+      "findings": [
+        "SKILL.md is large (542 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "rag-implementation",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/agent-ecosystem/setup-matt-pocock-skills/SKILL.md": {
+      "category": "agent-ecosystem",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "setup-matt-pocock-skills",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/agent-ecosystem/skill-creator/SKILL.md": {
+      "category": "agent-ecosystem",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "skill-creator",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/agent-ecosystem/skills-cli/SKILL.md": {
+      "category": "agent-ecosystem",
+      "findings": [
+        "SKILL.md is moderately large (291 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "skills-cli",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/analytics-observability/grafana-dashboards/SKILL.md": {
+      "category": "analytics-observability",
+      "findings": [
+        "SKILL.md is large (382 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "grafana-dashboards",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/analytics-observability/prometheus-configuration/SKILL.md": {
+      "category": "analytics-observability",
+      "findings": [
+        "SKILL.md is large (394 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "prometheus-configuration",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/analytics-observability/sentry/SKILL.md": {
+      "category": "analytics-observability",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "sentry",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/analytics-observability/slo-implementation/SKILL.md": {
+      "category": "analytics-observability",
+      "findings": [
+        "SKILL.md is large (333 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "slo-implementation",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/backend-architecture/api-design-principles/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [
+        "SKILL.md is large (529 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "api-design-principles",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/backend-architecture/architecture-patterns/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [
+        "SKILL.md is large (510 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "architecture-patterns",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/backend-architecture/auth-implementation-patterns/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "auth-implementation-patterns",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/backend-architecture/cli-developer/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "cli-developer",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/backend-architecture/cqrs-implementation/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [
+        "SKILL.md is large (549 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "cqrs-implementation",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/backend-architecture/develop-userscripts/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "develop-userscripts",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/backend-architecture/nodejs-backend-patterns/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "nodejs-backend-patterns",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/backend-architecture/openapi-spec-generation/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [
+        "SKILL.md is large (543 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "openapi-spec-generation",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/backend-architecture/stripe-integration/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [
+        "SKILL.md is large (503 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "stripe-integration",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/backend-architecture/websocket-engineer/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [
+        "SKILL.md is moderately large (179 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "websocket-engineer",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/backend-architecture/workflow-orchestration-patterns/SKILL.md": {
+      "category": "backend-architecture",
+      "findings": [
+        "SKILL.md is large (316 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "workflow-orchestration-patterns",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/cloud-infra/cloudflare-deploy/SKILL.md": {
+      "category": "cloud-infra",
+      "findings": [
+        "SKILL.md is moderately large (251 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "cloudflare-deploy",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/cloud-infra/deployment-pipeline-design/SKILL.md": {
+      "category": "cloud-infra",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "deployment-pipeline-design",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/cloud-infra/helm-chart-scaffolding/SKILL.md": {
+      "category": "cloud-infra",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "helm-chart-scaffolding",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/cloud-infra/k8s-manifest-generator/SKILL.md": {
+      "category": "cloud-infra",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "k8s-manifest-generator",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/cloud-infra/terraform-module-library/SKILL.md": {
+      "category": "cloud-infra",
+      "findings": [
+        "SKILL.md is moderately large (259 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "terraform-module-library",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/creative-media/ebook-analysis/SKILL.md": {
+      "category": "creative-media",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "ebook-analysis",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/creative-media/humanizer/SKILL.md": {
+      "category": "creative-media",
+      "findings": [
+        "SKILL.md is large (440 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "humanizer",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/creative-media/image/SKILL.md": {
+      "category": "creative-media",
+      "findings": [
+        "SKILL.md is large (342 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "image",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/creative-media/musical-dna/SKILL.md": {
+      "category": "creative-media",
+      "findings": [
+        "SKILL.md is large (325 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "musical-dna",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/creative-media/presentation-design/SKILL.md": {
+      "category": "creative-media",
+      "findings": [
+        "SKILL.md is moderately large (297 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "presentation-design",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/creative-media/subcult-brand-voice/SKILL.md": {
+      "category": "creative-media",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "subcult-brand-voice",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/creative-media/subcult-visual-design/SKILL.md": {
+      "category": "creative-media",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "subcult-visual-design",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/creative-media/subcult-worldbuilding/SKILL.md": {
+      "category": "creative-media",
+      "findings": [
+        "SKILL.md is moderately large (205 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "subcult-worldbuilding",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/creative-media/video/SKILL.md": {
+      "category": "creative-media",
+      "findings": [
+        "SKILL.md is large (339 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "video",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/data-database/database-migration/SKILL.md": {
+      "category": "data-database",
+      "findings": [
+        "SKILL.md is large (403 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "database-migration",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/data-database/gdpr-data-handling/SKILL.md": {
+      "category": "data-database",
+      "findings": [
+        "SKILL.md is large (624 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "gdpr-data-handling",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/data-database/hybrid-search-implementation/SKILL.md": {
+      "category": "data-database",
+      "findings": [
+        "SKILL.md is large (576 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "hybrid-search-implementation",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/data-database/postgres-data-quality/SKILL.md": {
+      "category": "data-database",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "postgres-data-quality",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/data-database/postgres-pro/SKILL.md": {
+      "category": "data-database",
+      "findings": [
+        "SKILL.md is moderately large (170 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "postgres-pro",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/debugging/distributed-tracing/SKILL.md": {
+      "category": "debugging",
+      "findings": [
+        "SKILL.md is large (449 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "distributed-tracing",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/debugging/systematic-debugging/SKILL.md": {
+      "category": "debugging",
+      "findings": [
+        "SKILL.md is large (317 lines); move detail to references/",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "systematic-debugging",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/debugging/triage/SKILL.md": {
+      "category": "debugging",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "triage",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/dev-workflows/cartography/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "cartography",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/dev-workflows/changelog-automation/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "changelog-automation",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/dev-workflows/deep-research/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "deep-research",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/dev-workflows/dependency-upgrade/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [
+        "SKILL.md is large (368 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "dependency-upgrade",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/dev-workflows/observe-and-tune/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "observe-and-tune",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/dev-workflows/parallel-feature-development/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [
+        "SKILL.md is moderately large (183 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "parallel-feature-development",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/dev-workflows/refactor/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [
+        "SKILL.md is large (645 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "refactor",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/dev-workflows/requirements-interview/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [
+        "SKILL.md is moderately large (211 lines); review for concise activation",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "requirements-interview",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/dev-workflows/session-handoff/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "session-handoff",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/dev-workflows/team-communication-protocols/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "team-communication-protocols",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/dev-workflows/team-composition-patterns/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "team-composition-patterns",
+      "outcome": "clean",
+      "score": 17,
+      "status": "audited"
+    },
+    "skills/dev-workflows/writing-plans/SKILL.md": {
+      "category": "dev-workflows",
+      "findings": [
+        "SKILL.md is moderately large (152 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "writing-plans",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/docs-documents/doc/SKILL.md": {
+      "category": "docs-documents",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "doc",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/docs-documents/hads/SKILL.md": {
+      "category": "docs-documents",
+      "findings": [
+        "SKILL.md is moderately large (189 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "hads",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/docs-documents/pdf/SKILL.md": {
+      "category": "docs-documents",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "pdf",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/docs-documents/pptx-generator/SKILL.md": {
+      "category": "docs-documents",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "pptx-generator",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/docs-documents/readme-i18n/SKILL.md": {
+      "category": "docs-documents",
+      "findings": [
+        "SKILL.md is moderately large (184 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "readme-i18n",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/docs-documents/review-doc-consistency/SKILL.md": {
+      "category": "docs-documents",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "review-doc-consistency",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/docs-documents/spreadsheet/SKILL.md": {
+      "category": "docs-documents",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "spreadsheet",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/frontend-ui/frontend-design/SKILL.md": {
+      "category": "frontend-ui",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "frontend-design",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/frontend-ui/react-pro/SKILL.md": {
+      "category": "frontend-ui",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "react-pro",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/games-interactive/develop-web-game/SKILL.md": {
+      "category": "games-interactive",
+      "findings": [
+        "SKILL.md is moderately large (161 lines); review for concise activation",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "develop-web-game",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/games-interactive/game-design-theory/SKILL.md": {
+      "category": "games-interactive",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "game-design-theory",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/git-github/git-advanced-workflows/SKILL.md": {
+      "category": "git-github",
+      "findings": [
+        "SKILL.md is large (408 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "git-advanced-workflows",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/git-github/github-pro/SKILL.md": {
+      "category": "git-github",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "github-pro",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/growth-marketing/ab-test-setup/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (361 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "ab-test-setup",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/book-marketing/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (509 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "book-marketing",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/competitive-landscape/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "competitive-landscape",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/growth-marketing/competitor-alternatives/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is moderately large (264 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "competitor-alternatives",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/growth-marketing/competitor-profiling/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (419 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "competitor-profiling",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/content-strategy/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (379 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "content-strategy",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/copywriting/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is moderately large (266 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "copywriting",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/growth-marketing/customer-research/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is moderately large (283 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "customer-research",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/growth-marketing/email-sequence/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (326 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "email-sequence",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/launch-strategy/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (370 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "launch-strategy",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/marketing-psychology/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (455 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "marketing-psychology",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/page-cro/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is moderately large (199 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "page-cro",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/growth-marketing/paid-ads/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (333 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "paid-ads",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/sales-enablement/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (369 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "sales-enablement",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/growth-marketing/seo-pro/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "seo-pro",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/growth-marketing/social-content/SKILL.md": {
+      "category": "growth-marketing",
+      "findings": [
+        "SKILL.md is large (420 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "social-content",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/language-go-rust/golang-pro/SKILL.md": {
+      "category": "language-go-rust",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "golang-pro",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/language-go-rust/rust-pro/SKILL.md": {
+      "category": "language-go-rust",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "rust-pro",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/language-js-ts/typescript-pro/SKILL.md": {
+      "category": "language-js-ts",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "typescript-pro",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/language-python/python-configuration/SKILL.md": {
+      "category": "language-python",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "python-configuration",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/language-python/python-packaging/SKILL.md": {
+      "category": "language-python",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "python-packaging",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/language-python/python-testing-patterns/SKILL.md": {
+      "category": "language-python",
+      "findings": [
+        "SKILL.md is large (629 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "python-testing-patterns",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/language-python/python-tooling-patterns/SKILL.md": {
+      "category": "language-python",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "python-tooling-patterns",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/language-python/uv-package-manager/SKILL.md": {
+      "category": "language-python",
+      "findings": [
+        "SKILL.md is large (352 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "uv-package-manager",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/mobile-apps/react-native-pro/SKILL.md": {
+      "category": "mobile-apps",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "react-native-pro",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/mobile-apps/wcag-audit-patterns/SKILL.md": {
+      "category": "mobile-apps",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "wcag-audit-patterns",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/product-business/data-storytelling/SKILL.md": {
+      "category": "product-business",
+      "findings": [
+        "SKILL.md is large (447 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "data-storytelling",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/product-business/internal-comms/SKILL.md": {
+      "category": "product-business",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "internal-comms",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/product-business/revops/SKILL.md": {
+      "category": "product-business",
+      "findings": [
+        "SKILL.md is large (355 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "revops",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/product-business/startup-finance/SKILL.md": {
+      "category": "product-business",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "startup-finance",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/quality-review/binary-analysis-patterns/SKILL.md": {
+      "category": "quality-review",
+      "findings": [
+        "SKILL.md is large (438 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "binary-analysis-patterns",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/quality-review/improve-codebase-architecture/SKILL.md": {
+      "category": "quality-review",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "improve-codebase-architecture",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/quality-review/multi-reviewer-patterns/SKILL.md": {
+      "category": "quality-review",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "multi-reviewer-patterns",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/quality-review/protocol-reverse-engineering/SKILL.md": {
+      "category": "quality-review",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "protocol-reverse-engineering",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/quality-review/review-quality/SKILL.md": {
+      "category": "quality-review",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "review-quality",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/quality-review/simplify/SKILL.md": {
+      "category": "quality-review",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "simplify",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/security/bash-defensive-patterns/SKILL.md": {
+      "category": "security",
+      "findings": [
+        "SKILL.md is large (533 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "bash-defensive-patterns",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/security/k8s-security-policies/SKILL.md": {
+      "category": "security",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "k8s-security-policies",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/security/memory-forensics/SKILL.md": {
+      "category": "security",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "memory-forensics",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/security/mtls-configuration/SKILL.md": {
+      "category": "security",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "mtls-configuration",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/security/pci-compliance/SKILL.md": {
+      "category": "security",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "pci-compliance",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/security/sast-configuration/SKILL.md": {
+      "category": "security",
+      "findings": [
+        "SKILL.md is moderately large (192 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "sast-configuration",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/security/secrets-management/SKILL.md": {
+      "category": "security",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "secrets-management",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/security/secure-linux-web-hosting/SKILL.md": {
+      "category": "security",
+      "findings": [
+        "SKILL.md is moderately large (178 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "secure-linux-web-hosting",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/security/security-best-practices/SKILL.md": {
+      "category": "security",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "security-best-practices",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/security/security-ownership-map/SKILL.md": {
+      "category": "security",
+      "findings": [
+        "SKILL.md is moderately large (218 lines); review for concise activation",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "security-ownership-map",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/security/security-threat-model/SKILL.md": {
+      "category": "security",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "security-threat-model",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/security/solidity-security/SKILL.md": {
+      "category": "security",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "solidity-security",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/testing/backtesting-frameworks/SKILL.md": {
+      "category": "testing",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "backtesting-frameworks",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/testing/bats-testing-patterns/SKILL.md": {
+      "category": "testing",
+      "findings": [
+        "SKILL.md is large (624 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "bats-testing-patterns",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/testing/shellcheck-configuration/SKILL.md": {
+      "category": "testing",
+      "findings": [
+        "SKILL.md is large (450 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "shellcheck-configuration",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/testing/tdd/SKILL.md": {
+      "category": "testing",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "tdd",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/testing/temporal-python-testing/SKILL.md": {
+      "category": "testing",
+      "findings": [
+        "SKILL.md is moderately large (158 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "temporal-python-testing",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/testing/webapp-testing/SKILL.md": {
+      "category": "testing",
+      "findings": [
+        "examples/ has multiple files; verify examples are necessary",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "webapp-testing",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/agent-browser/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "agent-browser",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/caveman/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "caveman",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/obsidian-cli/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "obsidian-cli",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/omarchy/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "omarchy",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/opensource-guide-coach/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [
+        "SKILL.md is moderately large (227 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "opensource-guide-coach",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/opentui/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [
+        "SKILL.md is moderately large (198 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "opentui",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/screenshot/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [
+        "SKILL.md is moderately large (282 lines); review for concise activation",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "screenshot",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/stripe/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [
+        "SKILL.md is moderately large (152 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "stripe",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/super-productivity-mcp/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [
+        "SKILL.md is large (310 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "super-productivity-mcp",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/use-my-browser/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "use-my-browser",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/vscode-ext-commands/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "vscode-ext-commands",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/vscode-ext-localization/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "vscode-ext-localization",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/tooling-integrations/web-search/SKILL.md": {
+      "category": "tooling-integrations",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "web-search",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/adaptation-synthesis/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is large (425 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "adaptation-synthesis",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/character-arc/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is moderately large (226 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "character-arc",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/cliche-transcendence/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is large (391 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "cliche-transcendence",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/conlang/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is large (314 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "conlang",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/dna-extraction/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "dna-extraction",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/game-facilitator/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "game-facilitator",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/interactive-fiction/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "interactive-fiction",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/language-evolution/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is large (422 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "language-evolution",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/list-builder/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is moderately large (271 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "list-builder",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/naming/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is large (485 lines); move detail to references/",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "naming",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/shared-world/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is large (536 lines); move detail to references/",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "shared-world",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/technology-impact/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "SKILL.md is large (321 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "technology-impact",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/world-fates/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "world-fates",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/worldbuilding-fiction/worldbuilding/SKILL.md": {
+      "category": "worldbuilding-fiction",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "worldbuilding",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/writing-craft/blind-spot-detective/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is moderately large (231 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "blind-spot-detective",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/chapter-drafter/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (384 lines); move detail to references/",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "chapter-drafter",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/claim-investigation/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (393 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "claim-investigation",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/dialogue/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (459 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "dialogue",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/drafting/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (493 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "drafting",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/fact-check/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is moderately large (293 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "fact-check",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/genre-conventions/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (441 lines); move detail to references/",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "genre-conventions",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/gentle-teaching/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is moderately large (229 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "gentle-teaching",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/writing-craft/good-thinking/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (383 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "good-thinking",
+      "outcome": "clean",
+      "score": 19,
+      "status": "audited"
+    },
+    "skills/writing-craft/joke-engineering/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (316 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "joke-engineering",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/lyric-diagnostic/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (455 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "lyric-diagnostic",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/prose-style/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (508 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "prose-style",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/reverse-outliner/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is moderately large (282 lines); review for concise activation",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "reverse-outliner",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/writing-craft/revision/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "revision",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/writing-craft/sensitivity-check/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (527 lines); move detail to references/",
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "sensitivity-check",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/speech-adaptation/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is moderately large (217 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "speech-adaptation",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/writing-craft/statistical-distance/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "statistical-distance",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/writing-craft/story-coach/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is moderately large (271 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "story-coach",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/writing-craft/story-collaborator/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is moderately large (259 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "story-collaborator",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/writing-craft/story-idea-generator/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "story-idea-generator",
+      "outcome": "clean",
+      "score": 22,
+      "status": "audited"
+    },
+    "skills/writing-craft/story-sense/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "scripts/ present; ensure usage and side effects are documented"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "story-sense",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/writing-craft/summarization/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is moderately large (219 lines); review for concise activation"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "summarization",
+      "outcome": "clean",
+      "score": 21,
+      "status": "audited"
+    },
+    "skills/writing-craft/table-tone/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (415 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "table-tone",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    },
+    "skills/writing-craft/voice-analysis/SKILL.md": {
+      "category": "writing-craft",
+      "findings": [
+        "SKILL.md is large (345 lines); move detail to references/"
+      ],
+      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
+      "name": "voice-analysis",
+      "outcome": "clean",
+      "score": 20,
+      "status": "audited"
+    }
+  },
+  "total_candidates": 175,
+  "version": 1
+}

@@ -23,6 +23,10 @@ For OMOC as the distribution layer, prefer bundled custom skills for core
 orchestration workflows. Keep DCP/quota-related skills outside OMOC unless a
 future integration contract explicitly defines that boundary.
 
+Bundled skill discovery is recursive (`src/skills/**/SKILL.md`) and generated
+at runtime from frontmatter metadata. This removes manual registry maintenance
+as the in-repo catalog grows.
+
 ---
 
 ## Available Skills
@@ -40,6 +44,33 @@ future integration contract explicitly defines that boundary.
 | [`simplify`](#simplify) | Behavior-preserving code simplification | `oracle` |
 | [`codemap`](#codemap) | Repository codemap generation | `orchestrator` |
 | [`clonedeps`](#clonedeps) | Local dependency source cloning | `orchestrator` |
+
+In addition to those OMOC defaults, this repo now bundles the migrated skills
+catalog under category paths like:
+
+- `src/skills/language-js-ts/<skill>/`
+- `src/skills/git-github/<skill>/`
+- `src/skills/dev-workflows/<skill>/`
+- `src/skills/.system/<skill>/`
+
+Top-level catalog docs are also preserved in `src/skills/` (`README.md`,
+`CATALOG.md`, `QUALITY.md`, `AUDIT_WORKFLOW.md`, `STACK_PROFILE.md`,
+`index.json`, `index.md`, plus `audits/`).
+
+Default auto-assignment remains intentionally narrow:
+
+- `simplify` -> `oracle`
+- `codemap` -> `orchestrator`
+- `clonedeps` -> `orchestrator`
+
+Generated configs use deny-by-default skill permissions. All other bundled
+migrated skills default to no auto-grants unless explicitly configured per
+agent, for example with `skills: ["*"]` or a named allow-list.
+
+`agent-browser` remains a recommended external skill because it also installs a
+runtime CLI. The migrated catalog copy is kept as source material but is not
+installed as a bundled custom skill, preventing the installer from overwriting
+the external skill payload.
 
 ---
 

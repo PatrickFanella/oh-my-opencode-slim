@@ -2,9 +2,9 @@ import { describe, expect, it } from 'bun:test';
 import { getSkillPermissionsForAgent } from './skills';
 
 describe('skills permissions', () => {
-  it('should allow all skills for orchestrator by default', () => {
+  it('should deny wildcard skills for orchestrator by default', () => {
     const permissions = getSkillPermissionsForAgent('orchestrator');
-    expect(permissions['*']).toBe('allow');
+    expect(permissions['*']).toBe('deny');
   });
 
   it('should deny all skills for other agents by default', () => {
@@ -44,5 +44,17 @@ describe('skills permissions', () => {
   it('should honor wildcard in explicit list', () => {
     const wildcardPerms = getSkillPermissionsForAgent('designer', ['*']);
     expect(wildcardPerms['*']).toBe('allow');
+  });
+
+  it('should make explicit deny rules win over later allows', () => {
+    const permissions = getSkillPermissionsForAgent('designer', [
+      '!unsafe-skill',
+      'unsafe-skill',
+      '*',
+      '!*',
+    ]);
+
+    expect(permissions['unsafe-skill']).toBe('deny');
+    expect(permissions['*']).toBe('deny');
   });
 });
