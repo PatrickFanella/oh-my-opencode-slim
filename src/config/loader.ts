@@ -47,6 +47,30 @@ export interface LoadPluginConfigOptions {
 
 const PROMPTS_DIR_NAME = 'oh-my-opencode-slim';
 
+function interpolateEnvTokens(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return value.replace(
+      /\{env:([^}]+)\}/g,
+      (_, varName) => process.env[varName] ?? '',
+    );
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(interpolateEnvTokens);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        interpolateEnvTokens(entry),
+      ]),
+    );
+  }
+
+  return value;
+}
+
 /**
  * Load and validate plugin configuration from a specific file path.
  * Supports both .json and .jsonc formats (JSON with comments).
@@ -66,7 +90,7 @@ function loadConfigFromPath(
     // Use stripJsonComments to support JSONC format (comments and trailing commas)
     let rawConfig: unknown;
     try {
-      rawConfig = JSON.parse(stripJsonComments(content));
+      rawConfig = interpolateEnvTokens(JSON.parse(stripJsonComments(content)));
     } catch (error) {
       // Empty file or JSON parse error is treated as invalid-json
       const message = error instanceof Error ? error.message : String(error);
