@@ -1,4 +1,7 @@
 import { describe, expect, spyOn, test } from 'bun:test';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { PluginConfig } from '../config';
 import { createAgents, getAgentConfigs } from './index';
 
@@ -198,5 +201,54 @@ describe('custom-agent creation', () => {
     expect(orchestrator?.config.prompt).not.toContain(
       '@janitor\n- Role: Cleanup specialist',
     );
+  });
+
+  test('loads custom agents from JSON definition directory', () => {
+    const previousConfigDir = process.env.OPENCODE_CONFIG_DIR;
+    const root = mkdtempSync(join(tmpdir(), 'omoc-agent-defs-'));
+    const configDir = join(root, 'opencode');
+    const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+
+    try {
+      mkdirSync(agentDir, { recursive: true });
+      process.env.OPENCODE_CONFIG_DIR = configDir;
+      writeFileSync(
+        join(agentDir, 'researcher.json'),
+        JSON.stringify({
+          name: 'researcher',
+          model: 'openai/gpt-5.4-mini',
+          prompt: 'You are a custom JSON researcher.',
+          orchestratorPrompt:
+            '@researcher\n- Role: JSON-defined research agent',
+          skills: ['web-search'],
+          mcps: ['websearch'],
+        }),
+      );
+
+      const agents = createAgents({});
+      const customAgent = agents.find((agent) => agent.name === 'researcher');
+      const orchestrator = agents.find(
+        (agent) => agent.name === 'orchestrator',
+      );
+
+      expect(customAgent?.config.model).toBe('openai/gpt-5.4-mini');
+      expect(customAgent?.config.prompt).toBe(
+        'You are a custom JSON researcher.',
+      );
+      expect(customAgent?.config.permission).toMatchObject({
+        skill: { 'web-search': 'allow' },
+      });
+      expect(getAgentConfigs({}).researcher.mcps).toEqual(['websearch']);
+      expect(orchestrator?.config.prompt).toContain(
+        '@researcher\n- Role: JSON-defined research agent',
+      );
+    } finally {
+      if (previousConfigDir === undefined) {
+        delete process.env.OPENCODE_CONFIG_DIR;
+      } else {
+        process.env.OPENCODE_CONFIG_DIR = previousConfigDir;
+      }
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

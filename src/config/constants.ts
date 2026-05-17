@@ -1,3 +1,9 @@
+import {
+  getDefaultDisabledAgents,
+  getDefaultModelMap,
+  getProtectedAgentNames,
+} from '../agents/registry';
+
 // Agent names
 export const AGENT_ALIASES: Record<string, string> = {
   explore: 'explorer',
@@ -41,7 +47,7 @@ export const ORCHESTRATABLE_AGENTS = [
 ] as const;
 
 /** Agents that cannot be disabled even if listed in disabled_agents config. */
-export const PROTECTED_AGENTS = new Set(['orchestrator', 'councillor']);
+export const PROTECTED_AGENTS = new Set(getProtectedAgentNames());
 
 /**
  * Get the list of orchestratable agents, excluding any disabled agents.
@@ -68,15 +74,7 @@ export const SUBAGENT_DELEGATION_RULES: Record<AgentName, readonly string[]> = {
 // Default models for each agent
 // orchestrator is undefined so its model is fully resolved at runtime via priority fallback
 export const DEFAULT_MODELS: Record<AgentName, string | undefined> = {
-  orchestrator: undefined,
-  oracle: 'openai/gpt-5.5',
-  librarian: 'openai/gpt-5.4-mini',
-  explorer: 'openai/gpt-5.4-mini',
-  designer: 'openai/gpt-5.4-mini',
-  fixer: 'openai/gpt-5.4-mini',
-  observer: 'openai/gpt-5.4-mini',
-  council: 'openai/gpt-5.4-mini',
-  councillor: 'openai/gpt-5.4-mini',
+  ...(getDefaultModelMap() as Record<AgentName, string | undefined>),
 };
 
 // Polling configuration
@@ -108,4 +106,4 @@ export const STABLE_POLLS_THRESHOLD = 3;
 
 /** Agents that are disabled by default. Users must explicitly enable them
  *  by removing from disabled_agents and configuring an appropriate model. */
-export const DEFAULT_DISABLED_AGENTS: string[] = ['observer'];
+export const DEFAULT_DISABLED_AGENTS: string[] = getDefaultDisabledAgents();

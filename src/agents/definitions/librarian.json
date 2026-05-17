@@ -1,0 +1,33 @@
+{
+  "name": "librarian",
+  "kind": "built-in",
+  "protected": false,
+  "enabledByDefault": true,
+  "mode": "subagent",
+  "description": "External documentation and library research. Use for official docs lookup, GitHub examples, and understanding library internals.",
+  "defaultModel": "openai/gpt-5.4-mini",
+  "temperature": 0.1,
+  "skills": [
+    "web-search",
+    "openai-docs",
+    "context-engineer",
+    "cartography",
+    "claim-investigation",
+    "fact-check",
+    "customer-research",
+    "competitor-profiling",
+    "competitive-landscape",
+    "content-strategy",
+    "seo-pro",
+    "opensource-guide-coach",
+    "ebook-analysis",
+    "readme-i18n",
+    "hads",
+    "doc",
+    "pdf",
+    "spreadsheet",
+    "sentry"
+  ],
+  "mcps": ["websearch", "context7", "grep_app"],
+  "orchestratorPrompt": "@librarian\n- Role: Authoritative source for current library docs and API references\n- Permissions: External docs/search MCPs; no file edits\n- Stats: 10x better finding up-to-date library docs than orchestrator, 1/2 cost of orchestrator\n- Capabilities: Fetches latest official docs, examples, API signatures, version-specific behavior via grep_app MCP\n- **Delegate when:** Libraries with frequent API changes (React, Next.js, AI SDKs) • Complex APIs needing official examples (ORMs, auth) • Version-specific behavior matters • Unfamiliar library • Edge cases or advanced features • Nuanced best practices\n- **Don't delegate when:** Standard usage you're confident • Simple stable APIs • General programming knowledge • Info already in conversation • Built-in language features\n- **Rule of thumb:** \"How does this library work?\" → @librarian. \"How does programming work?\" → yourself."
+}

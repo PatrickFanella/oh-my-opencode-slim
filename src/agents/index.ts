@@ -15,9 +15,9 @@ import {
   SUBAGENT_NAMES,
 } from '../config';
 import { getAgentMcpList } from '../config/agent-mcps';
-
 import { createCouncilAgent } from './council';
 import { createCouncillorAgent } from './councillor';
+import { mergeCustomAgentDefinitions } from './custom-definitions';
 import { createDesignerAgent } from './designer';
 import { createExplorerAgent } from './explorer';
 import { createFixerAgent } from './fixer';
@@ -29,6 +29,7 @@ import {
   createOrchestratorAgent,
   resolvePrompt,
 } from './orchestrator';
+import { getBuiltinAgentManifest } from './registry';
 
 export type { AgentDefinition } from './orchestrator';
 
@@ -88,6 +89,14 @@ function applyOverrides(
   if (override.displayName) {
     agent.displayName = override.displayName;
   }
+}
+
+function applyManifestDefaults(agent: AgentDefinition): void {
+  const manifest = getBuiltinAgentManifest(agent.name);
+  if (!manifest) return;
+
+  agent.description = manifest.description;
+  agent.config.temperature = manifest.temperature;
 }
 
 function isKnownAgentName(name: string): boolean {
@@ -264,6 +273,7 @@ const SUBAGENT_FACTORIES: Record<SubagentName, AgentFactory> = {
  * @returns Array of agent definitions (orchestrator first, then subagents)
  */
 export function createAgents(config?: PluginConfig): AgentDefinition[] {
+  config = mergeCustomAgentDefinitions(config);
   const disabled = getDisabledAgents(config);
   if (!config?.council) {
     disabled.add('council');
@@ -339,6 +349,7 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
   // 2. Apply overrides and default permissions to built-in subagents
   const builtInSubAgents = protoSubAgents.map((agent) => {
     const override = getAgentOverride(config, agent.name);
+    applyManifestDefaults(agent);
     if (override) {
       applyOverrides(agent, override);
     }
@@ -389,6 +400,7 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
     orchestrator,
     resolveAgentSkills(config, 'orchestrator'),
   );
+  applyManifestDefaults(orchestrator);
   if (orchestratorOverride) {
     applyOverrides(orchestrator, orchestratorOverride);
   }
@@ -483,7 +495,8 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
 export function getAgentConfigs(
   config?: PluginConfig,
 ): Record<string, SDKAgentConfig> {
-  const agents = createAgents(config);
+  const effectiveConfig = mergeCustomAgentDefinitions(config);
+  const agents = createAgents(effectiveConfig);
 
   const applyClassification = (
     name: string,
@@ -522,7 +535,7 @@ export function getAgentConfigs(
     } = {
       ...a.config,
       description: a.description,
-      mcps: getAgentMcpList(a.name, config),
+      mcps: getAgentMcpList(a.name, effectiveConfig),
     };
 
     if (a.displayName) {

@@ -61,6 +61,7 @@
     "generate-schema": "bun run scripts/generate-schema.ts",
     "verify:release": "bun run scripts/verify-release-artifact.ts",
     "verify:host-smoke": "bun run scripts/verify-opencode-host-smoke.ts",
+    "bootstrap": "bun run src/cli/index.ts bootstrap",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "lint": "biome lint .",

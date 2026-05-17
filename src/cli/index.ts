@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 
 export { CUSTOM_SKILLS } from './custom-skills';
 
+import { bootstrap, parseBootstrapArgs } from './bootstrap';
 import { doctor, parseDoctorArgs } from './doctor';
 import { install } from './install';
 import { getGeneratedPresetNames, isGeneratedPresetName } from './providers';
@@ -47,6 +48,7 @@ oh-my-opencode-slim installer
 
 Usage:
   bunx oh-my-opencode-slim install [OPTIONS]
+  bunx oh-my-opencode-slim bootstrap [OPTIONS]
   bunx oh-my-opencode-slim doctor [OPTIONS]
 
 Options:
@@ -56,6 +58,16 @@ Options:
   --dry-run              Simulate install without writing files
   --reset                Force overwrite of existing configuration
   -h, --help             Show this help message
+
+Bootstrap options:
+  --with-dcp             Add @tarquinen/opencode-dcp@latest to OpenCode plugins
+  --with-quota           Add @slkiser/opencode-quota to OpenCode plugins
+  --yes, -y              Non-interactive bootstrap confirmation flag
+  --skip-opencode        Skip OpenCode install/update
+  --skip-build           Skip bun install and bun run build
+  --skip-shell-helper    Skip omos tmux helper install
+  --opencode-install-cmd=<cmd>
+                         Override OpenCode install/update command
 
 Doctor options:
   --json                 Print diagnostics as JSON
@@ -71,6 +83,7 @@ Examples:
   bunx oh-my-opencode-slim install --no-tui --skills=yes
   bunx oh-my-opencode-slim install --preset=opencode-go
   bunx oh-my-opencode-slim install --reset
+  bunx oh-my-opencode-slim bootstrap --with-dcp --with-quota
   bunx oh-my-opencode-slim doctor
 `);
 }
@@ -82,6 +95,14 @@ async function main(): Promise<void> {
     const hasSubcommand = args[0] === 'install';
     const installArgs = parseArgs(args.slice(hasSubcommand ? 1 : 0));
     const exitCode = await install(installArgs);
+    process.exit(exitCode);
+  } else if (args[0] === 'bootstrap') {
+    if (args[1] === '-h' || args[1] === '--help') {
+      printHelp();
+      process.exit(0);
+    }
+    const bootstrapArgs = parseBootstrapArgs(args.slice(1));
+    const exitCode = await bootstrap(bootstrapArgs);
     process.exit(exitCode);
   } else if (args[0] === 'doctor') {
     const doctorArgs = parseDoctorArgs(args.slice(1));

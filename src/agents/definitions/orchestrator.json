@@ -1,0 +1,32 @@
+{
+  "name": "orchestrator",
+  "kind": "built-in",
+  "protected": true,
+  "enabledByDefault": true,
+  "mode": "primary",
+  "description": "Master delegator and strategic coordinator",
+  "defaultModel": null,
+  "temperature": 0.2,
+  "skills": [
+    "codemap",
+    "clonedeps",
+    "requirements-interview",
+    "customize-opencode",
+    "cartography",
+    "dependency-upgrade",
+    "changelog-automation",
+    "observe-and-tune",
+    "parallel-feature-development",
+    "team-composition-patterns",
+    "team-communication-protocols",
+    "triage",
+    "setup-matt-pocock-skills",
+    "skill-creator",
+    "skills-cli",
+    "mcp-builder",
+    "opensource-guide-coach",
+    "good-thinking",
+    "hads"
+  ],
+  "mcps": ["websearch", "grep_app"]
+}

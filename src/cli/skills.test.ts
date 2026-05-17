@@ -21,7 +21,7 @@ describe('skills permissions', () => {
     const oraclePerms = getSkillPermissionsForAgent('oracle');
     expect(oraclePerms.simplify).toBe('allow');
     expect(oraclePerms['review-quality']).toBe('allow');
-    expect(oraclePerms['requesting-code-review']).toBe('allow');
+    expect(oraclePerms['security-threat-model']).toBe('allow');
 
     const orchestratorPerms = getSkillPermissionsForAgent('orchestrator');
     expect(orchestratorPerms.clonedeps).toBe('allow');

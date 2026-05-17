@@ -1,4 +1,5 @@
 import type { AgentConfig } from '@opencode-ai/sdk/v2';
+import { getOrchestratorAgentPrompts } from './registry';
 
 export interface AgentDefinition {
   name: string;
@@ -25,72 +26,7 @@ export function resolvePrompt(
 }
 
 // Agent descriptions for the orchestrator prompt
-const AGENT_DESCRIPTIONS: Record<string, string> = {
-  explorer: `@explorer
-- Role: Parallel search specialist for discovering unknowns across the codebase
-- Permissions: Read files
-- Stats: 2x faster codebase search than orchestrator, 1/2 cost of orchestrator
-- Capabilities: Glob, grep, AST queries to locate files, symbols, patterns
-- **Delegate when:** Need to discover what exists before planning • Parallel searches speed discovery • Need summarized map vs full contents • Broad/uncertain scope
-- **Don't delegate when:** Know the path and need actual content • Need full file anyway • Single specific lookup • About to edit the file`,
-
-  librarian: `@librarian
-- Role: Authoritative source for current library docs and API references
-- Permissions: External docs/search MCPs; no file edits
-- Stats: 10x better finding up-to-date library docs than orchestrator, 1/2 cost of orchestrator
-- Capabilities: Fetches latest official docs, examples, API signatures, version-specific behavior via grep_app MCP
-- **Delegate when:** Libraries with frequent API changes (React, Next.js, AI SDKs) • Complex APIs needing official examples (ORMs, auth) • Version-specific behavior matters • Unfamiliar library • Edge cases or advanced features • Nuanced best practices
-- **Don't delegate when:** Standard usage you're confident • Simple stable APIs • General programming knowledge • Info already in conversation • Built-in language features
-- **Rule of thumb:** "How does this library work?" → @librarian. "How does programming work?" → yourself.`,
-
-  oracle: `@oracle
-- Role: Strategic advisor for high-stakes decisions and persistent problems, code reviewer
-- Permissions: Read files
-- Stats: 5x better decision maker, problem solver, investigator than orchestrator, 0.8x speed of orchestrator, same cost.
-- Capabilities: Deep architectural reasoning, system-level trade-offs, complex debugging, code review, simplification, maintainability review
-- **Delegate when:** Major architectural decisions with long-term impact • Problems persisting after 2+ fix attempts • High-risk multi-system refactors • Costly trade-offs (performance vs maintainability) • Complex debugging with unclear root cause • Security/scalability/data integrity decisions • Genuinely uncertain and cost of wrong choice is high • When a workflow calls for a **reviewer** subagent • Code needs simplification or YAGNI scrutiny
-- **Don't delegate when:** Routine decisions you're confident about • First bug fix attempt • Straightforward trade-offs • Tactical "how" vs strategic "should" • Time-sensitive good-enough decisions • Quick research/testing can answer
-- **Rule of thumb:** Need senior architect review? → @oracle. Need code review or simplification? → @oracle. Just do it and PR? → yourself.`,
-
-  designer: `@designer
-- Role: UI/UX specialist for intentional, polished experiences
-- Permissions: Read/write files
-- Stats: 10x better UI/UX than orchestrator
-- Capabilities: Visual relevant edits, interactions, responsive layouts, design systems with aesthetic intent, deep UI/UX knowledge.
-- **Delegate when:** User-facing interfaces needing polish • Responsive layouts • UX-critical components (forms, nav, dashboards) • Visual consistency systems • Animations/micro-interactions • Landing/marketing pages • Refining functional→delightful • Reviewing existing UI/UX quality
-- **Don't delegate when:** Backend/logic with no visual • Quick prototypes where design doesn't matter yet
-- **Rule of thumb:** Users see it and polish matters? → @designer. Headless/functional? → yourself.`,
-
-  fixer: `@fixer
-- Role: Fast execution specialist for well-defined tasks, which empowers orchestrator with parallel, speedy executions
-- Permissions: Read/write files
-- Stats: 2x faster code edits, 1/2 cost of orchestrator, 0.8x quality of orchestrator
-- Tools/Constraints: Execution-focused—no research, no architectural decisions
-- **Delegate when:** For implementation work, think and triage first. If the change is non-trivial or multi-file, hand bounded execution to @fixer • Writing or updating tests • Tasks that touch test files, fixtures, mocks, or test helpers. Parallelization benefits: Task involves multiple folders and multiple files modification, scoping work per folder and spawning parallel @fixers for each folder.
-- **Don't delegate when:** Needs discovery/research/decisions • Single small change (<20 lines, one file) • Unclear requirements needing iteration • Explaining to fixer > doing • Tight integration with your current work • Sequential dependencies
-- **Rule of thumb:** Explaining > doing? → yourself. Test file modifications and bounded implementation work usually go to @fixer. Bigger or lots of edits, splitting makes sense, parallelized by spawning @fixers per certain scope.`,
-
-  council: `@council
-- Role: Multi-LLM consensus engine that runs several councillors, synthesizes their views, and returns a structured council report.
-- Permissions: Read files
-- Stats: 3x slower than orchestrator, 3x or more cost of orchestrator
-- Capabilities: Runs multiple models in parallel, compares their answers, resolves disagreements, and produces a final synthesized answer plus councillor details and consensus summary.
-- **Delegate when:** Critical decisions need multiple independent perspectives • High-stakes architectural/security/data-integrity choices • Ambiguous problems where disagreement is useful signal • You want confidence beyond a single model • The user explicitly asks for council/consensus/multiple opinions.
-- **Don't delegate when:** Straightforward tasks you're confident about • Speed matters more than confidence • Routine implementation/debugging • A single specialist is clearly the right tool • You only need current docs/search/code review rather than multi-model consensus.
-- **How to call:** Send the full question/task and relevant context. Be explicit about what decision, trade-off, or answer the council should resolve. Do not ask council to do routine code edits.
-- **Result handling:** Council returns a structured response that may include: synthesized Council Response, individual Councillor Details, and Council Summary/confidence. Preserve that structure when the user asked for council output. Do not pretend the council only returned a final answer. If you need to act on the council result, first briefly state the council's recommendation, then proceed.
-- **Rule of thumb:** Need second/third opinions from different models? → @council. Need one expert agent or direct execution? → use the specialist or yourself.`,
-
-  observer: `@observer
-- Role: Visual analysis specialist for images, PDFs, and diagrams
-- Permissions: Read files
-- Stats: Saves main context tokens — Observer processes raw files, returns structured observations
-- Capabilities: Interprets images, screenshots, PDFs, and diagrams via native read tool; extracts UI elements, layouts, text, relationships
-- **Delegate when:** Need to analyze a multimedia file• Extract information
-- **Don't delegate when:** Plain text files that Read can handle directly • Files that need editing afterward (need literal content from Read)
-- **Rule of thumb:** Even if your model supports vision, delegate visual analysis to @observer — it isolates large image/PDF bytes from your context window, returning only concise structured text. Need exact file contents for editing? → Read it yourself.
-- **IMPORTANT:** When delegating to @observer, always include the **full file path** in the prompt so it can read the file. Example: "Analyze the screenshot at /path/to/file.png — describe the UI elements and error messages."`,
-};
+const AGENT_DESCRIPTIONS = getOrchestratorAgentPrompts();
 
 // Validation routing lines that reference agents
 const VALIDATION_ROUTING = [
