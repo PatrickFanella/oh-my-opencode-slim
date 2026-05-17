@@ -13,7 +13,8 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 
-**Context:** If working in an isolated worktree, it should have been created via the `superpowers:using-git-worktrees` skill at execution time.
+**Context:** If working in an isolated worktree, use `git-advanced-workflows`
+guidance for worktree setup and branch hygiene at execution time.
 
 **Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)
@@ -49,7 +50,12 @@ This structure informs the task decomposition. Each task should produce self-con
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Execute this plan task-by-task. Recommended path:
+> dispatch a fresh subagent per task, review each result with `review-quality`,
+> then continue. For complex multi-agent splits, use
+> `parallel-feature-development`, `team-composition-patterns`, and
+> `team-communication-protocols`. Steps use checkbox (`- [ ]`) syntax for
+> tracking.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -139,14 +145,17 @@ After saving the plan, offer execution choice:
 
 **1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 
-**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+**2. Inline Execution** - Execute tasks in this session with `todowrite` checkpoints and review after each batch
 
 **Which approach?"**
 
 **If Subagent-Driven chosen:**
-- **REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development
-- Fresh subagent per task + two-stage review
+- Use a fresh `task` subagent per task.
+- Review each completed task with `review-quality` before continuing.
+- For multi-stream work, use `parallel-feature-development`,
+  `team-composition-patterns`, and `team-communication-protocols` to define
+  ownership and integration points.
 
 **If Inline Execution chosen:**
-- **REQUIRED SUB-SKILL:** Use superpowers:executing-plans
-- Batch execution with checkpoints for review
+- Track plan steps with `todowrite`.
+- Execute in small batches with checkpoints for review.

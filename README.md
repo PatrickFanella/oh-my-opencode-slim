@@ -27,7 +27,7 @@ Copy and paste this prompt to your LLM agent (Claude Code, AmpCode, Cursor, etc.
 
 
 ```
-Install and configure oh-my-opencode-slim: https://raw.githubusercontent.com/alvinunreal/oh-my-opencode-slim/refs/heads/master/README.md
+Install and configure oh-my-opencode-slim: https://raw.githubusercontent.com/patrickfanella/oh-my-opencode-slim/refs/heads/master/README.md
 ```
 
 
@@ -35,6 +35,16 @@ Install and configure oh-my-opencode-slim: https://raw.githubusercontent.com/alv
 
 ```bash
 bunx oh-my-opencode-slim@latest install
+```
+
+For a full clone-based bootstrap that backs up OpenCode config, installs or
+updates OpenCode, builds this repo, configures OMOC, optionally adds DCP/quota,
+and installs the tmux helper:
+
+```bash
+git clone https://github.com/patrickfanella/oh-my-opencode-slim.git
+cd oh-my-opencode-slim
+bun run bootstrap --yes --with-dcp --with-quota
 ```
 
 The installer also registers the companion TUI plugin in OpenCode's
@@ -79,7 +89,7 @@ The default generated configuration includes both `openai` and `opencode-go` pre
     "global": ["summarization", "systematic-debugging", "github-pro", "deep-research", "review-quality", "writing-plans", "session-handoff"],
     "agents": {
       "orchestrator": ["codemap", "clonedeps", "requirements-interview", "customize-opencode", "cartography"],
-      "oracle": ["requesting-code-review", "improve-codebase-architecture", "security-threat-model"],
+      "oracle": ["review-quality", "improve-codebase-architecture", "security-threat-model"],
       "librarian": ["web-search", "openai-docs", "fact-check"],
       "explorer": ["cartography", "fact-check", "security-ownership-map"],
       "designer": ["frontend-design", "react-pro", "webapp-testing", "agent-browser", "wcag-audit-patterns"],

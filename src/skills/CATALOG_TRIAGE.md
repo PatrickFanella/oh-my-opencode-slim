@@ -86,7 +86,10 @@ Likely duplicate repo mapping. Pick canonical name, fold in useful content, then
 
 ### Execution/orchestration cluster
 
-`workflow-execute-plans`, `executing-plans`, `sdd-apply`, `workflow-feature-shipper`, `parallel-feature-development`, `team-*`, and `parallel-agents` overlap around execution. Preserve SDD-specific flows only if OpenSpec artifacts are active.
+`parallel-feature-development`, `team-*`, and task-by-task execution from
+`writing-plans` overlap around execution. Old Superpowers names such as
+`executing-plans` and `subagent-driven-development` should stay out of active
+profiles unless their workflows are restored as first-class OMOC skills.
 
 ### Tool vs workflow boundary
 

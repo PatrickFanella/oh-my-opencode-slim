@@ -1,0 +1,415 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { basename, join } from 'node:path';
+import { crossSpawn } from '../utils/compat';
+import { parseConfig, writeConfig } from './config-io';
+import { install } from './install';
+import {
+  ensureOpenCodeConfigDir,
+  getConfigDir,
+  getExistingConfigPath,
+  getExistingLiteConfigPath,
+  getExistingTuiConfigPath,
+} from './paths';
+import { isOpenCodeInstalled, isTmuxInstalled } from './system';
+import type { BooleanArg, InstallArgs, OpenCodeConfig } from './types';
+
+const GREEN = '\x1b[32m';
+const BLUE = '\x1b[34m';
+const RED = '\x1b[31m';
+const BOLD = '\x1b[1m';
+const DIM = '\x1b[2m';
+const RESET = '\x1b[0m';
+
+const OPTIONAL_PLUGINS = {
+  dcp: '@tarquinen/opencode-dcp@latest',
+  quota: '@slkiser/opencode-quota',
+} as const;
+
+const OPENCODE_INSTALL_COMMAND =
+  'curl -fsSL https://opencode.ai/install | bash';
+const HELPER_START = '# >>> oh-my-opencode-slim tmux helper >>>';
+const HELPER_END = '# <<< oh-my-opencode-slim tmux helper <<<';
+
+export interface BootstrapArgs {
+  dryRun?: boolean;
+  yes?: boolean;
+  reset?: boolean;
+  skills?: BooleanArg;
+  preset?: string;
+  skipOpencode?: boolean;
+  skipBuild?: boolean;
+  skipShellHelper?: boolean;
+  withDcp?: boolean;
+  withQuota?: boolean;
+  opencodeInstallCommand?: string;
+}
+
+interface StepResult {
+  ok: boolean;
+  message: string;
+}
+
+export function parseBootstrapArgs(args: string[]): BootstrapArgs {
+  const result: BootstrapArgs = { skills: 'yes' };
+
+  for (const arg of args) {
+    if (arg === '--dry-run') result.dryRun = true;
+    else if (arg === '--yes' || arg === '-y') result.yes = true;
+    else if (arg === '--reset') result.reset = true;
+    else if (arg === '--skip-opencode') result.skipOpencode = true;
+    else if (arg === '--skip-build') result.skipBuild = true;
+    else if (arg === '--skip-shell-helper') result.skipShellHelper = true;
+    else if (arg === '--with-dcp') result.withDcp = true;
+    else if (arg === '--with-quota') result.withQuota = true;
+    else if (arg === '--no-dcp') result.withDcp = false;
+    else if (arg === '--no-quota') result.withQuota = false;
+    else if (arg.startsWith('--skills=')) {
+      result.skills = arg.split('=')[1] as BooleanArg;
+    } else if (arg.startsWith('--preset=')) {
+      result.preset = arg.split('=')[1];
+    } else if (arg.startsWith('--opencode-install-cmd=')) {
+      result.opencodeInstallCommand = arg.slice(
+        '--opencode-install-cmd='.length,
+      );
+    } else {
+      throw new Error(`Unknown bootstrap option: ${arg}`);
+    }
+  }
+
+  return result;
+}
+
+function printHeader(): void {
+  console.log();
+  console.log(`${BOLD}OMOC Bootstrap${RESET}`);
+  console.log(
+    `${DIM}Fully automated OpenCode + oh-my-opencode-slim setup${RESET}`,
+  );
+  console.log();
+}
+
+function renderStep(index: number, total: number, title: string): void {
+  console.log(`${DIM}[${index}/${total}]${RESET} ${BOLD}${title}${RESET}`);
+}
+
+function renderResult(result: StepResult): void {
+  const icon = result.ok ? `${GREEN}[ok]${RESET}` : `${RED}[x]${RESET}`;
+  console.log(`  ${icon} ${result.message}`);
+}
+
+function renderInfo(message: string): void {
+  console.log(`  ${BLUE}[i]${RESET} ${message}`);
+}
+
+function timestamp(): string {
+  return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+async function backupIfExists(
+  sourcePath: string,
+  backupDir: string,
+): Promise<boolean> {
+  if (!existsSync(sourcePath)) return false;
+  mkdirSync(backupDir, { recursive: true });
+  await copyFile(sourcePath, join(backupDir, basename(sourcePath)));
+  return true;
+}
+
+export async function backupOpenCodeConfig(
+  dryRun = false,
+): Promise<StepResult> {
+  const configDir = getConfigDir();
+  const backupDir = join(configDir, 'backups', `omoc-bootstrap-${timestamp()}`);
+  const targets = [
+    getExistingConfigPath(),
+    getExistingTuiConfigPath(),
+    getExistingLiteConfigPath(),
+    join(configDir, 'dcp.jsonc'),
+    join(configDir, 'dcp.json'),
+  ];
+
+  if (!existsSync(configDir)) {
+    return { ok: true, message: 'No existing OpenCode config directory found' };
+  }
+
+  if (dryRun) {
+    return { ok: true, message: `Would back up config files to ${backupDir}` };
+  }
+
+  let count = 0;
+  for (const target of Array.from(new Set(targets))) {
+    if (await backupIfExists(target, backupDir)) count += 1;
+  }
+
+  return count > 0
+    ? { ok: true, message: `Backed up ${count} config files to ${backupDir}` }
+    : {
+        ok: true,
+        message: 'Config directory exists; no known config files found',
+      };
+}
+
+async function runCommand(
+  command: string,
+  dryRun = false,
+): Promise<StepResult> {
+  if (dryRun) return { ok: true, message: `Would run: ${command}` };
+
+  const proc = crossSpawn(['bash', '-lc', command], {
+    stdout: 'inherit',
+    stderr: 'inherit',
+  });
+  await proc.exited;
+  return proc.exitCode === 0
+    ? { ok: true, message: command }
+    : { ok: false, message: `${command} exited with code ${proc.exitCode}` };
+}
+
+async function ensureOpenCode(args: BootstrapArgs): Promise<StepResult> {
+  if (args.skipOpencode) {
+    return { ok: true, message: 'Skipped OpenCode install/update' };
+  }
+
+  const installed = await isOpenCodeInstalled();
+  renderInfo(installed ? 'Updating OpenCode' : 'Installing OpenCode');
+  return runCommand(
+    args.opencodeInstallCommand ?? OPENCODE_INSTALL_COMMAND,
+    args.dryRun,
+  );
+}
+
+async function ensureRepoBuild(args: BootstrapArgs): Promise<StepResult> {
+  if (args.skipBuild) return { ok: true, message: 'Skipped repository build' };
+
+  const installResult = await runCommand(
+    'bun install --yes --ignore-scripts',
+    args.dryRun,
+  );
+  if (!installResult.ok) return installResult;
+  return runCommand('bun run build', args.dryRun);
+}
+
+function getPluginSpec(entry: unknown): string | undefined {
+  if (typeof entry === 'string') return entry;
+  if (Array.isArray(entry) && typeof entry[0] === 'string') return entry[0];
+  return undefined;
+}
+
+export function addPluginsToConfig(
+  config: OpenCodeConfig,
+  pluginSpecs: readonly string[],
+): OpenCodeConfig {
+  const plugins = Array.isArray(config.plugin) ? [...config.plugin] : [];
+  const existing = new Set(plugins.map(getPluginSpec).filter(Boolean));
+
+  for (const pluginSpec of pluginSpecs) {
+    if (!existing.has(pluginSpec)) {
+      plugins.push(pluginSpec);
+      existing.add(pluginSpec);
+    }
+  }
+
+  return { ...config, plugin: plugins };
+}
+
+async function installOptionalPlugins(
+  args: BootstrapArgs,
+): Promise<StepResult> {
+  const pluginSpecs: string[] = [];
+  if (args.withDcp) pluginSpecs.push(OPTIONAL_PLUGINS.dcp);
+  if (args.withQuota) pluginSpecs.push(OPTIONAL_PLUGINS.quota);
+
+  if (pluginSpecs.length === 0) {
+    return { ok: true, message: 'No optional plugins selected' };
+  }
+
+  const configPath = getExistingConfigPath();
+  if (args.dryRun) {
+    return {
+      ok: true,
+      message: `Would add plugins to ${configPath}: ${pluginSpecs.join(', ')}`,
+    };
+  }
+
+  ensureOpenCodeConfigDir();
+  const { config, error } = parseConfig(configPath);
+  if (error) {
+    return { ok: false, message: `Failed to parse ${configPath}: ${error}` };
+  }
+
+  writeConfig(configPath, addPluginsToConfig(config ?? {}, pluginSpecs));
+  return {
+    ok: true,
+    message: `Added optional plugins: ${pluginSpecs.join(', ')}`,
+  };
+}
+
+export function tmuxHelperBlock(): string {
+  return `${HELPER_START}
+omos() {
+  local port
+  if command -v shuf >/dev/null 2>&1; then
+    port="$(shuf -i 49152-65535 -n 1)"
+  elif command -v jot >/dev/null 2>&1; then
+    port="$(jot -r 1 49152 65535)"
+  else
+    port="$((49152 + RANDOM % 16384))"
+  fi
+  OPENCODE_PORT="$port" opencode --port "$port" "$@"
+}
+${HELPER_END}`;
+}
+
+export function upsertManagedBlock(content: string, block: string): string {
+  const startIndex = content.indexOf(HELPER_START);
+  const endIndex = content.indexOf(HELPER_END);
+
+  if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+    const afterEnd = endIndex + HELPER_END.length;
+    return `${content.slice(0, startIndex).trimEnd()}\n\n${block}\n${content
+      .slice(afterEnd)
+      .trimStart()}`;
+  }
+
+  return `${content.trimEnd()}\n\n${block}\n`;
+}
+
+function shellRcCandidates(): string[] {
+  const home = homedir();
+  const bashrc = join(home, '.bashrc');
+  const zshrc = join(home, '.zshrc');
+  const shell = process.env.SHELL ?? '';
+
+  if (shell.endsWith('/bash')) return [bashrc, zshrc];
+  return [zshrc, bashrc];
+}
+
+async function installShellHelper(args: BootstrapArgs): Promise<StepResult> {
+  if (args.skipShellHelper) {
+    return { ok: true, message: 'Skipped tmux shell helper' };
+  }
+
+  const candidates = shellRcCandidates();
+  const existing = candidates.filter((path) => existsSync(path));
+  const targets = existing.length > 0 ? existing : [candidates[0]];
+
+  if (args.dryRun) {
+    return {
+      ok: true,
+      message: `Would install omos helper in ${targets.join(', ')}`,
+    };
+  }
+
+  for (const target of targets) {
+    const content = existsSync(target) ? readFileSync(target, 'utf-8') : '';
+    writeFileSync(target, upsertManagedBlock(content, tmuxHelperBlock()));
+  }
+
+  return {
+    ok: true,
+    message: `Installed omos helper in ${targets.join(', ')}`,
+  };
+}
+
+async function runOmocInstall(args: BootstrapArgs): Promise<StepResult> {
+  if (args.dryRun) return { ok: true, message: 'Would run OMOC installer' };
+
+  const installArgs: InstallArgs = {
+    tui: false,
+    skills: args.skills ?? 'yes',
+    preset: args.preset,
+    reset: args.reset,
+  };
+
+  const exitCode = await install(installArgs);
+  return exitCode === 0
+    ? { ok: true, message: 'OMOC installer completed' }
+    : { ok: false, message: `OMOC installer exited with code ${exitCode}` };
+}
+
+function printSummary(): void {
+  console.log();
+  console.log(`${BOLD}${GREEN}Bootstrap complete${RESET}`);
+  console.log();
+  console.log(`${BOLD}Next:${RESET}`);
+  console.log(`  ${BLUE}opencode auth login${RESET}`);
+  console.log(`  ${BLUE}opencode models --refresh${RESET}`);
+  console.log(
+    `  ${BLUE}omos${RESET} ${DIM}# tmux-friendly OpenCode launcher${RESET}`,
+  );
+  console.log();
+}
+
+async function step(
+  index: number,
+  total: number,
+  title: string,
+  fn: () => Promise<StepResult>,
+): Promise<boolean> {
+  renderStep(index, total, title);
+  const result = await fn();
+  renderResult(result);
+  console.log();
+  return result.ok;
+}
+
+export async function bootstrap(args: BootstrapArgs): Promise<number> {
+  printHeader();
+
+  const total = 7;
+  let index = 1;
+
+  if (
+    !(await step(index++, total, 'Back up OpenCode config', () =>
+      backupOpenCodeConfig(args.dryRun),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Check tmux', async () => {
+      const installed = await isTmuxInstalled();
+      return installed
+        ? { ok: true, message: 'tmux detected' }
+        : {
+            ok: true,
+            message: 'tmux not found; install it for live agent panes',
+          };
+    }))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install or update OpenCode', () =>
+      ensureOpenCode(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install dependencies and build repo', () =>
+      ensureRepoBuild(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install oh-my-opencode-slim', () =>
+      runOmocInstall(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install optional OpenCode plugins', () =>
+      installOptionalPlugins(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install tmux shell helper', () =>
+      installShellHelper(args),
+    ))
+  )
+    return 1;
+
+  printSummary();
+  return 0;
+}

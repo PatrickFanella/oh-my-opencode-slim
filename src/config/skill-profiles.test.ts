@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { CUSTOM_SKILLS } from '../cli/custom-skills';
 import {
+  DEFAULT_AGENT_SKILL_PROFILES,
+  DEFAULT_GLOBAL_SKILLS,
   getDefaultSkillProfileForAgent,
   resolveAgentSkills,
 } from './skill-profiles';
@@ -21,7 +26,7 @@ describe('skill profiles', () => {
       'wcag-audit-patterns',
     );
     expect(getDefaultSkillProfileForAgent('oracle')).toContain(
-      'requesting-code-review',
+      'review-quality',
     );
     expect(getDefaultSkillProfileForAgent('oracle')).toContain(
       'security-threat-model',
@@ -93,5 +98,26 @@ describe('skill profiles', () => {
         'councillor',
       ),
     ).toEqual(['summarization']);
+  });
+
+  test('default profiles do not reference removed skills', () => {
+    const skillIndex = JSON.parse(
+      readFileSync(join(process.cwd(), 'src/skills/index.json'), 'utf-8'),
+    ) as { skills: Array<{ name: string }> };
+    const knownSkills = new Set([
+      ...skillIndex.skills.map((skill) => skill.name),
+      ...CUSTOM_SKILLS.map((skill) => skill.name),
+      'customize-opencode',
+    ]);
+    const defaultSkills = [
+      ...DEFAULT_GLOBAL_SKILLS,
+      ...Object.values(DEFAULT_AGENT_SKILL_PROFILES).flat(),
+    ];
+
+    const missingSkills = defaultSkills.filter(
+      (skill) => !knownSkills.has(skill),
+    );
+
+    expect(missingSkills).toEqual([]);
   });
 });

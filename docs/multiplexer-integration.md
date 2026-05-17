@@ -35,9 +35,14 @@ If you open multiple OpenCode sessions, use a random high port for each launch i
 ```bash
 omos() {
   local port
-  port=$(jot -r 1 49152 65535)
-  OPENCODE_PORT="$port" \
-  opencode --port "$port" "$@"
+  if command -v shuf >/dev/null 2>&1; then
+    port="$(shuf -i 49152-65535 -n 1)"
+  elif command -v jot >/dev/null 2>&1; then
+    port="$(jot -r 1 49152 65535)"
+  else
+    port="$((49152 + RANDOM % 16384))"
+  fi
+  OPENCODE_PORT="$port" opencode --port "$port" "$@"
 }
 ```
 

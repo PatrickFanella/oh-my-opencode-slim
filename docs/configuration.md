@@ -306,6 +306,39 @@ Toolkit flags are opt-in and default to `false`:
 | `interview.port` | integer | `0` | Interview server port (0–65535). `0` = OS-assigned random port (per-session mode). Any value > 0 enables [dashboard mode](interview.md#dashboard-mode) |
 | `interview.dashboard` | boolean | `false` | Enable [dashboard mode](interview.md#dashboard-mode) on the default port (43211). Setting `port` > 0 also enables dashboard mode. If both are set, `port` takes precedence |
 
+### Agent definition files
+
+OMOC has a central bundled agent registry under `src/agents/definitions/`.
+Each core agent has one JSON manifest for default model, description,
+temperature, skills, MCPs, enabled/protected flags, and the compact routing
+prompt shown to Orchestrator.
+
+You can add local custom agents without editing the main config by placing JSON
+files in:
+
+```text
+~/.config/opencode/oh-my-opencode-slim/agents/*.json
+```
+
+Example:
+
+```json
+{
+  "name": "researcher",
+  "model": "openai/gpt-5.4-mini",
+  "prompt": "You are a custom research specialist.",
+  "orchestratorPrompt": "@researcher\n- Role: JSON-defined research agent",
+  "skills": ["web-search"],
+  "mcps": ["websearch"]
+}
+```
+
+Fields mirror `agents.<name>` config: `model`, `variant`, `temperature`,
+`skills`, `mcps`, `prompt`, `orchestratorPrompt`, `options`, and
+`displayName`. Main `oh-my-opencode-slim.json` values win if both define the
+same agent. Built-in protected agents such as `orchestrator` and `councillor`
+still always exist.
+
 ### Council configuration note
 
 - The **Council agent model** is configured like any other agent, for example in

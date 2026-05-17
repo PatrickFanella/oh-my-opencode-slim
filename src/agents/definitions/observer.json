@@ -1,0 +1,13 @@
+{
+  "name": "observer",
+  "kind": "built-in",
+  "protected": false,
+  "enabledByDefault": false,
+  "mode": "subagent",
+  "description": "Visual analysis. Use for interpreting images, screenshots, PDFs, and diagrams — extracts structured observations without loading raw files into main context. Requires a vision-capable model.",
+  "defaultModel": "openai/gpt-5.4-mini",
+  "temperature": 0.1,
+  "skills": [],
+  "mcps": [],
+  "orchestratorPrompt": "@observer\n- Role: Visual analysis specialist for images, PDFs, and diagrams\n- Permissions: Read files\n- Stats: Saves main context tokens — Observer processes raw files, returns structured observations\n- Capabilities: Interprets images, screenshots, PDFs, and diagrams via native read tool; extracts UI elements, layouts, text, relationships\n- **Delegate when:** Need to analyze a multimedia file• Extract information\n- **Don't delegate when:** Plain text files that Read can handle directly • Files that need editing afterward (need literal content from Read)\n- **Rule of thumb:** Even if your model supports vision, delegate visual analysis to @observer — it isolates large image/PDF bytes from your context window, returning only concise structured text. Need exact file contents for editing? → Read it yourself.\n- **IMPORTANT:** When delegating to @observer, always include the **full file path** in the prompt so it can read the file. Example: \"Analyze the screenshot at /path/to/file.png — describe the UI elements and error messages.\""
+}

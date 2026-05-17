@@ -27,6 +27,41 @@ Or use non-interactive mode:
 bunx oh-my-opencode-slim@latest install --no-tui --skills=yes
 ```
 
+### Clone-Based Bootstrap
+
+For a full machine bootstrap from a cloned checkout:
+
+```bash
+git clone https://github.com/patrickfanella/oh-my-opencode-slim.git
+cd oh-my-opencode-slim
+bun run bootstrap --yes --with-dcp --with-quota
+```
+
+The bootstrap command:
+
+- backs up existing OpenCode config files under
+  `~/.config/opencode/backups/omoc-bootstrap-*`
+- checks for `tmux`
+- installs or updates OpenCode with `curl -fsSL https://opencode.ai/install | bash`
+- runs `bun install --yes` and `bun run build`
+- runs the OMOC installer from the local checkout
+- optionally adds `@tarquinen/opencode-dcp@latest` and
+  `@slkiser/opencode-quota` to OpenCode's plugin list
+- inserts a managed `omos` helper into `.zshrc`/`.bashrc` for launching
+  OpenCode with a random `OPENCODE_PORT` for tmux panes
+
+Useful bootstrap flags:
+
+| Option | Description |
+|--------|-------------|
+| `--with-dcp` | Add `@tarquinen/opencode-dcp@latest` |
+| `--with-quota` | Add `@slkiser/opencode-quota` |
+| `--skip-opencode` | Do not run the OpenCode install/update command |
+| `--skip-build` | Do not run `bun install --yes` or `bun run build` |
+| `--skip-shell-helper` | Do not modify `.zshrc`/`.bashrc` |
+| `--opencode-install-cmd=<cmd>` | Override the OpenCode install/update command |
+| `--dry-run` | Show intended actions without writing files |
+
 ### Configuration Options
 
 The installer supports the following options:
@@ -106,7 +141,7 @@ Paste this into Claude Code, AmpCode, Cursor, or any coding agent:
 
 ```
 Install and configure by following the instructions here:
-https://raw.githubusercontent.com/alvinunreal/oh-my-opencode-slim/refs/heads/master/README.md
+https://raw.githubusercontent.com/patrickfanella/oh-my-opencode-slim/refs/heads/master/README.md
 ```
 
 ---

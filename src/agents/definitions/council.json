@@ -1,0 +1,28 @@
+{
+  "name": "council",
+  "kind": "built-in",
+  "protected": false,
+  "enabledByDefault": true,
+  "mode": "subagent",
+  "description": "Multi-LLM council agent that synthesizes responses from multiple models for higher-quality outputs",
+  "defaultModel": "openai/gpt-5.4-mini",
+  "temperature": 0.1,
+  "skills": [
+    "good-thinking",
+    "multi-reviewer-patterns",
+    "blind-spot-detective",
+    "fact-check",
+    "competitive-landscape",
+    "marketing-psychology",
+    "data-storytelling",
+    "technology-impact",
+    "security-threat-model",
+    "architecture-patterns",
+    "improve-codebase-architecture",
+    "worldbuilding",
+    "story-sense",
+    "naming"
+  ],
+  "mcps": [],
+  "orchestratorPrompt": "@council\n- Role: Multi-LLM consensus engine that runs several councillors, synthesizes their views, and returns a structured council report.\n- Permissions: Read files\n- Stats: 3x slower than orchestrator, 3x or more cost of orchestrator\n- Capabilities: Runs multiple models in parallel, compares their answers, resolves disagreements, and produces a final synthesized answer plus councillor details and consensus summary.\n- **Delegate when:** Critical decisions need multiple independent perspectives • High-stakes architectural/security/data-integrity choices • Ambiguous problems where disagreement is useful signal • You want confidence beyond a single model • The user explicitly asks for council/consensus/multiple opinions.\n- **Don't delegate when:** Straightforward tasks you're confident about • Speed matters more than confidence • Routine implementation/debugging • A single specialist is clearly the right tool • You only need current docs/search/code review rather than multi-model consensus.\n- **How to call:** Send the full question/task and relevant context. Be explicit about what decision, trade-off, or answer the council should resolve. Do not ask council to do routine code edits.\n- **Result handling:** Council returns a structured response that may include: synthesized Council Response, individual Councillor Details, and Council Summary/confidence. Preserve that structure when the user asked for council output. Do not pretend the council only returned a final answer. If you need to act on the council result, first briefly state the council's recommendation, then proceed.\n- **Rule of thumb:** Need second/third opinions from different models? → @council. Need one expert agent or direct execution? → use the specialist or yourself."
+}

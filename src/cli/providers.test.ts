@@ -164,7 +164,7 @@ describe('providers', () => {
     expect(profiles.global).toContain('session-handoff');
     expect(profiles.agents.orchestrator).toContain('codemap');
     expect(profiles.agents.orchestrator).toContain('clonedeps');
-    expect(profiles.agents.oracle).toContain('requesting-code-review');
+    expect(profiles.agents.oracle).toContain('review-quality');
     expect(profiles.agents.oracle).toContain('security-threat-model');
     expect(profiles.agents.designer).toContain('agent-browser');
     expect(profiles.agents.designer).toContain('wcag-audit-patterns');
