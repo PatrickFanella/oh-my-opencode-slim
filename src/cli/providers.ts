@@ -102,22 +102,16 @@ export function generateLiteConfig(
     agentName: string,
     modelInfo: { model: string; variant?: string },
   ) => {
-    const isOrchestrator = agentName === 'orchestrator';
-
-    const skills = isOrchestrator
-      ? ['*']
-      : [
-          ...RECOMMENDED_SKILLS.filter(
-            (s) =>
-              s.allowedAgents.includes('*') ||
-              s.allowedAgents.includes(agentName),
-          ).map((s) => s.skillName),
-          ...CUSTOM_SKILLS.filter(
-            (s) =>
-              s.allowedAgents.includes('*') ||
-              s.allowedAgents.includes(agentName),
-          ).map((s) => s.name),
-        ];
+    const skills = [
+      ...RECOMMENDED_SKILLS.filter(
+        (s) =>
+          s.allowedAgents.includes('*') || s.allowedAgents.includes(agentName),
+      ).map((s) => s.skillName),
+      ...CUSTOM_SKILLS.filter(
+        (s) =>
+          s.allowedAgents.includes('*') || s.allowedAgents.includes(agentName),
+      ).map((s) => s.name),
+    ];
 
     if (agentName === 'designer' && !skills.includes('agent-browser')) {
       skills.push('agent-browser');

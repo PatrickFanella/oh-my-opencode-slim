@@ -236,15 +236,14 @@ describe('per-model variant in array config', () => {
 });
 
 describe('skill permissions', () => {
-  test('orchestrator gets command-style bundled skills allowed by default', () => {
+  test('orchestrator denies wildcard skills but allows default bundled skills', () => {
     const agents = createAgents();
     const orchestrator = agents.find((a) => a.name === 'orchestrator');
     expect(orchestrator).toBeDefined();
     const skillPerm = (
       orchestrator?.config.permission as Record<string, unknown>
     )?.skill as Record<string, string>;
-    // orchestrator gets wildcard allow (from RECOMMENDED_SKILLS wildcard entry)
-    expect(skillPerm?.['*']).toBe('allow');
+    expect(skillPerm?.['*']).toBe('deny');
     // CUSTOM_SKILLS loop must also add a named codemap entry for orchestrator
     expect(skillPerm?.codemap).toBe('allow');
     expect(skillPerm?.clonedeps).toBe('allow');

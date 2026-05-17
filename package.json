@@ -41,6 +41,10 @@
   "files": [
     "dist",
     "src/skills",
+    "scripts/generate_skill_index.py",
+    "scripts/validate-hub.sh",
+    "scripts/audit_skills.py",
+    "scripts/hub_doctor.py",
     "oh-my-opencode-slim.schema.json",
     "README.md",
     "LICENSE"

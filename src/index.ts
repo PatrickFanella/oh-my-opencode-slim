@@ -1329,6 +1329,8 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
 
 export default OhMyOpenCodeLite;
 
+export { CUSTOM_SKILLS } from './cli/custom-skills';
+
 export type {
   AgentName,
   AgentOverrideConfig,

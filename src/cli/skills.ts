@@ -117,22 +117,28 @@ export function getSkillPermissionsForAgent(
   agentName: string,
   skillList?: string[],
 ): Record<string, 'allow' | 'ask' | 'deny'> {
-  // Orchestrator gets all skills by default, others are restricted
+  // All agents start deny-by-default. Generated permissions then allow only
+  // explicitly recommended/bundled defaults unless user config provides an
+  // explicit skill list (including '*').
   const permissions: Record<string, 'allow' | 'ask' | 'deny'> = {
-    '*': agentName === 'orchestrator' ? 'allow' : 'deny',
+    '*': 'deny',
   };
 
   // If the user provided an explicit skill list (even empty), honor it
   if (skillList) {
     permissions['*'] = 'deny';
+    const deniedSkills = new Set<string>();
     for (const name of skillList) {
       if (name === '*') {
         permissions['*'] = 'allow';
       } else if (name.startsWith('!')) {
-        permissions[name.slice(1)] = 'deny';
+        deniedSkills.add(name.slice(1));
       } else {
         permissions[name] = 'allow';
       }
+    }
+    for (const name of deniedSkills) {
+      permissions[name] = 'deny';
     }
     return permissions;
   }

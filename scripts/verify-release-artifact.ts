@@ -10,7 +10,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -28,6 +28,10 @@ const packagedRequiredFiles = [
   'dist/index.js',
   'dist/index.d.ts',
   'dist/cli/index.js',
+  'scripts/generate_skill_index.py',
+  'scripts/validate-hub.sh',
+  'scripts/audit_skills.py',
+  'scripts/hub_doctor.py',
   'dist/divoom/council.gif',
   'dist/divoom/designer.gif',
   'dist/divoom/explorer.gif',
@@ -41,6 +45,14 @@ const packagedRequiredFiles = [
   'src/skills/simplify/SKILL.md',
   'src/skills/codemap/SKILL.md',
   'src/skills/clonedeps/SKILL.md',
+  'src/skills/language-js-ts/typescript-pro/SKILL.md',
+  'src/skills/tooling-integrations/caveman/SKILL.md',
+];
+
+const forbiddenPackagedPathPatterns = [
+  /(^|\/)__pycache__(\/|$)/,
+  /\.py[cod]$/,
+  /(^|\/)\.DS_Store$/,
 ];
 
 function fail(message: string): never {
@@ -131,6 +143,14 @@ function packArtifact() {
     }
   }
 
+  for (const filePath of packagedFiles) {
+    if (
+      forbiddenPackagedPathPatterns.some((pattern) => pattern.test(filePath))
+    ) {
+      fail(`npm pack artifact includes forbidden generated file: ${filePath}`);
+    }
+  }
+
   return path.join(repoRoot, tarball);
 }
 
@@ -174,13 +194,37 @@ function verifyFreshInstall(tarballPath: string) {
     }
 
     const smokeScript = [
-      "import pkg from 'oh-my-opencode-slim';",
+      "import pkg, { CUSTOM_SKILLS } from 'oh-my-opencode-slim';",
       "if (typeof pkg !== 'function') throw new Error('default export is not a function');",
+      "if (!CUSTOM_SKILLS.find((s) => s.name === 'typescript-pro')) throw new Error('root bundle missing migrated skill');",
+      "if (CUSTOM_SKILLS.find((s) => s.name === 'agent-browser')) throw new Error('root bundle should keep agent-browser external');",
       "console.log('package loads');",
       'process.exit(0);',
     ].join('\n');
     console.log('Importing installed package entrypoint...');
-    run('node', ['--input-type=module', '--eval', smokeScript], {
+    run('bun', ['--eval', smokeScript], {
+      cwd: installDir,
+    });
+
+    const cliEntryUrl = pathToFileURL(
+      path.join(
+        installDir,
+        'node_modules',
+        'oh-my-opencode-slim',
+        'dist',
+        'cli',
+        'index.js',
+      ),
+    ).href;
+    const cliSmokeScript = [
+      `import { CUSTOM_SKILLS } from ${JSON.stringify(cliEntryUrl)};`,
+      "if (!CUSTOM_SKILLS.find((s) => s.name === 'typescript-pro')) throw new Error('missing migrated skill');",
+      "if (CUSTOM_SKILLS.find((s) => s.name === 'agent-browser')) throw new Error('agent-browser should stay external');",
+      "console.log('custom skills: ' + CUSTOM_SKILLS.length);",
+      'process.exit(0);',
+    ].join('\n');
+    console.log('Importing installed CLI skill manifest...');
+    run('bun', ['--eval', cliSmokeScript], {
       cwd: installDir,
     });
   } finally {

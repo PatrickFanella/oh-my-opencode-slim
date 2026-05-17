@@ -113,7 +113,7 @@ describe('createFilterAvailableSkillsHook', () => {
     expect(resultText).not.toContain('<name>skill1</name>');
   });
 
-  test('preserves orchestrator default wildcard allow', async () => {
+  test('filters orchestrator by deny-by-default skill policy', async () => {
     const hook = createFilterAvailableSkillsHook(mockCtx, {});
     const output = {
       messages: [
@@ -133,8 +133,9 @@ describe('createFilterAvailableSkillsHook', () => {
     await hook['experimental.chat.messages.transform']({}, output);
 
     const resultText = output.messages[0].parts[0].text;
-    expect(resultText).toContain('<name>skill1</name>');
-    expect(resultText).toContain('<name>skill2</name>');
+    expect(resultText).toContain('No skills available.');
+    expect(resultText).not.toContain('<name>skill1</name>');
+    expect(resultText).not.toContain('<name>skill2</name>');
   });
 
   test('supports wildcard allow with explicit exclusions', async () => {
@@ -169,7 +170,7 @@ describe('createFilterAvailableSkillsHook', () => {
     expect(resultText).not.toContain('<name>skill2</name>');
   });
 
-  test('defaults to orchestrator when no agent is present', async () => {
+  test('defaults to orchestrator deny-by-default when no agent is present', async () => {
     const hook = createFilterAvailableSkillsHook(mockCtx, {});
     const output = {
       messages: [
@@ -186,7 +187,10 @@ describe('createFilterAvailableSkillsHook', () => {
 
     await hook['experimental.chat.messages.transform']({}, output);
 
-    expect(output.messages[0].parts[0].text).toContain('<name>skill1</name>');
+    expect(output.messages[0].parts[0].text).toContain('No skills available.');
+    expect(output.messages[0].parts[0].text).not.toContain(
+      '<name>skill1</name>',
+    );
   });
 
   test('filters multiple skill blocks across messages', async () => {
