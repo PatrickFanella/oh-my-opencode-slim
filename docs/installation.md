@@ -50,9 +50,9 @@ The bootstrap command:
 - optionally installs RTK with its official install script, then runs
   `rtk init -g --opencode --auto-patch` so OpenCode gets the RTK rewrite
   integration
-- optionally adds `opencode-scheduled-tasks`, installs its launchd/systemd
-  scheduler daemon with `npx -y opencode-scheduled-tasks --install`, and
-  installs its agent skill with `npx -y opencode-scheduled-tasks --install-skill`
+- optionally adds `opencode-tasks`, installs its launchd/systemd scheduler
+  daemon with `bunx opencode-tasks --install`, and installs its agent skill
+  with `bunx opencode-tasks --install-skill`
 - inserts a managed `omos` helper into `.zshrc`/`.bashrc` for launching
   OpenCode with a random `OPENCODE_PORT` for tmux panes
 
@@ -63,7 +63,7 @@ Useful bootstrap flags:
 | `--with-dcp` | Add `@tarquinen/opencode-dcp@latest` |
 | `--with-quota` | Add `@slkiser/opencode-quota` |
 | `--with-rtk` | Install RTK and run `rtk init -g --opencode --auto-patch` |
-| `--with-scheduled-tasks` | Add `opencode-scheduled-tasks`, install daemon, and install skill |
+| `--with-scheduled-tasks` | Add `opencode-tasks`, install daemon, and install skill |
 | `--skip-opencode` | Do not run the OpenCode install/update command |
 | `--skip-build` | Do not run `bun install --yes` or `bun run build` |
 | `--skip-shell-helper` | Do not modify `.zshrc`/`.bashrc` |

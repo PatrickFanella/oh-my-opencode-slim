@@ -65,7 +65,7 @@ Bootstrap options:
   --with-dcp             Add @tarquinen/opencode-dcp@latest to OpenCode plugins
   --with-quota           Add @slkiser/opencode-quota to OpenCode plugins
   --with-rtk             Install rtk and run rtk init -g --opencode --auto-patch
-  --with-scheduled-tasks Add opencode-scheduled-tasks and install daemon/skill
+  --with-scheduled-tasks Add opencode-tasks and install daemon/skill
   --yes, -y              Non-interactive bootstrap confirmation flag
   --skip-opencode        Skip OpenCode install/update
   --skip-build           Skip bun install and bun run build
