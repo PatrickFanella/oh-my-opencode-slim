@@ -107,11 +107,19 @@ function isPackageManagerInstall(path: string): boolean {
   return normalizedPath.includes(`/node_modules/${PACKAGE_NAME}`);
 }
 
+function isLocalTuiFileEntry(entry: string): boolean {
+  if (!entry.endsWith('/dist/tui.js')) return false;
+  return isLocalPackageRootEntry(join(entry, '..', '..'));
+}
+
 function isPluginEntry(entry: string): boolean {
   return (
     entry === PACKAGE_NAME ||
+    entry === `${PACKAGE_NAME}/tui` ||
     entry.startsWith(`${PACKAGE_NAME}@`) ||
+    entry.startsWith(`${PACKAGE_NAME}/tui@`) ||
     (entry.startsWith('file://') && entry.includes(PACKAGE_NAME)) ||
+    isLocalTuiFileEntry(entry) ||
     isLocalPackageRootEntry(entry)
   );
 }
@@ -139,6 +147,19 @@ function getPluginEntry(): string {
   } catch {
     return PACKAGE_NAME;
   }
+}
+
+function getTuiPluginEntry(): string {
+  const pluginEntry = getPluginEntry();
+  if (pluginEntry === PACKAGE_NAME) {
+    return `${PACKAGE_NAME}/tui`;
+  }
+
+  if (isLocalPackageRootEntry(pluginEntry)) {
+    return join(pluginEntry, 'dist', 'tui.js');
+  }
+
+  return pluginEntry;
 }
 
 function getOpenCodePluginCacheDir(): string {
@@ -413,7 +434,7 @@ export async function addPluginToOpenCodeTuiConfig(): Promise<ConfigMergeResult>
     }
     const config = parsedConfig ?? {};
     const plugins = getPlugins(config);
-    const pluginEntry = getPluginEntry();
+    const pluginEntry = getTuiPluginEntry();
     const filteredPlugins = plugins.filter(
       (plugin) => !isMatchingPluginEntry(plugin),
     );

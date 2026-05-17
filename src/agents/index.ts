@@ -11,6 +11,7 @@ import {
   loadAgentPrompt,
   type PluginConfig,
   PROTECTED_AGENTS,
+  resolveAgentSkills,
   SUBAGENT_NAMES,
 } from '../config';
 import { getAgentMcpList } from '../config/agent-mcps';
@@ -341,7 +342,7 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
     if (override) {
       applyOverrides(agent, override);
     }
-    applyDefaultPermissions(agent, override?.skills);
+    applyDefaultPermissions(agent, resolveAgentSkills(config, agent.name));
     return agent;
   });
 
@@ -365,7 +366,7 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
     if (override) {
       applyOverrides(agent, override);
     }
-    applyDefaultPermissions(agent, override?.skills);
+    applyDefaultPermissions(agent, resolveAgentSkills(config, agent.name));
     return agent;
   });
 
@@ -384,7 +385,10 @@ export function createAgents(config?: PluginConfig): AgentDefinition[] {
     orchestratorPrompts.appendPrompt,
     disabled,
   );
-  applyDefaultPermissions(orchestrator, orchestratorOverride?.skills);
+  applyDefaultPermissions(
+    orchestrator,
+    resolveAgentSkills(config, 'orchestrator'),
+  );
   if (orchestratorOverride) {
     applyOverrides(orchestrator, orchestratorOverride);
   }

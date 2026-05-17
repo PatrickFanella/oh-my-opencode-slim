@@ -6,4 +6,5 @@ export {
   loadPluginConfig,
 } from './loader';
 export * from './schema';
+export * from './skill-profiles';
 export { getAgentOverride, getCustomAgentNames } from './utils';

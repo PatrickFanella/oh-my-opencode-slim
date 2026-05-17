@@ -168,9 +168,50 @@ Package fields:
 | `disabled_mcps` | string[] | MCPs disabled when the package is selected |
 | `enabled_mcps` | string[] | Opt-in MCPs enabled when the package is selected |
 | `toolkits` | object | Toolkit enable flags merged like `board` (`pluginHealth`, `github`, `review`, `observe`, `caveman`, `rtk`) |
+| `skillProfiles` | object | Focused global/per-agent skill profile fragments |
 
 Missing packages and package cycles are non-fatal warnings. Direct root config is
 kept so a typo does not erase existing agent settings.
+
+## Skill Profiles
+
+Use `skillProfiles` to define the global skill bundle and each agent's role
+skills while keeping unrelated niche skills out of each prompt context. The
+built-in defaults intentionally start broad so you can prune later. If an agent
+has an explicit `skills` array in the active preset or `agents` override, that
+explicit array wins. If it does not, OMOC resolves:
+
+1. `skillProfiles.global` (or built-in global defaults)
+2. `skillProfiles.agents.<agent>` (or built-in focused defaults)
+
+```jsonc
+{
+  "skillProfiles": {
+    "global": [
+      "summarization",
+      "systematic-debugging",
+      "github-pro",
+      "deep-research",
+      "review-quality",
+      "writing-plans",
+      "session-handoff"
+    ],
+    "agents": {
+      "orchestrator": ["codemap", "clonedeps", "cartography"],
+      "oracle": ["improve-codebase-architecture", "security-threat-model"],
+      "librarian": ["web-search", "openai-docs"],
+      "designer": ["frontend-design", "react-pro", "agent-browser"],
+      "fixer": ["tdd", "typescript-pro", "python-tooling-patterns"]
+    }
+  }
+}
+```
+
+Keep OpenCode host config minimal. Do not add broad host skill paths like
+`"skills": { "paths": ["~/.agents/skills"] }` unless you intentionally want
+external skills loaded by OpenCode. OMOC's bundled catalog is installed and then
+filtered per agent by permission/profile, so catalog size does not have to equal
+prompt size.
 
 ### Runtime Preset Switching
 
@@ -208,6 +249,8 @@ Toolkit flags are opt-in and default to `false`:
 | `presets.<name>.<agent>.options` | object | — | Provider-specific model options passed to the AI SDK (e.g., `textVerbosity`, `thinking` budget) |
 | `packages` | string[] | — | Package names to compose before preset resolution |
 | `packageDefinitions.<name>` | object | — | Reusable package fragments for presets, agents, and global disables |
+| `skillProfiles.global` | string[] | focused defaults | Skills added to every agent when no explicit `skills` array overrides them |
+| `skillProfiles.agents.<agent>` | string[] | focused defaults | Per-agent skill additions used with `skillProfiles.global` |
 | `toolkits.pluginHealth` | boolean | `false` | Enable integrated plugin health tools and command templates |
 | `toolkits.github` | boolean | `false` | Enable integrated GitHub toolkit |
 | `toolkits.review` | boolean | `false` | Enable integrated review toolkit |

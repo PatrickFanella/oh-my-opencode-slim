@@ -12,7 +12,7 @@ describe('skills permissions', () => {
     expect(permissions['*']).toBe('deny');
   });
 
-  it('should allow recommended skills for specific agents', () => {
+  it('should allow default profile skills for specific agents', () => {
     // Designer should have agent-browser allowed
     const designerPerms = getSkillPermissionsForAgent('designer');
     expect(designerPerms['agent-browser']).toBe('allow');
@@ -20,9 +20,20 @@ describe('skills permissions', () => {
     // Oracle should have simplify allowed by default
     const oraclePerms = getSkillPermissionsForAgent('oracle');
     expect(oraclePerms.simplify).toBe('allow');
+    expect(oraclePerms['review-quality']).toBe('allow');
+    expect(oraclePerms['requesting-code-review']).toBe('allow');
 
     const orchestratorPerms = getSkillPermissionsForAgent('orchestrator');
     expect(orchestratorPerms.clonedeps).toBe('allow');
+    expect(orchestratorPerms.summarization).toBe('allow');
+  });
+
+  it('should keep niche skills denied for unrelated agents', () => {
+    const fixerPerms = getSkillPermissionsForAgent('fixer');
+
+    expect(fixerPerms['frontend-design']).toBeUndefined();
+    expect(fixerPerms['security-threat-model']).toBeUndefined();
+    expect(fixerPerms['*']).toBe('deny');
   });
 
   it('should honor explicit skill list overrides', () => {

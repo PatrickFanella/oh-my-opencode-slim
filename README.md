@@ -41,8 +41,10 @@ The installer also registers the companion TUI plugin in OpenCode's
 `tui.json`, which adds a small sidebar showing specialist-agent status plus
 active/reusable task sessions. It also warms OpenCode's plugin cache so bunx
 installs keep loading even after temporary directories are cleaned up. For
-manual setups, add `oh-my-opencode-slim` to the `plugin` array in both
-`opencode.json` and `tui.json`.
+manual setups, add `oh-my-opencode-slim` to the `plugin` array in
+`opencode.json` and `oh-my-opencode-slim/tui` to the `plugin` array in
+`tui.json`. If the sidebar is visible but the OMOC panel is missing, open the
+TUI plugin manager and enable the `oh-my-opencode-slim:tui` plugin module.
 
 ### Getting Started
 
@@ -73,23 +75,37 @@ The default generated configuration includes both `openai` and `opencode-go` pre
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
   "preset": "openai",
+  "skillProfiles": {
+    "global": ["summarization", "systematic-debugging", "github-pro", "deep-research", "review-quality", "writing-plans", "session-handoff"],
+    "agents": {
+      "orchestrator": ["codemap", "clonedeps", "requirements-interview", "customize-opencode", "cartography"],
+      "oracle": ["requesting-code-review", "improve-codebase-architecture", "security-threat-model"],
+      "librarian": ["web-search", "openai-docs", "fact-check"],
+      "explorer": ["cartography", "fact-check", "security-ownership-map"],
+      "designer": ["frontend-design", "react-pro", "webapp-testing", "agent-browser", "wcag-audit-patterns"],
+      "fixer": ["tdd", "typescript-pro", "python-tooling-patterns", "golang-pro"],
+      "council": ["good-thinking", "multi-reviewer-patterns", "blind-spot-detective"]
+    }
+  },
   "presets": {
     "openai": {
-      "orchestrator": { "model": "openai/gpt-5.5", "skills": ["clonedeps", "codemap"], "mcps": ["*", "!context7"] },
-      "oracle": { "model": "openai/gpt-5.5", "variant": "high", "skills": ["simplify"], "mcps": [] },
-      "librarian": { "model": "openai/gpt-5.4-mini", "variant": "low", "skills": [], "mcps": ["websearch", "context7", "grep_app"] },
-      "explorer": { "model": "openai/gpt-5.4-mini", "variant": "low", "skills": [], "mcps": [] },
-      "designer": { "model": "openai/gpt-5.4-mini", "variant": "medium", "skills": ["agent-browser"], "mcps": [] },
-      "fixer": { "model": "openai/gpt-5.4-mini", "variant": "low", "skills": [], "mcps": [] }
+      "orchestrator": { "model": "openai/gpt-5.5", "mcps": ["*", "!context7"] },
+      "oracle": { "model": "openai/gpt-5.5", "variant": "high", "mcps": [] },
+      "council": { "model": "openai/gpt-5.5", "variant": "high", "mcps": [] },
+      "librarian": { "model": "openai/gpt-5.4-mini", "variant": "low", "mcps": ["websearch", "context7", "grep_app"] },
+      "explorer": { "model": "openai/gpt-5.4-mini", "variant": "low", "mcps": [] },
+      "designer": { "model": "openai/gpt-5.4-mini", "variant": "medium", "mcps": [] },
+      "fixer": { "model": "openai/gpt-5.4-mini", "variant": "low", "mcps": [] },
+      "observer": { "model": "openai/gpt-5.4-mini", "mcps": [] }
     },
     "opencode-go": {
-      "orchestrator": { "model": "opencode-go/glm-5.1", "skills": [ "clonedeps", "codemap" ], "mcps": [ "*", "!context7" ] },
-      "oracle": { "model": "opencode-go/deepseek-v4-pro", "variant": "max", "skills": ["simplify"], "mcps": [] },
-      "council": { "model": "opencode-go/deepseek-v4-pro", "variant": "high", "skills": [], "mcps": [] },
-      "librarian": { "model": "opencode-go/minimax-m2.7", "skills": [], "mcps": [ "websearch", "context7", "grep_app" ] },
-      "explorer": { "model": "opencode-go/minimax-m2.7", "skills": [], "mcps": [] },
-      "designer": { "model": "opencode-go/kimi-k2.6", "variant": "medium", "skills": [ "agent-browser" ], "mcps": [] },
-      "fixer": { "model": "opencode-go/deepseek-v4-flash", "variant": "high", "skills": [], "mcps": [] }
+      "orchestrator": { "model": "opencode-go/glm-5.1", "mcps": [ "*", "!context7" ] },
+      "oracle": { "model": "opencode-go/deepseek-v4-pro", "variant": "max", "mcps": [] },
+      "council": { "model": "opencode-go/deepseek-v4-pro", "variant": "high", "mcps": [] },
+      "librarian": { "model": "opencode-go/minimax-m2.7", "mcps": [ "websearch", "context7", "grep_app" ] },
+      "explorer": { "model": "opencode-go/minimax-m2.7", "mcps": [] },
+      "designer": { "model": "opencode-go/kimi-k2.6", "variant": "medium", "mcps": [] },
+      "fixer": { "model": "opencode-go/deepseek-v4-flash", "variant": "high", "mcps": [] }
     }
   }
 }

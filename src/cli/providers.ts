@@ -1,6 +1,5 @@
 import { DEFAULT_AGENT_MCPS } from '../config/agent-mcps';
-import { CUSTOM_SKILLS } from './custom-skills';
-import { RECOMMENDED_SKILLS } from './skills';
+import { getDefaultSkillProfilesConfig } from '../config/skill-profiles';
 import type { InstallConfig } from './types';
 
 const SCHEMA_URL =
@@ -13,10 +12,12 @@ export const MODEL_MAPPINGS = {
   openai: {
     orchestrator: { model: 'openai/gpt-5.5' },
     oracle: { model: 'openai/gpt-5.5', variant: 'high' },
+    council: { model: 'openai/gpt-5.5', variant: 'high' },
     librarian: { model: 'openai/gpt-5.4-mini', variant: 'low' },
     explorer: { model: 'openai/gpt-5.4-mini', variant: 'low' },
     designer: { model: 'openai/gpt-5.4-mini', variant: 'medium' },
     fixer: { model: 'openai/gpt-5.4-mini', variant: 'low' },
+    observer: { model: 'openai/gpt-5.4-mini' },
   },
   kimi: {
     orchestrator: { model: 'kimi-for-coding/k2p5' },
@@ -91,6 +92,7 @@ export function generateLiteConfig(
   const config: Record<string, unknown> = {
     $schema: SCHEMA_URL,
     preset,
+    skillProfiles: getDefaultSkillProfilesConfig(),
     presets: {},
   };
 
@@ -102,25 +104,9 @@ export function generateLiteConfig(
     agentName: string,
     modelInfo: { model: string; variant?: string },
   ) => {
-    const skills = [
-      ...RECOMMENDED_SKILLS.filter(
-        (s) =>
-          s.allowedAgents.includes('*') || s.allowedAgents.includes(agentName),
-      ).map((s) => s.skillName),
-      ...CUSTOM_SKILLS.filter(
-        (s) =>
-          s.allowedAgents.includes('*') || s.allowedAgents.includes(agentName),
-      ).map((s) => s.name),
-    ];
-
-    if (agentName === 'designer' && !skills.includes('agent-browser')) {
-      skills.push('agent-browser');
-    }
-
     return {
       model: modelInfo.model,
       variant: modelInfo.variant,
-      skills,
       mcps:
         DEFAULT_AGENT_MCPS[agentName as keyof typeof DEFAULT_AGENT_MCPS] ?? [],
     };

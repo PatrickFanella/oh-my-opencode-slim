@@ -152,4 +152,29 @@ describe('createBuiltinMcps', () => {
       expect(command).not.toContain('-e GITHUB_PERSONAL_ACCESS_TOKEN="$token"');
     }
   });
+
+  test('super-productivity MCP uses local bridge defaults', () => {
+    const mcps = createBuiltinMcps([], undefined, ['super-productivity']);
+    const sp = mcps['super-productivity'];
+
+    expect('command' in sp).toBe(true);
+    if ('command' in sp) {
+      expect(sp.command).toEqual([
+        'bash',
+        '-lc',
+        [
+          'if [ -x "$HOME/.local/bin/sp-mcp" ]; then',
+          'exec "$HOME/.local/bin/sp-mcp"',
+          'fi',
+          'exec sp-mcp',
+        ].join('\n'),
+      ]);
+      expect(sp.environment).toMatchObject({
+        SP_MCP_LOG_LEVEL: 'info',
+      });
+      expect(sp.environment?.SP_MCP_DATA_DIR).toContain(
+        '/.local/share/super-productivity-mcp',
+      );
+    }
+  });
 });

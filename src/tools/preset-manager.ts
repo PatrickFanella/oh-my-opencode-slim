@@ -1,14 +1,17 @@
 import type { PluginInput } from '@opencode-ai/plugin';
-import type {
-  AgentOverrideConfig,
-  ModelEntry,
-  PluginConfig,
-  Preset,
+import {
+  type AgentOverrideConfig,
+  type ModelEntry,
+  type PluginConfig,
+  type Preset,
+  resolveAgentSkills,
 } from '../config';
+import { DEFAULT_AGENT_MCPS } from '../config/agent-mcps';
 import { AGENT_ALIASES } from '../config/constants';
 import {
   getActiveRuntimePreset,
   rollbackRuntimePreset,
+  setActiveRuntimePreset,
   setActiveRuntimePresetWithPrevious,
 } from '../config/runtime-preset';
 import { readTuiSnapshot, recordTuiAgentModels } from '../tui-state';
@@ -32,6 +35,9 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
   // preset persists across dispose()/re-init cycles.
   let activePreset: string | null =
     getActiveRuntimePreset() ?? config.preset ?? null;
+  if (!getActiveRuntimePreset() && config.preset) {
+    setActiveRuntimePreset(config.preset);
+  }
 
   /**
    * Handle the /preset command from command.execute.before hook.
@@ -120,6 +126,21 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
       return;
     }
 
+    const pluginScopedFields = getRestartRequiredPresetFields(
+      presets,
+      activePreset,
+      presetName,
+    );
+    if (pluginScopedFields.length > 0) {
+      output.parts.push(
+        createInternalAgentTextPart(
+          `Preset "${presetName}" changes plugin-scoped fields (${pluginScopedFields.join(', ')}). ` +
+            'Edit the active preset in config and restart OpenCode to apply skills, display names, or prompt changes.',
+        ),
+      );
+      return;
+    }
+
     // Build the agent config overrides from the preset.
     // Each preset value is { agentName: AgentOverrideConfig }.
     // We need to convert to SDK AgentConfig format:
@@ -145,7 +166,7 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
     // The SDK accumulates client.config.update() calls, so switching from
     // Preset A to Preset B leaks A's variant/temperature/options on agents
     // that aren't in B. Reset them to the config-file baseline values.
-    const currentRuntimePreset = getActiveRuntimePreset();
+    const currentRuntimePreset = getActiveRuntimePreset() ?? activePreset;
     const resetUpdates: Record<
       string,
       {
@@ -172,9 +193,8 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
       }
     }
 
-    const hasAgentUpdates = Object.keys(agentUpdates).length > 0;
     const allUpdates = { ...resetUpdates, ...agentUpdates };
-    if (!hasAgentUpdates) {
+    if (Object.keys(allUpdates).length === 0) {
       output.parts.push(
         createInternalAgentTextPart(
           `Preset "${presetName}" is empty (no agent overrides defined).`,
@@ -217,7 +237,6 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
           `Reset to baseline: ${Object.keys(resetUpdates).join(', ')}`,
         );
       }
-
       output.parts.push(
         createInternalAgentTextPart(
           `Switched to preset "${presetName}":\n${summaryParts.join('\n')}`,
@@ -285,6 +304,119 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
     }
 
     return agentConfig;
+  }
+
+  function getRestartRequiredPresetFields(
+    presets: Record<string, Preset>,
+    fromPresetName: string | null,
+    toPresetName: string,
+  ): string[] {
+    const toPreset = presets[toPresetName];
+    const fromPreset = fromPresetName ? presets[fromPresetName] : undefined;
+    const fields = new Set<string>();
+
+    if (hasChangedMcps(fromPreset, toPreset)) {
+      fields.add('mcps');
+    }
+    if (hasChangedSkills(fromPreset, toPreset)) {
+      fields.add('skills');
+    }
+    for (const field of [
+      'displayName',
+      'prompt',
+      'orchestratorPrompt',
+    ] as const) {
+      if (hasChangedScalarField(fromPreset, toPreset, field)) {
+        fields.add(field);
+      }
+    }
+
+    return Array.from(fields).sort();
+  }
+
+  function hasChangedMcps(fromPreset: Preset | undefined, toPreset: Preset) {
+    const agentNames = new Set([
+      ...Object.keys(fromPreset ?? {}),
+      ...Object.keys(toPreset),
+    ]);
+    for (const agentName of agentNames) {
+      const fromMcps = getEffectivePresetMcps(fromPreset, agentName);
+      const toMcps = getEffectivePresetMcps(toPreset, agentName);
+      if (JSON.stringify(fromMcps) !== JSON.stringify(toMcps)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function hasChangedSkills(fromPreset: Preset | undefined, toPreset: Preset) {
+    const agentNames = getPresetAgentNames(fromPreset, toPreset);
+    for (const agentName of agentNames) {
+      const fromSkills = getEffectivePresetSkills(fromPreset, agentName);
+      const toSkills = getEffectivePresetSkills(toPreset, agentName);
+      if (JSON.stringify(fromSkills) !== JSON.stringify(toSkills)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function hasChangedScalarField(
+    fromPreset: Preset | undefined,
+    toPreset: Preset,
+    field: 'displayName' | 'prompt' | 'orchestratorPrompt',
+  ) {
+    const agentNames = getPresetAgentNames(fromPreset, toPreset);
+    for (const agentName of agentNames) {
+      if (fromPreset?.[agentName]?.[field] !== toPreset[agentName]?.[field]) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function getPresetAgentNames(
+    fromPreset: Preset | undefined,
+    toPreset: Preset,
+  ): Set<string> {
+    return new Set([
+      ...Object.keys(fromPreset ?? {}),
+      ...Object.keys(toPreset),
+    ]);
+  }
+
+  function getEffectivePresetMcps(
+    preset: Preset | undefined,
+    agentName: string,
+  ): string[] {
+    const explicitMcps = preset?.[agentName]?.mcps;
+    if (explicitMcps !== undefined) {
+      return explicitMcps;
+    }
+
+    const resolvedName = AGENT_ALIASES[agentName] ?? agentName;
+    return (
+      DEFAULT_AGENT_MCPS[resolvedName as keyof typeof DEFAULT_AGENT_MCPS] ?? []
+    );
+  }
+
+  function getEffectivePresetSkills(
+    preset: Preset | undefined,
+    agentName: string,
+  ): string[] {
+    const explicitSkills = preset?.[agentName]?.skills;
+    if (explicitSkills !== undefined) {
+      return explicitSkills;
+    }
+
+    const resolvedName = AGENT_ALIASES[agentName] ?? agentName;
+    return resolveAgentSkills(
+      { skillProfiles: config.skillProfiles },
+      resolvedName,
+    );
   }
 
   /**

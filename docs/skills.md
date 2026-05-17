@@ -57,15 +57,17 @@ Top-level catalog docs are also preserved in `src/skills/` (`README.md`,
 `CATALOG.md`, `QUALITY.md`, `AUDIT_WORKFLOW.md`, `STACK_PROFILE.md`,
 `index.json`, `index.md`, plus `audits/`).
 
-Default auto-assignment remains intentionally narrow:
+Default auto-assignment is controlled by skill profiles. Every agent gets a
+broad cross-cutting core (`summarization`, `systematic-debugging`, `github-pro`,
+research, review, refactor, planning, handoff, and documentation skills), then
+the skills for its role. The defaults intentionally start broad so teams can
+prune after observing real context use.
 
-- `simplify` -> `oracle`
-- `codemap` -> `orchestrator`
-- `clonedeps` -> `orchestrator`
-
-Generated configs use deny-by-default skill permissions. All other bundled
-migrated skills default to no auto-grants unless explicitly configured per
-agent, for example with `skills: ["*"]` or a named allow-list.
+Generated configs use deny-by-default skill permissions. The bundled catalog can
+stay installed without appearing in every prompt: OMOC filters OpenCode's global
+`<available_skills>` block down to the active agent's resolved allow-list. Niche
+skills stay invisible unless assigned through a profile or explicit agent
+`skills` array.
 
 `agent-browser` remains a recommended external skill because it also installs a
 runtime CLI. The migrated catalog copy is kept as source material but is not
@@ -161,6 +163,44 @@ Control which skills each agent can use in `~/.config/opencode/oh-my-opencode-sl
 - `*` expands to all available installed skills
 - `!item` excludes a specific skill
 - Conflicts (e.g. `["a", "!a"]`) → deny wins (principle of least privilege)
+- Explicit `skills` on an agent wins over `skillProfiles`
+- If no explicit `skills` exists, OMOC uses `skillProfiles.global` plus
+  `skillProfiles.agents.<agent>`; missing sections fall back to built-in focused
+  defaults
+
+**Recommended host config:** avoid globally loading every personal skill folder
+unless you intentionally want those external skills available. Prefer letting
+OMOC install and filter its bundled catalog. In OpenCode host config, omit broad
+paths like:
+
+```jsonc
+"skills": {
+  "paths": ["/home/you/.agents/skills"]
+}
+```
+
+Use OMOC's plugin config for focused agent visibility instead:
+
+```jsonc
+{
+  "skillProfiles": {
+    "global": [
+      "summarization",
+      "systematic-debugging",
+      "github-pro",
+      "deep-research",
+      "review-quality",
+      "writing-plans",
+      "session-handoff"
+    ],
+    "agents": {
+      "orchestrator": ["codemap", "clonedeps", "cartography"],
+      "oracle": ["improve-codebase-architecture", "security-threat-model"],
+      "designer": ["frontend-design", "react-pro", "agent-browser"]
+    }
+  }
+}
+```
 
 **Example:**
 

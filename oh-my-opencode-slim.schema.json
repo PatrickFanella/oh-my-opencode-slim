@@ -527,6 +527,30 @@
               }
             },
             "additionalProperties": false
+          },
+          "skillProfiles": {
+            "type": "object",
+            "properties": {
+              "global": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "agents": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -833,6 +857,30 @@
         },
         "rtk": {
           "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "skillProfiles": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "agents": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       },
       "additionalProperties": false

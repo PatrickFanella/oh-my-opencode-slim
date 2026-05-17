@@ -198,6 +198,15 @@ export const ToolkitConfigSchema = z
 
 export type ToolkitConfig = z.infer<typeof ToolkitConfigSchema>;
 
+export const SkillProfilesConfigSchema = z
+  .object({
+    global: z.array(z.string()).optional(),
+    agents: z.record(z.string(), z.array(z.string())).optional(),
+  })
+  .strict();
+
+export type SkillProfilesConfig = z.infer<typeof SkillProfilesConfigSchema>;
+
 export const PackageDefinitionSchema = z
   .object({
     description: z.string().optional(),
@@ -214,6 +223,7 @@ export const PackageDefinitionSchema = z
       ),
     board: BoardConfigSchema.optional(),
     toolkits: ToolkitConfigSchema.optional(),
+    skillProfiles: SkillProfilesConfigSchema.optional(),
   })
   .strict();
 
@@ -420,6 +430,7 @@ export const PluginConfigSchema = z
       ),
     board: BoardConfigSchema.optional(),
     toolkits: ToolkitConfigSchema.optional(),
+    skillProfiles: SkillProfilesConfigSchema.optional(),
     // Multiplexer config (new unified config - preferred)
     multiplexer: MultiplexerConfigSchema.optional(),
     // Legacy tmux config (for backward compatibility)

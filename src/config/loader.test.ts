@@ -110,6 +110,45 @@ describe('loadPluginConfig', () => {
     });
   });
 
+  test('merges skill profiles from package definitions and root config', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        packages: ['focused-skills'],
+        packageDefinitions: {
+          'focused-skills': {
+            skillProfiles: {
+              global: ['summarization'],
+              agents: {
+                oracle: ['simplify'],
+                designer: ['frontend-design'],
+              },
+            },
+          },
+        },
+        skillProfiles: {
+          global: ['github-pro'],
+          agents: {
+            oracle: ['review-quality'],
+          },
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.skillProfiles).toEqual({
+      global: ['github-pro'],
+      agents: {
+        oracle: ['review-quality'],
+        designer: ['frontend-design'],
+      },
+    });
+  });
+
   test('loads scoringEngineVersion flag when configured', () => {
     const projectDir = path.join(tempDir, 'project');
     const projectConfigDir = path.join(projectDir, '.opencode');

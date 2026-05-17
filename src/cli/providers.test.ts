@@ -36,8 +36,11 @@ describe('providers', () => {
     expect(agents).toBeDefined();
     expect(agents.orchestrator.model).toBe('openai/gpt-5.5');
     expect(agents.orchestrator.variant).toBeUndefined();
+    expect(agents.council.model).toBe('openai/gpt-5.5');
+    expect(agents.council.variant).toBe('high');
     expect(agents.fixer.model).toBe('openai/gpt-5.4-mini');
     expect(agents.fixer.variant).toBe('low');
+    expect(agents.observer.model).toBe('openai/gpt-5.4-mini');
   });
 
   test('generateLiteConfig uses correct OpenAI models', () => {
@@ -54,6 +57,8 @@ describe('providers', () => {
     );
     expect(agents.oracle.model).toBe('openai/gpt-5.5');
     expect(agents.oracle.variant).toBe('high');
+    expect(agents.council.model).toBe('openai/gpt-5.5');
+    expect(agents.council.variant).toBe('high');
     expect(agents.librarian.model).toBe('openai/gpt-5.4-mini');
     expect(agents.librarian.variant).toBe('low');
     expect(agents.explorer.model).toBe('openai/gpt-5.4-mini');
@@ -138,7 +143,7 @@ describe('providers', () => {
     expect((config.tmux as any).layout).toBe('main-vertical');
   });
 
-  test('generateLiteConfig includes default skills', () => {
+  test('generateLiteConfig includes default skill profiles', () => {
     const config = generateLiteConfig({
       hasTmux: false,
       installSkills: true,
@@ -147,22 +152,27 @@ describe('providers', () => {
     });
 
     const agents = (config.presets as any).openai;
-    expect(agents.orchestrator.skills).toEqual(['clonedeps', 'codemap']);
+    expect(agents.orchestrator.skills).toBeUndefined();
+    expect(agents.oracle.skills).toBeUndefined();
+    expect(agents.designer.skills).toBeUndefined();
 
-    // Oracle should have bundled simplify
-    expect(agents.oracle.skills).toContain('simplify');
-
-    // Orchestrator gets only explicitly default-granted bundled skills.
-    expect(agents.orchestrator.skills).toContain('codemap');
-
-    // Designer should have 'agent-browser'
-    expect(agents.designer.skills).toContain('agent-browser');
-
-    // Explorer should have no bundled skills by default
-    expect(agents.explorer.skills).toEqual([]);
-
-    // Fixer should have no bundled skills by default
-    expect(agents.fixer.skills).toEqual([]);
+    const profiles = config.skillProfiles as any;
+    expect(profiles.global).toContain('summarization');
+    expect(profiles.global).toContain('systematic-debugging');
+    expect(profiles.global).toContain('github-pro');
+    expect(profiles.global).toContain('review-quality');
+    expect(profiles.global).toContain('session-handoff');
+    expect(profiles.agents.orchestrator).toContain('codemap');
+    expect(profiles.agents.orchestrator).toContain('clonedeps');
+    expect(profiles.agents.oracle).toContain('requesting-code-review');
+    expect(profiles.agents.oracle).toContain('security-threat-model');
+    expect(profiles.agents.designer).toContain('agent-browser');
+    expect(profiles.agents.designer).toContain('wcag-audit-patterns');
+    expect(profiles.agents.fixer).toContain('tdd');
+    expect(profiles.agents.fixer).toContain('typescript-pro');
+    expect(profiles.agents.fixer).toContain('golang-pro');
+    expect(profiles.agents.fixer).toContain('python-tooling-patterns');
+    expect(profiles.agents.fixer).not.toContain('*');
   });
 
   test('generateLiteConfig includes mcps field', () => {
