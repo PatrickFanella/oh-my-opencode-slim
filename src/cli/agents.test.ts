@@ -110,4 +110,68 @@ describe('agents CLI', () => {
       expect(exitCode).toBe(1);
     });
   });
+
+  test('agents validate rejects missing model', async () => {
+    await withTempConfig(async (configDir) => {
+      const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+      mkdirSync(agentDir, { recursive: true });
+      writeFileSync(
+        join(agentDir, 'missing-model.json'),
+        JSON.stringify({ name: 'missing-model' }),
+      );
+
+      const exitCode = await agents(parseAgentsArgs(['validate']));
+
+      expect(exitCode).toBe(1);
+    });
+  });
+
+  test('agents validate rejects built-in agent names', async () => {
+    await withTempConfig(async (configDir) => {
+      const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+      mkdirSync(agentDir, { recursive: true });
+      writeFileSync(
+        join(agentDir, 'oracle.json'),
+        JSON.stringify({ name: 'oracle', model: 'openai/gpt-5.4-mini' }),
+      );
+
+      const exitCode = await agents(parseAgentsArgs(['validate']));
+
+      expect(exitCode).toBe(1);
+    });
+  });
+
+  test('agents validate catches runtime orchestratorPrompt errors', async () => {
+    await withTempConfig(async (configDir) => {
+      const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+      mkdirSync(agentDir, { recursive: true });
+      writeFileSync(
+        join(agentDir, 'janitor.json'),
+        JSON.stringify({
+          name: 'janitor',
+          model: 'openai/gpt-5.4-mini',
+          orchestratorPrompt: '@cleanup\n- Role: Wrong target',
+        }),
+      );
+
+      const exitCode = await agents(parseAgentsArgs(['validate']));
+
+      expect(exitCode).toBe(1);
+    });
+  });
+
+  test('agents create rejects invalid temperatures', async () => {
+    await withTempConfig(async () => {
+      const exitCode = await agents(
+        parseAgentsArgs([
+          'create',
+          'hot-agent',
+          '--model=openai/gpt-5.4-mini',
+          '--temperature=9',
+        ]),
+      );
+
+      expect(exitCode).toBe(1);
+    });
+  });
 });

@@ -272,8 +272,13 @@ const SUBAGENT_FACTORIES: Record<SubagentName, AgentFactory> = {
  * @param config - Optional plugin configuration with agent overrides
  * @returns Array of agent definitions (orchestrator first, then subagents)
  */
-export function createAgents(config?: PluginConfig): AgentDefinition[] {
-  config = mergeCustomAgentDefinitions(config);
+export function createAgents(
+  config?: PluginConfig,
+  options?: { customDefinitionsMerged?: boolean },
+): AgentDefinition[] {
+  config = options?.customDefinitionsMerged
+    ? config
+    : mergeCustomAgentDefinitions(config);
   const disabled = getDisabledAgents(config);
   if (!config?.council) {
     disabled.add('council');
@@ -496,7 +501,9 @@ export function getAgentConfigs(
   config?: PluginConfig,
 ): Record<string, SDKAgentConfig> {
   const effectiveConfig = mergeCustomAgentDefinitions(config);
-  const agents = createAgents(effectiveConfig);
+  const agents = createAgents(effectiveConfig, {
+    customDefinitionsMerged: true,
+  });
 
   const applyClassification = (
     name: string,

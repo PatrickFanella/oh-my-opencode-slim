@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
 import { getConfigSearchDirs } from '../cli/paths';
+import { ALL_AGENT_NAMES } from '../config/constants';
 import type { AgentOverrideConfig, PluginConfig } from '../config/schema';
 
 export const CustomAgentDefinitionSchema = z
@@ -11,19 +12,17 @@ export const CustomAgentDefinitionSchema = z
       .string()
       .min(1)
       .regex(/^[a-z][a-z0-9_-]*$/i),
-    model: z
-      .union([
-        z.string(),
-        z
-          .array(
-            z.union([
-              z.string(),
-              z.object({ id: z.string(), variant: z.string().optional() }),
-            ]),
-          )
-          .min(1),
-      ])
-      .optional(),
+    model: z.union([
+      z.string(),
+      z
+        .array(
+          z.union([
+            z.string(),
+            z.object({ id: z.string(), variant: z.string().optional() }),
+          ]),
+        )
+        .min(1),
+    ]),
     temperature: z.number().min(0).max(2).optional(),
     variant: z.string().optional(),
     skills: z.array(z.string()).optional(),
@@ -58,6 +57,20 @@ export function getAgentDefinitionDirs(): string[] {
   );
 }
 
+function assertCustomAgentName(name: string): void {
+  if ((ALL_AGENT_NAMES as readonly string[]).includes(name)) {
+    throw new Error(
+      `Custom agent definition cannot override built-in agent '${name}'`,
+    );
+  }
+}
+
+function parseCustomAgentDefinition(value: unknown): CustomAgentDefinition {
+  const parsed = CustomAgentDefinitionSchema.parse(value);
+  assertCustomAgentName(parsed.name);
+  return parsed;
+}
+
 export function readCustomAgentDefinitionFile(
   path: string,
   fileName = path,
@@ -67,7 +80,7 @@ export function readCustomAgentDefinitionFile(
       path,
       fileName,
       valid: true,
-      definition: CustomAgentDefinitionSchema.parse(
+      definition: parseCustomAgentDefinition(
         JSON.parse(readFileSync(path, 'utf-8')),
       ),
     };
@@ -102,7 +115,7 @@ function readAgentDefinitionsFromDir(
 
     const path = join(dir, entry);
     try {
-      const parsed = CustomAgentDefinitionSchema.parse(
+      const parsed = parseCustomAgentDefinition(
         JSON.parse(readFileSync(path, 'utf-8')),
       );
       const { $schema: _schema, name, ...override } = parsed;
