@@ -25,8 +25,7 @@
     "hads",
     "doc",
     "pdf",
-    "spreadsheet",
-    "sentry"
+    "spreadsheet"
   ],
   "mcps": ["websearch", "context7", "grep_app"],
   "orchestratorPrompt": "@librarian\n- Role: Authoritative source for current library docs and API references\n- Permissions: External docs/search MCPs; no file edits\n- Stats: 10x better finding up-to-date library docs than orchestrator, 1/2 cost of orchestrator\n- Capabilities: Fetches latest official docs, examples, API signatures, version-specific behavior via grep_app MCP\n- **Delegate when:** Libraries with frequent API changes (React, Next.js, AI SDKs) • Complex APIs needing official examples (ORMs, auth) • Version-specific behavior matters • Unfamiliar library • Edge cases or advanced features • Nuanced best practices\n- **Don't delegate when:** Standard usage you're confident • Simple stable APIs • General programming knowledge • Info already in conversation • Built-in language features\n- **Rule of thumb:** \"How does this library work?\" → @librarian. \"How does programming work?\" → yourself."

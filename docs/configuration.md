@@ -15,7 +15,13 @@ Complete reference for all configuration files and options in oh-my-opencode-sli
 
 > **💡 JSONC recommended:** Use the `.jsonc` extension to add comments and trailing commas. If both `.jsonc` and `.json` exist, `.jsonc` takes precedence.
 
-If OmO-slim detects an invalid plugin config for the current project, the TUI sidebar shows a warning. Run `oh-my-opencode-slim doctor` from your project root for full diagnostics.
+If OmO-slim detects an invalid plugin config for the current project, the TUI
+full-board sidebar shows a warning. The sidebar is collapsible: it defaults to
+compact mode with CORE visible and custom groups collapsed. The sidebar is a
+render-only slot, so collapse state is controlled through real OpenCode commands:
+`/board-toggle`, `/board-full`, `/board-compact`, `/board-minimal`, and
+`/board-off`. Run `oh-my-opencode-slim doctor` from your project root for full
+diagnostics.
 
 ---
 
@@ -40,7 +46,8 @@ Ownership split:
   permissions).
 
 DCP and quota systems are intentionally separate from OMOC. Keep them outside
-OMOC config unless a future integration defines a narrow, explicit contract.
+OMOC config; the clone-based bootstrap writes their sidecar defaults when
+`--with-dcp` or `--with-quota` is selected.
 
 For this distribution path, prefer config-first behavior in
 `~/.config/opencode/oh-my-opencode-slim.jsonc`, not new behavior environment
@@ -99,10 +106,8 @@ All config files support **JSONC** (JSON with Comments):
     },
   },
 
-  "multiplexer": {
-    "type": "tmux",
-    "layout": "main-vertical",
-  },
+  // Optional: defaults to tmux/main-vertical/60 when omitted
+  "multiplexer": { "layout": "tiled" },
 }
 ```
 
@@ -165,8 +170,8 @@ Package fields:
 | `presets` | object | Preset fragments using normal `presets.<name>.<agent>` shape |
 | `agents` | object | Root agent fragments, including custom Board agents |
 | `disabled_agents` | string[] | Agents disabled when the package is selected |
-| `disabled_mcps` | string[] | MCPs disabled when the package is selected |
-| `enabled_mcps` | string[] | Opt-in MCPs enabled when the package is selected |
+| `disabled_mcps` | string[] | Host MCPs marked disabled when the package is selected |
+| `enabled_mcps` | string[] | Host MCPs force-enabled when the package is selected |
 | `toolkits` | object | Toolkit enable flags merged like `board` (`pluginHealth`, `github`, `review`, `observe`, `caveman`, `rtk`) |
 | `skillProfiles` | object | Focused global/per-agent skill profile fragments |
 
@@ -176,13 +181,14 @@ kept so a typo does not erase existing agent settings.
 ## Skill Profiles
 
 Use `skillProfiles` to define the global skill bundle and each agent's role
-skills while keeping unrelated niche skills out of each prompt context. The
-built-in defaults intentionally start broad so you can prune later. If an agent
-has an explicit `skills` array in the active preset or `agents` override, that
-explicit array wins. If it does not, OMOC resolves:
+skills while keeping unrelated niche skills out of each prompt context. By
+default, the installer omits `skillProfiles` so OMOC's code-owned built-in
+agent defaults control availability. If an agent has an explicit `skills` array
+in the active preset or `agents` override, that explicit array wins. If it does
+not, OMOC resolves:
 
-1. `skillProfiles.global` (or built-in global defaults)
-2. `skillProfiles.agents.<agent>` (or built-in focused defaults)
+1. `skillProfiles.global` (or built-in global defaults if omitted)
+2. `skillProfiles.agents.<agent>` (or built-in focused defaults if omitted)
 
 ```jsonc
 {
@@ -207,11 +213,14 @@ explicit array wins. If it does not, OMOC resolves:
 }
 ```
 
-Keep OpenCode host config minimal. Do not add broad host skill paths like
-`"skills": { "paths": ["~/.agents/skills"] }` unless you intentionally want
-external skills loaded by OpenCode. OMOC's bundled catalog is installed and then
-filtered per agent by permission/profile, so catalog size does not have to equal
-prompt size.
+Keep OpenCode host config minimal. OMOC materializes only the curated union of
+bundled skills referenced by enabled agents into a managed skill directory at
+startup, so you do not need broad external host paths like
+`"skills": { "paths": ["~/.agents/skills"] }`. The installer no longer
+bulk-copies OMOC's whole bundled skill catalog and bootstrap removes the legacy
+`~/.agents/skills` path. Assign availability through `skillProfiles` or
+explicit agent `skills` arrays; the plugin's skill permissions and prompt
+filtering enforce those code-owned allow lists per agent.
 
 ### Runtime Preset Switching
 
@@ -263,7 +272,7 @@ Toolkit flags are opt-in and default to `false`:
 | `agents.<agent>.displayName` | string | — | Custom user-facing alias for the agent in the active config |
 | `disabled_agents` | string[] | `["observer"]` | Agent names to disable globally. Set to `[]` to enable Observer; this is global, not per-preset |
 | `autoUpdate` | boolean | `true` | Automatically install plugin updates in the background; set to `false` for notification-only mode |
-| `multiplexer.type` | string | `"none"` | Multiplexer mode: `auto`, `tmux`, `zellij`, or `none` |
+| `multiplexer.type` | string | `"tmux"` | Multiplexer mode: `auto`, `tmux`, `zellij`, or `none` |
 | `multiplexer.layout` | string | `"main-vertical"` | Layout preset: `main-vertical`, `main-horizontal`, `tiled`, `even-horizontal`, `even-vertical` |
 | `multiplexer.main_pane_size` | number | `60` | Main pane size as percentage (20–80) |
 | `divoom.enabled` | boolean | `false` | Enable Divoom Bluetooth display status GIFs for plugin load and delegated agent calls |
@@ -275,14 +284,14 @@ Toolkit flags are opt-in and default to `false`:
 | `divoom.maxFrames` | integer | `24` | Maximum frames passed to `divoom_send.py` |
 | `divoom.posterizeBits` | integer | `3` | Posterization bits passed to `divoom_send.py` |
 | `divoom.gifs.<agent>` | string | bundled GIF | Optional per-agent GIF filename or absolute path override |
-| `tmux.enabled` | boolean | `false` | Legacy alias for `multiplexer.type = "tmux"` |
+| `tmux.enabled` | boolean | `false` | Legacy alias. When present, `true` maps to `multiplexer.type = "tmux"`; `false` maps to `multiplexer.type = "none"` |
 | `tmux.layout` | string | `"main-vertical"` | Legacy alias for `multiplexer.layout` |
 | `tmux.main_pane_size` | number | `60` | Legacy alias for `multiplexer.main_pane_size` |
 | `sessionManager.maxSessionsPerAgent` | integer | `2` | Maximum remembered resumable child sessions per specialist type in the current orchestrator session (1–10). See [Session Management](session-management.md) |
 | `sessionManager.readContextMinLines` | integer | `10` | Minimum number of lines read from a file before it appears in resumable-session context (0–1000) |
 | `sessionManager.readContextMaxFiles` | integer | `8` | Maximum number of recent read-context files shown per remembered child session (0–50) |
 | `disabled_mcps` | string[] | `[]` | MCP server IDs to disable globally |
-| `enabled_mcps` | string[] | `[]` | MCP server IDs to opt into when a built-in MCP is registered disabled by default |
+| `enabled_mcps` | string[] | `[]` | MCP server IDs to force-enable if host config or a package disabled them; built-ins are enabled by default |
 | `fallback.enabled` | boolean | `false` | Enable model failover on timeout/error |
 | `fallback.timeoutMs` | number | `15000` | Time before aborting and trying next model |
 | `fallback.retryDelayMs` | number | `500` | Delay between retry attempts |

@@ -5,6 +5,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -12,6 +13,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  addBuiltinMcpsToOpenCodeConfig,
   addPluginToOpenCodeConfig,
   addPluginToOpenCodeTuiConfig,
   detectCurrentConfig,
@@ -105,16 +107,32 @@ describe('config-io', () => {
     expect(result.config).toEqual({ a: 1 } as any);
   });
 
-  test('writeConfig writes JSON and creates backup', () => {
+  test('parseConfig tries .json if .jsonc is missing', () => {
+    const jsonPath = join(tmpDir, 'test.json');
+    writeFileSync(jsonPath, '{"a": 1}');
+
+    const result = parseConfig(join(tmpDir, 'test.jsonc'));
+    expect(result.config).toEqual({ a: 1 } as any);
+  });
+
+  test('writeConfig writes JSON and backs up under backups directory', () => {
     const path = join(tmpDir, 'test.json');
     writeFileSync(path, '{"old": true}');
 
     writeConfig(path, { new: true } as any);
 
     expect(JSON.parse(readFileSync(path, 'utf-8'))).toEqual({ new: true });
-    expect(JSON.parse(readFileSync(`${path}.bak`, 'utf-8'))).toEqual({
+    const backupsDir = join(tmpDir, 'opencode', 'backups');
+    const backupSubdirs = readdirSync(backupsDir);
+    expect(backupSubdirs).toHaveLength(1);
+    const backupRun = readFileSync(
+      join(backupsDir, backupSubdirs[0] ?? '', 'test.json'),
+      'utf-8',
+    );
+    expect(JSON.parse(backupRun)).toEqual({
       old: true,
     });
+    expect(existsSync(`${path}.bak`)).toBe(false);
   });
 
   test('addPluginToOpenCodeConfig adds plugin and removes duplicates', async () => {
@@ -133,6 +151,27 @@ describe('config-io', () => {
     expect(saved.plugin).toContain('oh-my-opencode-slim');
     expect(saved.plugin).not.toContain('oh-my-opencode-slim@1.0.0');
     expect(saved.plugin.length).toBe(2);
+  });
+
+  test('addPluginToOpenCodeConfig prefers opencode.jsonc when both files exist', async () => {
+    const configPath = join(tmpDir, 'opencode', 'opencode.json');
+    const configJsoncPath = join(tmpDir, 'opencode', 'opencode.jsonc');
+    paths.ensureConfigDir();
+    writeFileSync(configPath, JSON.stringify({ plugin: ['json-config'] }));
+    writeFileSync(
+      configJsoncPath,
+      JSON.stringify({ plugin: ['jsonc-config'] }),
+    );
+    process.argv[1] = '';
+
+    const result = await addPluginToOpenCodeConfig();
+    expect(result.success).toBe(true);
+    expect(result.configPath).toBe(configJsoncPath);
+
+    const savedJson = JSON.parse(readFileSync(configPath, 'utf-8'));
+    const savedJsonc = JSON.parse(readFileSync(configJsoncPath, 'utf-8'));
+    expect(savedJson.plugin).toEqual(['json-config']);
+    expect(savedJsonc.plugin).toEqual(['jsonc-config', 'oh-my-opencode-slim']);
   });
 
   test('addPluginToOpenCodeConfig stores package name for bunx temp paths', async () => {
@@ -249,6 +288,92 @@ describe('config-io', () => {
     expect(saved.plugin).toEqual(['other', 'oh-my-opencode-slim']);
   });
 
+  test('addBuiltinMcpsToOpenCodeConfig writes host MCP definitions without clobbering existing auth', () => {
+    const configPath = join(tmpDir, 'opencode', 'opencode.json');
+    paths.ensureConfigDir();
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        mcp: {
+          websearch: {
+            type: 'remote',
+            url: 'https://mcp.exa.ai/mcp?tools=web_search_exa',
+            oauth: { clientId: 'existing' },
+          },
+        },
+      }),
+    );
+
+    const result = addBuiltinMcpsToOpenCodeConfig();
+    expect(result.success).toBe(true);
+
+    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(saved.mcp.context7).toMatchObject({
+      type: 'remote',
+      url: 'https://mcp.context7.com/mcp',
+    });
+    expect(saved.mcp.grep_app).toMatchObject({
+      type: 'remote',
+      url: 'https://mcp.grep.app',
+    });
+    expect(saved.mcp.grep_app.oauth).toBeUndefined();
+    expect(saved.mcp.websearch.oauth).toEqual({ clientId: 'existing' });
+    expect(saved.mcp.playwright.enabled).toBeUndefined();
+  });
+
+  test('addBuiltinMcpsToOpenCodeConfig removes legacy default-disabled flags', () => {
+    const configPath = join(tmpDir, 'opencode', 'opencode.json');
+    paths.ensureConfigDir();
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        mcp: {
+          github: { type: 'local', command: ['old'], enabled: false },
+          playwright: { type: 'local', command: ['old'], enabled: false },
+        },
+      }),
+    );
+
+    const result = addBuiltinMcpsToOpenCodeConfig();
+    expect(result.success).toBe(true);
+
+    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(saved.mcp.github.enabled).toBeUndefined();
+    expect(saved.mcp.playwright.enabled).toBeUndefined();
+  });
+
+  test('addBuiltinMcpsToOpenCodeConfig upgrades broken generated github docker command', () => {
+    const configPath = join(tmpDir, 'opencode', 'opencode.json');
+    paths.ensureConfigDir();
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        mcp: {
+          github: {
+            type: 'local',
+            command: [
+              'bash',
+              '-lc',
+              'export GITHUB_PERSONAL_ACCESS_TOKEN="$token"\nexec docker run -i --rm\n-e GITHUB_PERSONAL_ACCESS_TOKEN\nghcr.io/github/github-mcp-server stdio',
+            ],
+            enabled: true,
+          },
+        },
+      }),
+    );
+
+    const result = addBuiltinMcpsToOpenCodeConfig();
+    expect(result.success).toBe(true);
+
+    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    const command = saved.mcp.github.command.join(' ');
+    expect(saved.mcp.github.enabled).toBe(true);
+    expect(command).toContain(
+      'docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server stdio',
+    );
+    expect(command).not.toContain('docker run -i --rm\n-e');
+  });
+
   test('addPluginToOpenCodeTuiConfig adds plugin to tui.json and removes duplicates', async () => {
     const tuiPath = join(tmpDir, 'opencode', 'tui.json');
     paths.ensureConfigDir();
@@ -265,6 +390,27 @@ describe('config-io', () => {
     expect(saved.plugin).toContain('oh-my-opencode-slim/tui');
     expect(saved.plugin).not.toContain('oh-my-opencode-slim@1.0.0');
     expect(saved.plugin.length).toBe(2);
+  });
+
+  test('addPluginToOpenCodeTuiConfig prefers tui.jsonc when both files exist', async () => {
+    const tuiPath = join(tmpDir, 'opencode', 'tui.json');
+    const tuiJsoncPath = join(tmpDir, 'opencode', 'tui.jsonc');
+    paths.ensureConfigDir();
+    writeFileSync(tuiPath, JSON.stringify({ plugin: ['json-config'] }));
+    writeFileSync(tuiJsoncPath, JSON.stringify({ plugin: ['jsonc-config'] }));
+    process.argv[1] = '';
+
+    const result = await addPluginToOpenCodeTuiConfig();
+    expect(result.success).toBe(true);
+    expect(result.configPath).toBe(tuiJsoncPath);
+
+    const savedJson = JSON.parse(readFileSync(tuiPath, 'utf-8'));
+    const savedJsonc = JSON.parse(readFileSync(tuiJsoncPath, 'utf-8'));
+    expect(savedJson.plugin).toEqual(['json-config']);
+    expect(savedJsonc.plugin).toEqual([
+      'jsonc-config',
+      'oh-my-opencode-slim/tui',
+    ]);
   });
 
   test('addPluginToOpenCodeTuiConfig stores package name for bunx temp paths', async () => {
@@ -401,26 +547,40 @@ describe('config-io', () => {
     expect(saved.plugin.length).toBe(3);
   });
 
-  test('writeLiteConfig writes lite config with OpenAI preset', () => {
+  test('writeLiteConfig writes schema-only config for default install', () => {
+    const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
+    paths.ensureConfigDir();
+
+    const result = writeLiteConfig({
+      hasTmux: true,
+      installSkills: true,
+      reset: false,
+    });
+    expect(result.success).toBe(true);
+
+    const saved = JSON.parse(readFileSync(litePath, 'utf-8'));
+    expect(saved).toEqual({
+      $schema:
+        'https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json',
+    });
+  });
+
+  test('writeLiteConfig writes generated OpenAI preset when skills are disabled', () => {
     const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
     paths.ensureConfigDir();
 
     const result = writeLiteConfig({
       hasTmux: true,
       installSkills: false,
-      installCustomSkills: false,
       reset: false,
     });
     expect(result.success).toBe(true);
 
     const saved = JSON.parse(readFileSync(litePath, 'utf-8'));
-    expect(saved.$schema).toBe(
-      'https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json',
-    );
     expect(saved.preset).toBe('openai');
     expect(saved.presets.openai).toBeDefined();
-    expect(saved.presets['opencode-go']).toBeDefined();
-    expect(saved.tmux.enabled).toBe(true);
+    expect(saved.presets['opencode-go']).toBeUndefined();
+    expect(saved.skillProfiles.global).toEqual([]);
   });
 
   test('writeLiteConfig writes selected preset', () => {
@@ -430,7 +590,6 @@ describe('config-io', () => {
     const result = writeLiteConfig({
       hasTmux: false,
       installSkills: false,
-      installCustomSkills: false,
       preset: 'opencode-go',
       reset: false,
     });
@@ -439,7 +598,7 @@ describe('config-io', () => {
     const saved = JSON.parse(readFileSync(litePath, 'utf-8'));
     expect(saved.preset).toBe('opencode-go');
     expect(saved.disabled_agents).toEqual([]);
-    expect(saved.presets.openai).toBeDefined();
+    expect(saved.presets.openai).toBeUndefined();
     expect(saved.presets['opencode-go'].orchestrator.model).toBe(
       'opencode-go/glm-5.1',
     );
@@ -495,6 +654,7 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
 
     expect(existsSync(`${configPath}.bak`)).toBe(false);
+    expect(existsSync(join(tmpDir, 'opencode', 'backups'))).toBe(false);
   });
 
   test('detectCurrentConfig detects installed status', () => {
@@ -537,6 +697,44 @@ describe('config-io', () => {
     expect(detected.hasCopilot).toBe(true);
     expect(detected.hasZaiPlan).toBe(true);
     expect(detected.hasTmux).toBe(true);
+  });
+
+  test('detectCurrentConfig prefers lite .jsonc over .json', () => {
+    const configPath = join(tmpDir, 'opencode', 'opencode.json');
+    const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
+    const liteJsoncPath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.jsonc');
+    paths.ensureConfigDir();
+
+    writeFileSync(
+      configPath,
+      JSON.stringify({ plugin: ['oh-my-opencode-slim'] }),
+    );
+    writeFileSync(
+      litePath,
+      JSON.stringify({
+        preset: 'default',
+        presets: {
+          default: {
+            orchestrator: { model: 'openai/gpt-4' },
+          },
+        },
+      }),
+    );
+    writeFileSync(
+      liteJsoncPath,
+      JSON.stringify({
+        preset: 'default',
+        presets: {
+          default: {
+            orchestrator: { model: 'anthropic/claude-opus-4-6' },
+          },
+        },
+      }),
+    );
+
+    const detected = detectCurrentConfig();
+    expect(detected.hasOpenAI).toBe(false);
+    expect(detected.hasAnthropic).toBe(true);
   });
 
   test('detectCurrentConfig treats local repo path entries as installed', () => {

@@ -8,13 +8,16 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
+import { createHostBuiltinMcps } from '../mcp';
 import { crossSpawn } from '../utils/compat';
 import {
   ensureConfigDir,
   ensureOpenCodeConfigDir,
   ensureTuiConfigDir,
+  getConfigDir,
   getExistingConfigPath,
+  getExistingLiteConfigPath,
   getExistingTuiConfigPath,
   getLiteConfig,
 } from './paths';
@@ -166,6 +169,22 @@ function getOpenCodePluginCacheDir(): string {
   const cacheDir =
     process.env.XDG_CACHE_HOME?.trim() || join(homedir(), '.cache');
   return join(cacheDir, 'opencode', 'packages', `${PACKAGE_NAME}@latest`);
+}
+
+function timestamp(): string {
+  return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+function backupConfigFile(configPath: string): void {
+  if (!existsSync(configPath)) return;
+
+  const backupDir = join(
+    getConfigDir(),
+    'backups',
+    `omoc-install-${timestamp()}`,
+  );
+  mkdirSync(backupDir, { recursive: true });
+  copyFileSync(configPath, join(backupDir, basename(configPath)));
 }
 
 function writeOpenCodePluginCacheManifest(
@@ -336,6 +355,10 @@ export function parseConfig(path: string): {
     const jsoncPath = path.replace(/\.json$/, '.jsonc');
     return parseConfigFile(jsoncPath);
   }
+  if (path.endsWith('.jsonc')) {
+    const jsonPath = path.replace(/\.jsonc$/, '.json');
+    return parseConfigFile(jsonPath);
+  }
   return { config: null };
 }
 
@@ -350,13 +373,9 @@ export function writeConfig(configPath: string, config: OpenCodeConfig): void {
   }
 
   const tmpPath = `${configPath}.tmp`;
-  const bakPath = `${configPath}.bak`;
   const content = `${JSON.stringify(config, null, 2)}\n`;
 
-  // Backup existing config if it exists
-  if (existsSync(configPath)) {
-    copyFileSync(configPath, bakPath);
-  }
+  backupConfigFile(configPath);
 
   // Atomic write pattern: write to tmp, then rename
   writeFileSync(tmpPath, content);
@@ -468,13 +487,9 @@ export function writeLiteConfig(
 
     // Atomic write for lite config too
     const tmpPath = `${configPath}.tmp`;
-    const bakPath = `${configPath}.bak`;
     const content = `${JSON.stringify(config, null, 2)}\n`;
 
-    // Backup existing config if it exists
-    if (existsSync(configPath)) {
-      copyFileSync(configPath, bakPath);
-    }
+    backupConfigFile(configPath);
 
     writeFileSync(tmpPath, content);
     renameSync(tmpPath, configPath);
@@ -550,6 +565,92 @@ export function enableLspByDefault(): ConfigMergeResult {
   }
 }
 
+function isBrokenGeneratedGithubMcp(value: unknown): value is {
+  command: unknown[];
+  enabled?: unknown;
+} {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const command = (value as { command?: unknown }).command;
+  if (!Array.isArray(command)) return false;
+
+  return command.some(
+    (part) =>
+      typeof part === 'string' &&
+      part.includes('exec docker run -i --rm\n-e GITHUB_PERSONAL_ACCESS_TOKEN'),
+  );
+}
+
+function removeLegacyDefaultDisabledFlag(
+  mcpName: string,
+  value: unknown,
+  generatedMcps: Record<string, unknown>,
+): unknown {
+  if (!Object.hasOwn(generatedMcps, mcpName)) return value;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+
+  const entry = { ...(value as Record<string, unknown>) };
+  if (entry.enabled === false) {
+    delete entry.enabled;
+  }
+  return entry;
+}
+
+export function addBuiltinMcpsToOpenCodeConfig(): ConfigMergeResult {
+  const configPath = getExistingConfigPath();
+
+  try {
+    ensureOpenCodeConfigDir();
+    const { config: parsedConfig, error } = parseConfig(configPath);
+    if (error) {
+      return {
+        success: false,
+        configPath,
+        error: `Failed to parse config: ${error}`,
+      };
+    }
+    const config = parsedConfig ?? {};
+    const existingMcp =
+      config.mcp && typeof config.mcp === 'object' && !Array.isArray(config.mcp)
+        ? (config.mcp as Record<string, unknown>)
+        : {};
+    const generatedMcps = createHostBuiltinMcps();
+
+    if (isBrokenGeneratedGithubMcp(existingMcp.github)) {
+      existingMcp.github = {
+        ...generatedMcps.github,
+        ...(typeof existingMcp.github.enabled === 'boolean'
+          ? { enabled: existingMcp.github.enabled }
+          : {}),
+      };
+    }
+
+    for (const mcpName of Object.keys(existingMcp)) {
+      existingMcp[mcpName] = removeLegacyDefaultDisabledFlag(
+        mcpName,
+        existingMcp[mcpName],
+        generatedMcps,
+      );
+    }
+
+    config.mcp = {
+      ...generatedMcps,
+      ...existingMcp,
+    };
+
+    writeConfig(configPath, config);
+    return { success: true, configPath };
+  } catch (err) {
+    return {
+      success: false,
+      configPath,
+      error: `Failed to add built-in MCPs: ${err}`,
+    };
+  }
+}
+
 export function canModifyOpenCodeConfig(): boolean {
   try {
     const configPath = getExistingConfigPath();
@@ -597,7 +698,7 @@ export function detectCurrentConfig(): DetectedConfig {
   if (providers?.google) result.hasAntigravity = true;
 
   // Try to detect from lite config
-  const { config: liteConfig } = parseConfig(getLiteConfig());
+  const { config: liteConfig } = parseConfig(getExistingLiteConfigPath());
   if (liteConfig && typeof liteConfig === 'object') {
     const configObj = liteConfig as Record<string, unknown>;
     const presetName = configObj.preset as string;

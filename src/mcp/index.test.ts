@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { createBuiltinMcps } from './index';
+import { createBuiltinMcps, createHostBuiltinMcps } from './index';
 
 describe('createBuiltinMcps', () => {
   const builtinNames = [
@@ -7,10 +7,7 @@ describe('createBuiltinMcps', () => {
     'playwright',
     'chrome-devtools',
     'context7',
-    'microsoft-learn',
-    'sentry',
     'stripe',
-    'huggingface',
     'super-productivity',
     'websearch',
     'grep_app',
@@ -119,25 +116,22 @@ describe('createBuiltinMcps', () => {
     }
   });
 
-  test('opt-in MCPs are disabled by default', () => {
+  test('all built-in MCPs are enabled by default', () => {
     const mcps = createBuiltinMcps();
 
-    expect(mcps.github).toMatchObject({ enabled: false });
-    expect(mcps.playwright).toMatchObject({ enabled: false });
-    expect(mcps['chrome-devtools']).toMatchObject({ enabled: false });
-    expect(mcps['microsoft-learn']).toMatchObject({ enabled: false });
-    expect(mcps.sentry).toMatchObject({ enabled: false });
-    expect(mcps.stripe).toMatchObject({ enabled: false });
-    expect(mcps.huggingface).toMatchObject({ enabled: false });
-    expect(mcps['super-productivity']).toMatchObject({ enabled: false });
+    expect(mcps.github).not.toHaveProperty('enabled', false);
+    expect(mcps.playwright).not.toHaveProperty('enabled', false);
+    expect(mcps['chrome-devtools']).not.toHaveProperty('enabled', false);
+    expect(mcps.stripe).not.toHaveProperty('enabled', false);
+    expect(mcps['super-productivity']).not.toHaveProperty('enabled', false);
   });
 
-  test('enabled MCPs opt into default-disabled MCPs', () => {
-    const mcps = createBuiltinMcps([], undefined, ['playwright', 'sentry']);
+  test('enabled MCPs is backward-compatible and no longer required', () => {
+    const mcps = createBuiltinMcps([], undefined, ['playwright', 'stripe']);
 
     expect(mcps.playwright).not.toHaveProperty('enabled', false);
-    expect(mcps.sentry).not.toHaveProperty('enabled', false);
-    expect(mcps.github).toMatchObject({ enabled: false });
+    expect(mcps.stripe).not.toHaveProperty('enabled', false);
+    expect(mcps.github).not.toHaveProperty('enabled', false);
   });
 
   test('github MCP does not pass token value as docker argv', () => {
@@ -149,6 +143,10 @@ describe('createBuiltinMcps', () => {
       const command = github.command.join(' ');
       expect(command).toContain('export GITHUB_PERSONAL_ACCESS_TOKEN="$token"');
       expect(command).toContain('-e GITHUB_PERSONAL_ACCESS_TOKEN');
+      expect(command).toContain(
+        'docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server stdio',
+      );
+      expect(command).not.toContain('docker run -i --rm\n-e');
       expect(command).not.toContain('-e GITHUB_PERSONAL_ACCESS_TOKEN="$token"');
     }
   });
@@ -176,5 +174,17 @@ describe('createBuiltinMcps', () => {
         '/.local/share/super-productivity-mcp',
       );
     }
+  });
+
+  test('host MCP definitions avoid plugin-only remote auth suppression', () => {
+    const mcps = createHostBuiltinMcps();
+
+    expect(mcps.websearch).toMatchObject({
+      type: 'remote',
+      url: 'https://mcp.exa.ai/mcp?tools=web_search_exa',
+    });
+    expect(mcps.websearch).not.toHaveProperty('oauth', false);
+    expect(mcps.grep_app).not.toHaveProperty('oauth', false);
+    expect(mcps.context7).not.toHaveProperty('headers');
   });
 });

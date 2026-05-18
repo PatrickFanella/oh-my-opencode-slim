@@ -116,12 +116,11 @@ Use for unclear failures, flaky tests, incidents, and prevention analysis.
   "skills": [
     "systematic-debugging",
     "triage",
-    "sentry",
     "distributed-tracing",
     "slo-implementation",
     "review-quality"
   ],
-  "mcps": ["sentry"]
+  "mcps": ["websearch", "grep_app"]
 }
 ```
 

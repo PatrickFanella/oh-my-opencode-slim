@@ -1,6 +1,6 @@
 # MCP Servers
 
-Built-in Model Context Protocol (MCP) servers ship with oh-my-opencode-slim and give agents access to external tools — web search, library documentation, code search, browser automation, product APIs, and local workflow bridges.
+Built-in Model Context Protocol (MCP) definitions ship with oh-my-opencode-slim and give agents access to external tools — web search, library documentation, code search, browser automation, product APIs, and local workflow bridges.
 
 ---
 
@@ -13,21 +13,19 @@ Built-in Model Context Protocol (MCP) servers ship with oh-my-opencode-slim and 
 | `chrome-devtools` | Chrome DevTools automation, debugging, and performance analysis | `npx -y chrome-devtools-mcp@latest --isolated --headless --no-usage-statistics` |
 | `websearch` | Real-time web search via Exa AI | `https://mcp.exa.ai/mcp` |
 | `context7` | Official library documentation (up-to-date) | `https://mcp.context7.com/mcp` |
-| `microsoft-learn` | Official Microsoft Learn documentation and code samples | `https://learn.microsoft.com/api/mcp` |
-| `sentry` | Sentry issues, events, traces, and debugging workflows | `https://mcp.sentry.dev/mcp` |
 | `stripe` | Stripe billing, customers, payments, invoices, and subscriptions | `https://mcp.stripe.com/` |
-| `huggingface` | Hugging Face Hub and Spaces via official MCP | `https://huggingface.co/mcp?login` |
 | `super-productivity` | Super Productivity task and time-tracking bridge | local `sp-mcp` command |
 | `grep_app` | GitHub code search via grep.app | `https://mcp.grep.app` |
 
-The expanded built-in list mirrors the shared `.agents` MCP registry where the
-entries can be represented portably in OMOC. User-specific absolute paths and
-secret values are not vendored into the plugin; local MCPs expect their normal
-commands (`docker`, `gh`, `npx`, or `sp-mcp`) to be available on the host.
-Host-dependent local MCPs and auth/product remotes (`github`, `playwright`,
-`chrome-devtools`, `microsoft-learn`, `sentry`, `stripe`, `huggingface`, and
-`super-productivity`) are registered disabled by default; opt into them with
-`enabled_mcps` before assigning them to agents.
+The installer writes these definitions into OpenCode's host `opencode.json(c)`
+instead of exporting them from the plugin. That keeps OAuth/API authentication
+inside OpenCode's native MCP flow. User-specific absolute paths and secret
+values are not vendored into the plugin; local MCPs expect their normal commands
+(`docker`, `gh`, `npx`, or `sp-mcp`) to be available on the host.
+All built-in MCPs are registered enabled by default. Host-dependent local MCPs
+still require their host commands/auth to work (`docker`, `gh`, `npx`, or
+`sp-mcp`). Use `disabled_mcps` if you want to keep a server from starting, and
+use per-agent `mcps` lists to decide which agents can call each server.
 
 ---
 
@@ -97,24 +95,24 @@ To disable specific MCPs for all agents regardless of preset, add them to `disab
 }
 ```
 
-This is useful when you want to cut external network calls entirely (e.g. air-gapped environments or cost control).
+This marks the host MCP disabled and removes it from OMOC's per-agent MCP
+permission expansion. It is useful when you want to cut external network calls
+entirely (e.g. air-gapped environments or cost control).
 
 ---
 
-## Enabling Opt-In MCPs
+## Enabling All MCPs For An Agent
 
-Local MCPs that require host tools and product/API remotes that may require auth
-are disabled by default so OMOC does not start extra local processes or connect
-to product services on every installation. Enable them explicitly with
-`enabled_mcps`, then grant per-agent access through `mcps`:
+Built-in MCP servers are registered enabled by default, but agents still need
+permission to call them. Grant broad per-agent access with `mcps: ["*"]`, or use
+the default focused lists for narrower access:
 
 ```json
 {
-  "enabled_mcps": ["github", "playwright"],
   "presets": {
     "my-preset": {
       "orchestrator": {
-        "mcps": ["websearch", "grep_app", "github"]
+        "mcps": ["*"]
       },
       "designer": {
         "mcps": ["playwright"]

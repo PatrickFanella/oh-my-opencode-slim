@@ -11,7 +11,6 @@
     "skills/agent-ecosystem/skills-cli/SKILL.md",
     "skills/analytics-observability/grafana-dashboards/SKILL.md",
     "skills/analytics-observability/prometheus-configuration/SKILL.md",
-    "skills/analytics-observability/sentry/SKILL.md",
     "skills/analytics-observability/slo-implementation/SKILL.md",
     "skills/backend-architecture/api-design-principles/SKILL.md",
     "skills/backend-architecture/architecture-patterns/SKILL.md",
@@ -177,7 +176,7 @@
     "skills/writing-craft/table-tone/SKILL.md",
     "skills/writing-craft/voice-analysis/SKILL.md"
   ],
-  "last_batch_count": 175,
+  "last_batch_count": 174,
   "skills": {
     "skills/agent-ecosystem/context-engineer/SKILL.md": {
       "category": "agent-ecosystem",
@@ -284,17 +283,6 @@
       "name": "prometheus-configuration",
       "outcome": "clean",
       "score": 20,
-      "status": "audited"
-    },
-    "skills/analytics-observability/sentry/SKILL.md": {
-      "category": "analytics-observability",
-      "findings": [
-        "scripts/ present; ensure usage and side effects are documented"
-      ],
-      "last_audited_at": "2026-05-17T00:11:16.121317+00:00",
-      "name": "sentry",
-      "outcome": "clean",
-      "score": 21,
       "status": "audited"
     },
     "skills/analytics-observability/slo-implementation/SKILL.md": {

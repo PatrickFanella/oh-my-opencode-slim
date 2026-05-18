@@ -54,7 +54,7 @@ Usage:
   bunx oh-my-opencode-slim doctor [OPTIONS]
 
 Options:
-  --skills=yes|no        Install recommended and bundled skills (default: yes)
+  --skills=yes|no        Enable code-managed bundled skills (default: yes)
   --preset=<name>        Active generated config preset (default: openai)
   --no-tui               Non-interactive mode
   --dry-run              Simulate install without writing files
@@ -63,9 +63,9 @@ Options:
 
 Bootstrap options:
   --with-dcp             Add @tarquinen/opencode-dcp@latest to OpenCode plugins
-  --with-quota           Add @slkiser/opencode-quota to OpenCode plugins
+  --with-quota           Add @slkiser/opencode-quota to OpenCode/TUI plugins
   --with-rtk             Install rtk and run rtk init -g --opencode --auto-patch
-  --with-scheduled-tasks Add opencode-tasks and install daemon/skill
+  --with-scheduled-tasks Add opencode-tasks and install daemon/commands
   --yes, -y              Non-interactive bootstrap confirmation flag
   --skip-opencode        Skip OpenCode install/update
   --skip-build           Skip bun install and bun run build
@@ -73,16 +73,16 @@ Bootstrap options:
   --skip-rtk-init        Install rtk but skip rtk init
   --skip-scheduled-tasks-daemon
                          Add plugin but skip launchd/systemd daemon install
-  --skip-scheduled-tasks-skill
-                         Add plugin/daemon but skip scheduled-tasks skill install
+  --skip-scheduled-tasks-commands
+                         Add plugin/daemon but skip /loop command install
   --opencode-install-cmd=<cmd>
                          Override OpenCode install/update command
   --rtk-install-cmd=<cmd>
                          Override RTK install command
   --scheduled-tasks-daemon-cmd=<cmd>
                          Override scheduled-tasks daemon install command
-  --scheduled-tasks-skill-cmd=<cmd>
-                         Override scheduled-tasks skill install command
+  --scheduled-tasks-commands-cmd=<cmd>
+                         Override scheduled-tasks command install command
 
 Agents commands:
   agents list [--json]       List built-in and custom JSON agents
@@ -95,8 +95,11 @@ Doctor options:
 
 Available presets: ${getGeneratedPresetNames().join(', ')}
 
-The installer generates OpenAI and OpenCode Go presets by default.
+The installer writes only the selected generated preset.
 OpenAI is active unless --preset selects another generated preset.
+Install writes built-in MCP definitions to OpenCode config for native auth.
+Bootstrap applies trusted host defaults: permission allow, compaction, and
+selected DCP/quota sidecar config.
 For the full config reference, see docs/configuration.md.
 
 Examples:

@@ -31,7 +31,7 @@ Tail Workers automatically process events from producer Workers (the Workers bei
 
 **Before using Tail Workers, consider OpenTelemetry:**
 
-For batch exports to observability tools (Sentry, Grafana, Honeycomb):
+For batch exports to observability tools (Grafana, Honeycomb, etc.):
 - OTEL export sends logs/traces in batches (more efficient)
 - Built-in integrations with popular platforms
 - Lower overhead than Tail Workers
@@ -41,7 +41,7 @@ For batch exports to observability tools (Sentry, Grafana, Honeycomb):
 
 ```
 Need observability for Workers?
-├─ Batch export to known tools (Sentry/Grafana/Honeycomb)?
+├─ Batch export to known tools (Grafana/Honeycomb/etc.)?
 │  └─ Use OpenTelemetry export (not Tail Workers)
 ├─ Custom real-time processing needed?
 │  ├─ Aggregated metrics?

@@ -11,7 +11,9 @@ import {
   getConfigJsonc,
   getConfigSearchDirs,
   getExistingConfigPath,
+  getExistingLiteConfigPath,
   getLiteConfig,
+  getLiteConfigJsonc,
   getOpenCodeConfigPaths,
 } from './paths';
 
@@ -70,12 +72,12 @@ describe('paths', () => {
     ]);
   });
 
-  test('getOpenCodeConfigPaths() ignores OPENCODE_CONFIG_DIR', () => {
+  test('getOpenCodeConfigPaths() respects OPENCODE_CONFIG_DIR', () => {
     process.env.OPENCODE_CONFIG_DIR = '/custom/directory';
     process.env.XDG_CONFIG_HOME = '/tmp/xdg-config';
     expect(getOpenCodeConfigPaths()).toEqual([
-      '/tmp/xdg-config/opencode/opencode.json',
-      '/tmp/xdg-config/opencode/opencode.jsonc',
+      '/custom/directory/opencode.json',
+      '/custom/directory/opencode.jsonc',
     ]);
   });
 
@@ -101,6 +103,13 @@ describe('paths', () => {
     expect(getLiteConfig()).toBe('/custom/directory/oh-my-opencode-slim.json');
   });
 
+  test('getLiteConfigJsonc() respects OPENCODE_CONFIG_DIR', () => {
+    process.env.OPENCODE_CONFIG_DIR = '/custom/directory';
+    expect(getLiteConfigJsonc()).toBe(
+      '/custom/directory/oh-my-opencode-slim.jsonc',
+    );
+  });
+
   describe('getExistingConfigPath()', () => {
     let tmpDir: string;
 
@@ -123,6 +132,21 @@ describe('paths', () => {
       expect(getExistingConfigPath()).toBe(jsonPath);
     });
 
+    test('prefers .jsonc when both .json and .jsonc exist', () => {
+      tmpDir = mkdtempSync(join(tmpdir(), 'opencode-test-'));
+      process.env.XDG_CONFIG_HOME = tmpDir;
+
+      const configDir = join(tmpDir, 'opencode');
+      ensureConfigDir();
+
+      const jsonPath = join(configDir, 'opencode.json');
+      const jsoncPath = join(configDir, 'opencode.jsonc');
+      writeFileSync(jsonPath, '{}');
+      writeFileSync(jsoncPath, '{}');
+
+      expect(getExistingConfigPath()).toBe(jsoncPath);
+    });
+
     test("returns .jsonc if .json doesn't exist but .jsonc does", () => {
       tmpDir = mkdtempSync(join(tmpdir(), 'opencode-test-'));
       process.env.XDG_CONFIG_HOME = tmpDir;
@@ -142,6 +166,54 @@ describe('paths', () => {
 
       const jsonPath = join(tmpDir, 'opencode', 'opencode.json');
       expect(getExistingConfigPath()).toBe(jsonPath);
+    });
+
+    test('respects OPENCODE_CONFIG_DIR', () => {
+      tmpDir = mkdtempSync(join(tmpdir(), 'opencode-test-'));
+      const customDir = join(tmpDir, 'custom-opencode');
+      process.env.OPENCODE_CONFIG_DIR = customDir;
+      process.env.XDG_CONFIG_HOME = join(tmpDir, 'xdg-config');
+
+      ensureConfigDir();
+
+      const jsoncPath = join(customDir, 'opencode.jsonc');
+      writeFileSync(jsoncPath, '{}');
+
+      expect(getExistingConfigPath()).toBe(jsoncPath);
+    });
+  });
+
+  describe('getExistingLiteConfigPath()', () => {
+    let tmpDir: string;
+
+    afterEach(() => {
+      if (tmpDir && existsSync(tmpDir)) {
+        rmSync(tmpDir, { recursive: true, force: true });
+      }
+    });
+
+    test('prefers .jsonc when both .json and .jsonc exist', () => {
+      tmpDir = mkdtempSync(join(tmpdir(), 'opencode-test-'));
+      process.env.XDG_CONFIG_HOME = tmpDir;
+
+      const configDir = join(tmpDir, 'opencode');
+      ensureConfigDir();
+
+      const jsonPath = join(configDir, 'oh-my-opencode-slim.json');
+      const jsoncPath = join(configDir, 'oh-my-opencode-slim.jsonc');
+      writeFileSync(jsonPath, '{}');
+      writeFileSync(jsoncPath, '{}');
+
+      expect(getExistingLiteConfigPath()).toBe(jsoncPath);
+    });
+
+    test('returns default .json path if neither file exists', () => {
+      tmpDir = mkdtempSync(join(tmpdir(), 'opencode-test-'));
+      process.env.XDG_CONFIG_HOME = tmpDir;
+
+      expect(getExistingLiteConfigPath()).toBe(
+        join(tmpDir, 'opencode', 'oh-my-opencode-slim.json'),
+      );
     });
   });
 

@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
-import { MultiplexerSessionManager } from './session-manager';
+import {
+  MultiplexerSessionManager,
+  resolveMultiplexerServerUrl,
+} from './session-manager';
 
 const originalFetch = globalThis.fetch;
+const originalOpenCodePort = process.env.OPENCODE_PORT;
+const originalOpenCodeServerUrl = process.env.OPENCODE_SERVER_URL;
 let mockSessionStatuses: Record<string, { type: string }> = {};
 const mockFetch = mock(
   async () =>
@@ -77,7 +82,7 @@ describe('MultiplexerSessionManager', () => {
   beforeEach(() => {
     mockSessionStatuses = {};
     mockFetch.mockClear();
-    globalThis.fetch = mockFetch as typeof fetch;
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
     mockMultiplexer.spawnPane.mockReset();
     mockMultiplexer.spawnPane.mockResolvedValue({
       success: true,
@@ -87,10 +92,22 @@ describe('MultiplexerSessionManager', () => {
     mockMultiplexer.closePane.mockResolvedValue(true);
     mockMultiplexer.isInsideSession.mockReset();
     mockMultiplexer.isInsideSession.mockReturnValue(true);
+    delete process.env.OPENCODE_PORT;
+    delete process.env.OPENCODE_SERVER_URL;
   });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    if (originalOpenCodePort === undefined) {
+      delete process.env.OPENCODE_PORT;
+    } else {
+      process.env.OPENCODE_PORT = originalOpenCodePort;
+    }
+    if (originalOpenCodeServerUrl === undefined) {
+      delete process.env.OPENCODE_SERVER_URL;
+    } else {
+      process.env.OPENCODE_SERVER_URL = originalOpenCodeServerUrl;
+    }
   });
 
   describe('constructor', () => {
@@ -101,6 +118,21 @@ describe('MultiplexerSessionManager', () => {
         defaultMultiplexerConfig,
       );
       expect(manager).toBeDefined();
+    });
+
+    test('prefers OPENCODE_PORT over SDK default server URL', () => {
+      process.env.OPENCODE_PORT = '64772';
+      const ctx = createMockContext({ serverUrl: 'http://localhost:4096/' });
+
+      expect(resolveMultiplexerServerUrl(ctx)).toBe('http://localhost:64772');
+    });
+
+    test('prefers explicit OPENCODE_SERVER_URL over port and context', () => {
+      process.env.OPENCODE_PORT = '64772';
+      process.env.OPENCODE_SERVER_URL = 'http://127.0.0.1:7777';
+      const ctx = createMockContext({ serverUrl: 'http://localhost:4096/' });
+
+      expect(resolveMultiplexerServerUrl(ctx)).toBe('http://127.0.0.1:7777');
     });
   });
 

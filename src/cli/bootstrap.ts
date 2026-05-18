@@ -1,13 +1,14 @@
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
-  statSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
-import { copyFile, cp } from 'node:fs/promises';
+import { cp } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { basename, join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { crossSpawn } from '../utils/compat';
 import { parseConfig, writeConfig } from './config-io';
 import { install } from './install';
@@ -15,7 +16,6 @@ import {
   ensureOpenCodeConfigDir,
   getConfigDir,
   getExistingConfigPath,
-  getExistingLiteConfigPath,
   getExistingTuiConfigPath,
 } from './paths';
 import { isOpenCodeInstalled, isTmuxInstalled } from './system';
@@ -33,6 +33,9 @@ const OPTIONAL_PLUGINS = {
   quota: '@slkiser/opencode-quota',
   scheduledTasks: 'opencode-tasks',
 } as const;
+const OPTIONAL_TUI_PLUGINS = {
+  quota: '@slkiser/opencode-quota',
+} as const;
 
 const OPENCODE_INSTALL_COMMAND =
   'curl -fsSL https://opencode.ai/install | bash';
@@ -40,10 +43,95 @@ const RTK_INSTALL_COMMAND =
   'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh';
 const RTK_INIT_COMMAND = 'rtk init -g --opencode --auto-patch';
 const SCHEDULED_TASKS_INSTALL_DAEMON_COMMAND = 'bunx opencode-tasks --install';
-const SCHEDULED_TASKS_INSTALL_SKILL_COMMAND =
-  'bunx opencode-tasks --install-skill';
+const SCHEDULED_TASKS_INSTALL_COMMANDS_COMMAND =
+  'bunx opencode-tasks --install-commands';
 const HELPER_START = '# >>> oh-my-opencode-slim tmux helper >>>';
 const HELPER_END = '# <<< oh-my-opencode-slim tmux helper <<<';
+const DCP_SCHEMA_URL =
+  'https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json';
+const OPENCODE_PLUGIN_TYPES_PACKAGE = {
+  dependencies: {
+    '@opencode-ai/plugin': '1.15.3',
+  },
+} as const;
+const OPENCODE_CONFIG_GITIGNORE = `node_modules
+package.json
+package-lock.json
+bun.lock
+.gitignore
+`;
+
+const BOOTSTRAP_COMPACTION_DEFAULTS = {
+  auto: false,
+  prune: true,
+  reserved: 10_000,
+} as const;
+
+const QUOTA_TOAST_DEFAULTS = {
+  enableToast: false,
+  showSessionTokens: true,
+  enabledProviders: 'auto',
+  formatStyle: 'allWindows',
+  percentDisplayMode: 'used',
+  tuiSidebarPanel: {
+    enabled: true,
+  },
+  tuiCompactStatus: {
+    enabled: true,
+    homeBottom: true,
+    sessionPrompt: true,
+    suppressWhenNativeProviderQuota: true,
+  },
+} as const;
+
+const DCP_DEFAULTS = {
+  $schema: DCP_SCHEMA_URL,
+  enabled: true,
+  debug: false,
+  autoUpdate: true,
+  commands: {
+    enabled: true,
+    protectedTools: [],
+  },
+  compress: {
+    mode: 'range',
+    permission: 'allow',
+    minContextLimit: '35%',
+    maxContextLimit: '65%',
+    iterationNudgeThreshold: 15,
+    nudgeFrequency: 5,
+    nudgeForce: 'soft',
+    protectTags: false,
+    protectUserMessages: false,
+    protectedTools: [],
+    showCompression: false,
+    summaryBuffer: true,
+  },
+  experimental: {
+    allowSubAgents: true,
+    customPrompts: false,
+  },
+  manualMode: {
+    enabled: false,
+    automaticStrategies: true,
+  },
+  strategies: {
+    deduplication: {
+      enabled: true,
+    },
+    purgeErrors: {
+      enabled: true,
+      turns: 4,
+    },
+  },
+  turnProtection: {
+    enabled: false,
+    turns: 4,
+  },
+  protectedFilePatterns: [],
+  pruneNotification: 'detailed',
+  pruneNotificationType: 'chat',
+} as const;
 
 export interface BootstrapArgs {
   dryRun?: boolean;
@@ -56,7 +144,7 @@ export interface BootstrapArgs {
   skipShellHelper?: boolean;
   skipRtkInit?: boolean;
   skipScheduledTasksDaemon?: boolean;
-  skipScheduledTasksSkill?: boolean;
+  skipScheduledTasksCommands?: boolean;
   withDcp?: boolean;
   withQuota?: boolean;
   withRtk?: boolean;
@@ -64,7 +152,7 @@ export interface BootstrapArgs {
   opencodeInstallCommand?: string;
   rtkInstallCommand?: string;
   scheduledTasksDaemonCommand?: string;
-  scheduledTasksSkillCommand?: string;
+  scheduledTasksCommandsCommand?: string;
 }
 
 interface StepResult {
@@ -85,8 +173,11 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
     else if (arg === '--skip-rtk-init') result.skipRtkInit = true;
     else if (arg === '--skip-scheduled-tasks-daemon') {
       result.skipScheduledTasksDaemon = true;
-    } else if (arg === '--skip-scheduled-tasks-skill') {
-      result.skipScheduledTasksSkill = true;
+    } else if (
+      arg === '--skip-scheduled-tasks-commands' ||
+      arg === '--skip-scheduled-tasks-skill'
+    ) {
+      result.skipScheduledTasksCommands = true;
     } else if (arg === '--with-dcp') result.withDcp = true;
     else if (arg === '--with-quota') result.withQuota = true;
     else if (arg === '--with-rtk') result.withRtk = true;
@@ -109,8 +200,12 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
       result.scheduledTasksDaemonCommand = arg.slice(
         '--scheduled-tasks-daemon-cmd='.length,
       );
+    } else if (arg.startsWith('--scheduled-tasks-commands-cmd=')) {
+      result.scheduledTasksCommandsCommand = arg.slice(
+        '--scheduled-tasks-commands-cmd='.length,
+      );
     } else if (arg.startsWith('--scheduled-tasks-skill-cmd=')) {
-      result.scheduledTasksSkillCommand = arg.slice(
+      result.scheduledTasksCommandsCommand = arg.slice(
         '--scheduled-tasks-skill-cmd='.length,
       );
     } else {
@@ -147,19 +242,95 @@ function timestamp(): string {
   return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
-async function backupIfExists(
-  sourcePath: string,
-  backupDir: string,
-): Promise<boolean> {
-  if (!existsSync(sourcePath)) return false;
-  mkdirSync(backupDir, { recursive: true });
-  const targetPath = join(backupDir, basename(sourcePath));
-  if (statSync(sourcePath).isDirectory()) {
-    await cp(sourcePath, targetPath, { recursive: true });
-  } else {
-    await copyFile(sourcePath, targetPath);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeWithDefaults(
+  existing: unknown,
+  defaults: Record<string, unknown>,
+): Record<string, unknown> {
+  const base = isRecord(existing) ? { ...existing } : {};
+
+  for (const [key, value] of Object.entries(defaults)) {
+    if (isRecord(value)) {
+      base[key] = mergeWithDefaults(base[key], value);
+    } else if (Array.isArray(value)) {
+      base[key] = [...value];
+    } else {
+      base[key] = value;
+    }
   }
-  return true;
+
+  return base;
+}
+
+function uniqueStrings(values: unknown[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const value of values) {
+    if (typeof value !== 'string' || seen.has(value)) continue;
+    seen.add(value);
+    result.push(value);
+  }
+
+  return result;
+}
+
+export function applyBootstrapHostDefaults(
+  config: OpenCodeConfig,
+  options: {
+    skillsPath?: string | null;
+    removeSkillPaths?: readonly string[];
+  } = {},
+): OpenCodeConfig {
+  const next: OpenCodeConfig = { ...config };
+  next.permission = 'allow';
+  next.compaction = mergeWithDefaults(
+    next.compaction,
+    BOOTSTRAP_COMPACTION_DEFAULTS,
+  );
+
+  if (options.skillsPath || options.removeSkillPaths?.length) {
+    const skills = isRecord(next.skills) ? { ...next.skills } : {};
+    const removePaths = new Set(options.removeSkillPaths ?? []);
+    const paths = uniqueStrings(
+      (Array.isArray(skills.paths) ? skills.paths : []).filter(
+        (path) => typeof path === 'string' && !removePaths.has(path),
+      ),
+    );
+
+    if (options.skillsPath) {
+      paths.push(options.skillsPath);
+    }
+
+    if (paths.length > 0) {
+      skills.paths = uniqueStrings(paths);
+      next.skills = skills;
+    } else {
+      delete skills.paths;
+      if (Object.keys(skills).length > 0) {
+        next.skills = skills;
+      } else {
+        delete next.skills;
+      }
+    }
+  }
+
+  return next;
+}
+
+export function buildDcpConfig(
+  existing?: OpenCodeConfig | null,
+): OpenCodeConfig {
+  return mergeWithDefaults(existing ?? {}, DCP_DEFAULTS);
+}
+
+export function buildQuotaToastConfig(
+  existing?: OpenCodeConfig | null,
+): OpenCodeConfig {
+  return mergeWithDefaults(existing ?? {}, QUOTA_TOAST_DEFAULTS);
 }
 
 export async function backupOpenCodeConfig(
@@ -167,36 +338,62 @@ export async function backupOpenCodeConfig(
 ): Promise<StepResult> {
   const configDir = getConfigDir();
   const backupDir = join(configDir, 'backups', `omoc-bootstrap-${timestamp()}`);
-  const targets = [
-    getExistingConfigPath(),
-    getExistingTuiConfigPath(),
-    getExistingLiteConfigPath(),
-    join(configDir, 'oh-my-opencode-slim', 'agents'),
-    join(configDir, 'tasks'),
-    join(configDir, '.tasks.db'),
-    join(configDir, 'dcp.jsonc'),
-    join(configDir, 'dcp.json'),
-  ];
 
   if (!existsSync(configDir)) {
     return { ok: true, message: 'No existing OpenCode config directory found' };
   }
 
   if (dryRun) {
-    return { ok: true, message: `Would back up config files to ${backupDir}` };
+    return {
+      ok: true,
+      message: `Would back up OpenCode config directory to ${backupDir}`,
+    };
   }
 
-  let count = 0;
-  for (const target of Array.from(new Set(targets))) {
-    if (await backupIfExists(target, backupDir)) count += 1;
+  mkdirSync(backupDir, { recursive: true });
+  const entries = readdirSync(configDir).filter((entry) => entry !== 'backups');
+  for (const entry of entries) {
+    await cp(join(configDir, entry), join(backupDir, entry), {
+      recursive: true,
+      force: true,
+    });
   }
 
-  return count > 0
-    ? { ok: true, message: `Backed up ${count} config files to ${backupDir}` }
+  return entries.length > 0
+    ? {
+        ok: true,
+        message: `Backed up OpenCode config directory to ${backupDir}`,
+      }
     : {
         ok: true,
-        message: 'Config directory exists; no known config files found',
+        message: 'Config directory exists; no files found outside backups',
       };
+}
+
+export function resetOpenCodeConfigDirectory(dryRun = false): StepResult {
+  const configDir = getConfigDir();
+  if (!existsSync(configDir)) {
+    if (!dryRun) mkdirSync(join(configDir, 'backups'), { recursive: true });
+    return { ok: true, message: 'Initialized empty OpenCode config directory' };
+  }
+
+  const entries = readdirSync(configDir).filter((entry) => entry !== 'backups');
+  if (dryRun) {
+    return {
+      ok: true,
+      message: `Would remove ${entries.length} existing entries outside backups`,
+    };
+  }
+
+  for (const entry of entries) {
+    rmSync(join(configDir, entry), { recursive: true, force: true });
+  }
+  mkdirSync(join(configDir, 'backups'), { recursive: true });
+
+  return {
+    ok: true,
+    message: `Reset OpenCode config directory; preserved backups`,
+  };
 }
 
 async function runCommand(
@@ -297,14 +494,15 @@ async function installScheduledTasksDaemon(
         SCHEDULED_TASKS_INSTALL_DAEMON_COMMAND,
     );
   }
-  if (!args.skipScheduledTasksSkill) {
+  if (!args.skipScheduledTasksCommands) {
     commands.push(
-      args.scheduledTasksSkillCommand ?? SCHEDULED_TASKS_INSTALL_SKILL_COMMAND,
+      args.scheduledTasksCommandsCommand ??
+        SCHEDULED_TASKS_INSTALL_COMMANDS_COMMAND,
     );
   }
 
   if (commands.length === 0) {
-    return { ok: true, message: 'Skipped scheduled tasks daemon and skill' };
+    return { ok: true, message: 'Skipped scheduled tasks daemon and commands' };
   }
 
   if (args.dryRun) {
@@ -319,8 +517,8 @@ async function installScheduledTasksDaemon(
   return {
     ok: true,
     message: args.skipScheduledTasksDaemon
-      ? 'Scheduled tasks skill installed'
-      : 'Scheduled tasks daemon installed and initialized',
+      ? 'Scheduled tasks commands installed'
+      : 'Scheduled tasks daemon and commands installed',
   };
 }
 
@@ -330,61 +528,225 @@ function getPluginSpec(entry: unknown): string | undefined {
   return undefined;
 }
 
+function isOmocPluginSpec(pluginSpec: string): boolean {
+  return pluginSpec.includes('oh-my-opencode-slim');
+}
+
 export function addPluginsToConfig(
   config: OpenCodeConfig,
   pluginSpecs: readonly string[],
 ): OpenCodeConfig {
   const plugins = Array.isArray(config.plugin) ? [...config.plugin] : [];
   const existing = new Set(plugins.map(getPluginSpec).filter(Boolean));
+  const missingPlugins = pluginSpecs.filter((pluginSpec) => {
+    if (existing.has(pluginSpec)) return false;
+    existing.add(pluginSpec);
+    return true;
+  });
 
-  for (const pluginSpec of pluginSpecs) {
-    if (!existing.has(pluginSpec)) {
-      plugins.push(pluginSpec);
-      existing.add(pluginSpec);
-    }
-  }
+  const firstOmocIndex = plugins.findIndex((entry) => {
+    const pluginSpec = getPluginSpec(entry);
+    return pluginSpec ? isOmocPluginSpec(pluginSpec) : false;
+  });
+
+  if (firstOmocIndex === -1) plugins.push(...missingPlugins);
+  else plugins.splice(firstOmocIndex, 0, ...missingPlugins);
 
   return { ...config, plugin: plugins };
 }
 
-async function installOptionalPlugins(
-  args: BootstrapArgs,
-): Promise<StepResult> {
+function getOptionalOpenCodePluginSpecs(args: BootstrapArgs): string[] {
   const pluginSpecs: string[] = [];
   if (args.withDcp) pluginSpecs.push(OPTIONAL_PLUGINS.dcp);
   if (args.withQuota) pluginSpecs.push(OPTIONAL_PLUGINS.quota);
   if (args.withScheduledTasks) {
     pluginSpecs.push(OPTIONAL_PLUGINS.scheduledTasks);
   }
+  return pluginSpecs;
+}
 
-  if (pluginSpecs.length === 0) {
+export function getOptionalTuiPluginSpecs(args: BootstrapArgs): string[] {
+  const pluginSpecs: string[] = [];
+  if (args.withQuota) pluginSpecs.push(OPTIONAL_TUI_PLUGINS.quota);
+  return pluginSpecs;
+}
+
+async function installOptionalPlugins(
+  args: BootstrapArgs,
+): Promise<StepResult> {
+  const pluginSpecs = getOptionalOpenCodePluginSpecs(args);
+  const tuiPluginSpecs = getOptionalTuiPluginSpecs(args);
+
+  if (pluginSpecs.length === 0 && tuiPluginSpecs.length === 0) {
     return { ok: true, message: 'No optional plugins selected' };
   }
 
   const configPath = getExistingConfigPath();
+  const tuiConfigPath = getExistingTuiConfigPath();
   if (args.dryRun) {
+    const messages: string[] = [];
+    if (pluginSpecs.length > 0) {
+      messages.push(`OpenCode ${configPath}: ${pluginSpecs.join(', ')}`);
+    }
+    if (tuiPluginSpecs.length > 0) {
+      messages.push(`TUI ${tuiConfigPath}: ${tuiPluginSpecs.join(', ')}`);
+    }
     return {
       ok: true,
-      message: `Would add plugins to ${configPath}: ${pluginSpecs.join(', ')}`,
+      message: `Would add plugins to ${messages.join('; ')}`,
     };
   }
 
   ensureOpenCodeConfigDir();
+
   const { config, error } = parseConfig(configPath);
   if (error) {
     return { ok: false, message: `Failed to parse ${configPath}: ${error}` };
   }
 
-  writeConfig(configPath, addPluginsToConfig(config ?? {}, pluginSpecs));
+  let parsedTuiConfig: OpenCodeConfig | null = null;
+  if (tuiPluginSpecs.length > 0) {
+    mkdirSync(dirname(tuiConfigPath), { recursive: true });
+    const { config: tuiConfig, error: tuiError } = parseConfig(tuiConfigPath);
+    if (tuiError) {
+      return {
+        ok: false,
+        message: `Failed to parse ${tuiConfigPath}: ${tuiError}`,
+      };
+    }
+    parsedTuiConfig = tuiConfig;
+  }
+
+  if (pluginSpecs.length > 0) {
+    writeConfig(configPath, addPluginsToConfig(config ?? {}, pluginSpecs));
+  }
+  if (tuiPluginSpecs.length > 0) {
+    writeConfig(
+      tuiConfigPath,
+      addPluginsToConfig(parsedTuiConfig ?? {}, tuiPluginSpecs),
+    );
+  }
+
+  const messages = [`OpenCode: ${pluginSpecs.join(', ')}`];
+  if (tuiPluginSpecs.length > 0) {
+    messages.push(`TUI: ${tuiPluginSpecs.join(', ')}`);
+  }
+
   return {
     ok: true,
-    message: `Added optional plugins: ${pluginSpecs.join(', ')}`,
+    message: `Added optional plugins: ${messages.join('; ')}`,
+  };
+}
+
+function getExternalSkillsPath(): string {
+  return join(homedir(), '.agents', 'skills');
+}
+
+function getExistingDcpConfigPath(): string {
+  const configDir = getConfigDir();
+  const jsoncPath = join(configDir, 'dcp.jsonc');
+  const jsonPath = join(configDir, 'dcp.json');
+
+  if (existsSync(jsoncPath) || !existsSync(jsonPath)) return jsoncPath;
+  return jsonPath;
+}
+
+function getQuotaToastConfigPath(): string {
+  return join(getConfigDir(), 'opencode-quota', 'quota-toast.json');
+}
+
+export function ensureDesiredOpenCodeDirectory(dryRun = false): StepResult {
+  const configDir = getConfigDir();
+  const targets = [
+    join(configDir, 'backups'),
+    join(configDir, 'commands'),
+    join(configDir, 'oh-my-opencode-slim'),
+    join(configDir, 'plugins'),
+    join(configDir, 'skills'),
+  ];
+
+  if (dryRun) {
+    return { ok: true, message: 'Would ensure expected OpenCode directories' };
+  }
+
+  for (const target of targets) {
+    mkdirSync(target, { recursive: true });
+  }
+
+  writeFileSync(join(configDir, '.gitignore'), OPENCODE_CONFIG_GITIGNORE);
+  writeFileSync(
+    join(configDir, 'package.json'),
+    `${JSON.stringify(OPENCODE_PLUGIN_TYPES_PACKAGE, null, 2)}\n`,
+  );
+
+  return { ok: true, message: 'Ensured expected OpenCode directory layout' };
+}
+
+async function applyBootstrapRuntimeDefaults(
+  args: BootstrapArgs,
+): Promise<StepResult> {
+  const configPath = getExistingConfigPath();
+  const dcpPath = getExistingDcpConfigPath();
+  const quotaPath = getQuotaToastConfigPath();
+  const configured = ['OpenCode permissions and compaction'];
+
+  configured.push('remove legacy external skill path');
+  if (args.withDcp) configured.push('DCP defaults');
+  if (args.withQuota) configured.push('quota toast defaults');
+
+  if (args.dryRun) {
+    return {
+      ok: true,
+      message: `Would configure ${configured.join('; ')}`,
+    };
+  }
+
+  ensureOpenCodeConfigDir();
+
+  const { config, error } = parseConfig(configPath);
+  if (error) {
+    return { ok: false, message: `Failed to parse ${configPath}: ${error}` };
+  }
+
+  writeConfig(
+    configPath,
+    applyBootstrapHostDefaults(config ?? {}, {
+      removeSkillPaths: [getExternalSkillsPath()],
+    }),
+  );
+
+  if (args.withDcp) {
+    const { config: dcpConfig, error: dcpError } = parseConfig(dcpPath);
+    if (dcpError) {
+      return { ok: false, message: `Failed to parse ${dcpPath}: ${dcpError}` };
+    }
+    mkdirSync(dirname(dcpPath), { recursive: true });
+    writeConfig(dcpPath, buildDcpConfig(dcpConfig));
+  }
+
+  if (args.withQuota) {
+    const { config: quotaConfig, error: quotaError } = parseConfig(quotaPath);
+    if (quotaError) {
+      return {
+        ok: false,
+        message: `Failed to parse ${quotaPath}: ${quotaError}`,
+      };
+    }
+    mkdirSync(dirname(quotaPath), { recursive: true });
+    writeConfig(quotaPath, buildQuotaToastConfig(quotaConfig));
+  }
+
+  return {
+    ok: true,
+    message: `Configured ${configured.join('; ')}`,
   };
 }
 
 export function tmuxHelperBlock(): string {
   return `${HELPER_START}
-omos() {
+unalias opencode oc occ 2>/dev/null || true
+
+__omoc_opencode_with_port() {
   local port
   if command -v shuf >/dev/null 2>&1; then
     port="$(shuf -i 49152-65535 -n 1)"
@@ -393,9 +755,50 @@ omos() {
   else
     port="$((49152 + RANDOM % 16384))"
   fi
-  OPENCODE_PORT="$port" opencode --port "$port" "$@"
+  # Bypass shell functions and aliases so the real opencode binary runs.
+  OPENCODE_PORT="$port" command opencode --port "$port" "$@"
+}
+
+omos() {
+  __omoc_opencode_with_port "$@"
+}
+
+opencode() {
+  __omoc_opencode_with_port "$@"
+}
+
+oc() {
+  __omoc_opencode_with_port "$@"
+}
+
+occ() {
+  __omoc_opencode_with_port --continue "$@"
 }
 ${HELPER_END}`;
+}
+
+function hasSafeLegacyHelper(content: string): boolean {
+  if (
+    !content.includes('omos()') ||
+    !content.includes('OPENCODE_PORT="$port"')
+  ) {
+    return false;
+  }
+
+  const invokesBinarySafely = [
+    'command opencode --port "$port" "$@"',
+    'command "opencode" --port "$port" "$@"',
+    '"$OPENCODE_BIN" --port "$port" "$@"',
+  ].some((command) => content.includes(command));
+
+  if (!invokesBinarySafely) return false;
+
+  return (
+    content.includes('opencode()') &&
+    (content.includes('alias oc="omos"') || content.includes('oc()')) &&
+    (content.includes('alias occ="omos --continue"') ||
+      content.includes('occ()'))
+  );
 }
 
 export function upsertManagedBlock(content: string, block: string): string {
@@ -407,6 +810,10 @@ export function upsertManagedBlock(content: string, block: string): string {
     return `${content.slice(0, startIndex).trimEnd()}\n\n${block}\n${content
       .slice(afterEnd)
       .trimStart()}`;
+  }
+
+  if (hasSafeLegacyHelper(content)) {
+    return content;
   }
 
   return `${content.trimEnd()}\n\n${block}\n`;
@@ -494,12 +901,18 @@ async function step(
 export async function bootstrap(args: BootstrapArgs): Promise<number> {
   printHeader();
 
-  const total = 9;
+  const total = 12;
   let index = 1;
 
   if (
     !(await step(index++, total, 'Back up OpenCode config', () =>
       backupOpenCodeConfig(args.dryRun),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Reset OpenCode config directory', async () =>
+      resetOpenCodeConfigDirectory(args.dryRun),
     ))
   )
     return 1;
@@ -552,8 +965,23 @@ export async function bootstrap(args: BootstrapArgs): Promise<number> {
   )
     return 1;
   if (
+    !(await step(index++, total, 'Apply trusted OpenCode defaults', () =>
+      applyBootstrapRuntimeDefaults(args),
+    ))
+  )
+    return 1;
+  if (
     !(await step(index++, total, 'Install tmux shell helper', () =>
       installShellHelper(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(
+      index++,
+      total,
+      'Finalize OpenCode config directory',
+      async () => ensureDesiredOpenCodeDirectory(args.dryRun),
     ))
   )
     return 1;

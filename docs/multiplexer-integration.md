@@ -33,7 +33,7 @@ If you open multiple OpenCode sessions, use a random high port for each launch i
 **Bash helper:**
 
 ```bash
-omos() {
+__omoc_opencode_with_port() {
   local port
   if command -v shuf >/dev/null 2>&1; then
     port="$(shuf -i 49152-65535 -n 1)"
@@ -42,19 +42,29 @@ omos() {
   else
     port="$((49152 + RANDOM % 16384))"
   fi
-  OPENCODE_PORT="$port" opencode --port "$port" "$@"
+  # Bypass shell functions and aliases so the real opencode binary runs.
+  OPENCODE_PORT="$port" command opencode --port "$port" "$@"
 }
+
+omos() { __omoc_opencode_with_port "$@"; }
+opencode() { __omoc_opencode_with_port "$@"; }
+oc() { __omoc_opencode_with_port "$@"; }
+occ() { __omoc_opencode_with_port --continue "$@"; }
 ```
 
 ---
 
 ## Quick Start
 
-### 1. Enable the multiplexer
+### 1. Configure the multiplexer if needed
 
-Edit `~/.config/opencode/oh-my-opencode-slim.json` (or `.jsonc`):
+OMOC defaults to tmux with `main-vertical` layout and `main_pane_size: 60`, so
+you can omit multiplexer config entirely for the standard tmux setup.
 
-**Auto-detect (recommended):**
+Edit `~/.config/opencode/oh-my-opencode-slim.json` (or `.jsonc`) only when you
+want to change or disable those defaults:
+
+**Auto-detect tmux/Zellij:**
 
 ```jsonc
 {
@@ -132,7 +142,7 @@ Please analyze this codebase and create a documentation structure.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `type` | string | `"none"` | `"auto"`, `"tmux"`, `"zellij"`, or `"none"` |
+| `type` | string | `"tmux"` | `"auto"`, `"tmux"`, `"zellij"`, or `"none"` |
 | `layout` | string | `"main-vertical"` | Layout preset for tmux only |
 | `main_pane_size` | number | `60` | Main pane size percentage for tmux only (`20`-`80`) |
 
@@ -157,7 +167,9 @@ Older configs still work:
 }
 ```
 
-This is converted automatically to `multiplexer.type: "tmux"`.
+This is converted automatically to `multiplexer.type: "tmux"`. If legacy
+`tmux.enabled` is present and set to `false`, it disables the default
+multiplexer by mapping to `multiplexer.type: "none"`.
 
 ---
 

@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import {
+  addBuiltinMcpsToOpenCodeConfig,
   addPluginToOpenCodeConfig,
   addPluginToOpenCodeTuiConfig,
   detectCurrentConfig,
@@ -10,12 +11,11 @@ import {
   getOpenCodePath,
   getOpenCodeVersion,
   isOpenCodeInstalled,
+  isTmuxInstalled,
   warmOpenCodePluginCache,
   writeLiteConfig,
 } from './config-manager';
-import { CUSTOM_SKILLS, installCustomSkill } from './custom-skills';
 import { getExistingLiteConfigPath } from './paths';
-import { installSkill, RECOMMENDED_SKILLS } from './skills';
 import type { ConfigMergeResult, InstallArgs, InstallConfig } from './types';
 
 // Colors
@@ -151,10 +151,7 @@ async function runInstall(config: InstallConfig): Promise<number> {
 
   printHeader(isUpdate);
 
-  let totalSteps = 6;
-  if (config.installSkills) totalSteps += 1;
-  if (config.installCustomSkills) totalSteps += 1;
-  totalSteps += 1;
+  const totalSteps = 8;
 
   let step = 1;
 
@@ -215,6 +212,14 @@ async function runInstall(config: InstallConfig): Promise<number> {
     if (!handleStepResult(lspResult, 'LSP enabled')) return 1;
   }
 
+  printStep(step++, totalSteps, 'Installing built-in MCP definitions...');
+  if (config.dryRun) {
+    printInfo('Dry run mode - skipping MCP configuration');
+  } else {
+    const mcpResult = addBuiltinMcpsToOpenCodeConfig();
+    if (!handleStepResult(mcpResult, 'MCP definitions installed')) return 1;
+  }
+
   printStep(step++, totalSteps, 'Writing oh-my-opencode-slim configuration...');
   if (config.dryRun) {
     const liteConfig = generateLiteConfig(config);
@@ -244,57 +249,6 @@ async function runInstall(config: InstallConfig): Promise<number> {
     }
   }
 
-  // Install skills if requested
-  if (config.installSkills) {
-    printStep(step++, totalSteps, 'Installing recommended skills...');
-    if (config.dryRun) {
-      printInfo('Dry run mode - would install skills:');
-      for (const skill of RECOMMENDED_SKILLS) {
-        printInfo(`  - ${skill.name}`);
-      }
-    } else {
-      let skillsInstalled = 0;
-      for (const skill of RECOMMENDED_SKILLS) {
-        printInfo(`Installing ${skill.name}...`);
-        if (installSkill(skill)) {
-          printSuccess(`Installed: ${skill.name}`);
-          skillsInstalled++;
-        } else {
-          printInfo(`Skipped: ${skill.name} (already installed)`);
-        }
-      }
-      printSuccess(
-        `${skillsInstalled}/${RECOMMENDED_SKILLS.length} skills processed`,
-      );
-    }
-  }
-
-  // Install custom skills if requested
-  if (config.installCustomSkills) {
-    printStep(step++, totalSteps, 'Installing custom skills...');
-    if (config.dryRun) {
-      printInfo('Dry run mode - would install custom skills:');
-      for (const skill of CUSTOM_SKILLS) {
-        printInfo(`  - ${skill.name}`);
-      }
-    } else {
-      let customSkillsInstalled = 0;
-      for (const skill of CUSTOM_SKILLS) {
-        printInfo(`Installing ${skill.name}...`);
-        if (installCustomSkill(skill)) {
-          printSuccess(`Installed: ${skill.name}`);
-          customSkillsInstalled++;
-        } else {
-          printInfo(`Skipped: ${skill.name} (already installed)`);
-        }
-      }
-      const totalCustom = CUSTOM_SKILLS.length;
-      printSuccess(
-        `${customSkillsInstalled}/${totalCustom} custom skills processed`,
-      );
-    }
-  }
-
   const statusMsg = isUpdate
     ? 'Configuration updated!'
     : 'Installation complete!';
@@ -321,10 +275,9 @@ async function runInstall(config: InstallConfig): Promise<number> {
   console.log(`     ${BLUE}> ping all agents${RESET}`);
   console.log();
 
-  const modelsInfo =
-    config.preset && config.preset !== 'openai'
-      ? `Generated OpenAI and OpenCode Go presets; ${config.preset} is active.`
-      : 'Generated OpenAI and OpenCode Go presets; OpenAI is active by default.';
+  const modelsInfo = config.preset
+    ? `Generated ${config.preset} preset and made it active.`
+    : 'Wrote schema-only OMOC config; code-owned defaults are active.';
   console.log(`${modelsInfo}`);
   const altProviders = 'For the full configuration reference, see:';
   console.log(altProviders);
@@ -339,16 +292,22 @@ async function runInstall(config: InstallConfig): Promise<number> {
   return 0;
 }
 
-export async function install(args: InstallArgs): Promise<number> {
-  const config: InstallConfig = {
-    hasTmux: false,
+export function createInstallConfig(
+  args: InstallArgs,
+  hasTmux: boolean,
+): InstallConfig {
+  return {
+    hasTmux,
     installSkills: args.skills === 'yes',
-    installCustomSkills: args.skills === 'yes',
     preset: args.preset,
     promptForStar: args.tui,
     dryRun: args.dryRun,
     reset: args.reset ?? false,
   };
+}
+
+export async function install(args: InstallArgs): Promise<number> {
+  const config = createInstallConfig(args, await isTmuxInstalled());
 
   return runInstall(config);
 }

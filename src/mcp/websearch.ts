@@ -1,6 +1,8 @@
 import type { WebsearchConfig } from '../config';
 import type { RemoteMcpConfig } from './types';
 
+const TAVILY_API_KEY_CONFIG_TOKEN = '$' + '{TAVILY_API_KEY}';
+
 /**
  * Creates a websearch MCP config based on the provided configuration.
  * Supports Exa (default) and Tavily providers.
@@ -40,6 +42,35 @@ export function createWebsearchConfig(
     type: 'remote',
     url: exaUrl,
     oauth: false,
+  };
+}
+
+/**
+ * Creates a host OpenCode MCP config for websearch.
+ *
+ * This deliberately avoids embedding process env secrets into opencode.json.
+ * Host config can handle OAuth/headers in OpenCode's native MCP flow, while
+ * plugin-provided MCP definitions cannot reliably authenticate remote MCPs.
+ */
+export function createHostWebsearchConfig(
+  config?: WebsearchConfig,
+): RemoteMcpConfig {
+  const provider = config?.provider || 'exa';
+
+  if (provider === 'tavily') {
+    return {
+      type: 'remote',
+      url: 'https://mcp.tavily.com/mcp/',
+      headers: {
+        Authorization: `Bearer ${TAVILY_API_KEY_CONFIG_TOKEN}`,
+      },
+      oauth: false,
+    };
+  }
+
+  return {
+    type: 'remote',
+    url: 'https://mcp.exa.ai/mcp?tools=web_search_exa',
   };
 }
 

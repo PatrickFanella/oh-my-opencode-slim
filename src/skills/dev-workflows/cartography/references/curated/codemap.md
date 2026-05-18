@@ -106,7 +106,9 @@ Empty templates created in each folder for fixers to fill with:
 
 ## Installation
 
-Installed automatically via oh-my-opencode-slim installer when custom skills are enabled.
+Bundled with the package, but not installed automatically by the default slim
+installer. Copy or install this skill explicitly when codemap generation should
+be available in OpenCode.
 
 
 ### From `codemap.md`

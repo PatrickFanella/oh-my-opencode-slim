@@ -44,6 +44,38 @@ describe('tui-state persistence', () => {
     });
   });
 
+  test('persists full-board agent metadata and preset', () => {
+    recordTuiAgentModels({
+      preset: 'openai',
+      agentModels: {
+        'backend-architect': 'openai/gpt-5.5',
+      },
+      agents: [
+        {
+          name: 'backend-architect',
+          displayName: 'api-forge',
+          model: 'openai/gpt-5.5',
+          variant: 'high',
+          mode: 'subagent',
+          source: 'custom',
+        },
+      ],
+    });
+
+    const snapshot = readTuiSnapshot();
+    expect(snapshot.preset).toBe('openai');
+    expect(snapshot.agents).toEqual([
+      {
+        name: 'backend-architect',
+        displayName: 'api-forge',
+        model: 'openai/gpt-5.5',
+        variant: 'high',
+        mode: 'subagent',
+        source: 'custom',
+      },
+    ]);
+  });
+
   test('updates a single live agent model without dropping others', () => {
     recordTuiAgentModels({
       agentModels: {

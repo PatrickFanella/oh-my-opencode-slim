@@ -236,7 +236,7 @@ describe('per-model variant in array config', () => {
 });
 
 describe('skill permissions', () => {
-  test('orchestrator denies wildcard skills but allows default bundled skills', () => {
+  test('orchestrator denies wildcard skills but allows built-in fallback skills', () => {
     const agents = createAgents();
     const orchestrator = agents.find((a) => a.name === 'orchestrator');
     expect(orchestrator).toBeDefined();
@@ -244,7 +244,7 @@ describe('skill permissions', () => {
       orchestrator?.config.permission as Record<string, unknown>
     )?.skill as Record<string, string>;
     expect(skillPerm?.['*']).toBe('deny');
-    // CUSTOM_SKILLS loop must also add a named codemap entry for orchestrator
+    // Built-in fallback profiles include selected bundled skill names.
     expect(skillPerm?.codemap).toBe('allow');
     expect(skillPerm?.clonedeps).toBe('allow');
   });

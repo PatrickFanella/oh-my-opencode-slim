@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { stripJsonComments } from '../cli/config-io';
 import { getConfigSearchDirs } from '../cli/paths';
 import {
+  DEFAULT_MULTIPLEXER_CONFIG,
   type PackageDefinition,
   type PluginConfig,
   PluginConfigSchema,
@@ -417,8 +418,8 @@ export function loadPluginConfig(
     config = mergePluginConfigs(config, projectConfig);
   }
 
-  // Migrate legacy tmux config to multiplexer config for backward compatibility
-  config = migrateTmuxToMultiplexer(config);
+  // Normalize multiplexer config before environment/package/preset overlays.
+  config = normalizeMultiplexerConfig(config);
 
   // Override preset from environment variable if set
   const envPreset = process.env.OH_MY_OPENCODE_SLIM_PRESET;
@@ -526,30 +527,33 @@ export function loadAgentPrompt(
 }
 
 /**
- * Migrate legacy tmux config to multiplexer config for backward compatibility.
- * If tmux.enabled is true and no multiplexer config is set, creates a multiplexer
- * config from the tmux settings.
+ * Normalize multiplexer config. Explicit `multiplexer` config wins; otherwise
+ * legacy `tmux` config maps to the unified multiplexer shape. If neither is
+ * present, the code-owned default is tmux/main-vertical/60.
  *
  * @param config - Plugin config to migrate
  * @returns Config with multiplexer settings applied
  */
-function migrateTmuxToMultiplexer(config: PluginConfig): PluginConfig {
-  // If multiplexer is already configured, use it as-is
-  if (config.multiplexer?.type && config.multiplexer.type !== 'none') {
+function normalizeMultiplexerConfig(config: PluginConfig): PluginConfig {
+  if (config.multiplexer) {
     return config;
   }
 
-  // If tmux is enabled, migrate to multiplexer
-  if (config.tmux?.enabled) {
+  if (config.tmux) {
     return {
       ...config,
       multiplexer: {
-        type: 'tmux',
-        layout: config.tmux.layout ?? 'main-vertical',
-        main_pane_size: config.tmux.main_pane_size ?? 60,
+        type: config.tmux.enabled ? 'tmux' : 'none',
+        layout: config.tmux.layout ?? DEFAULT_MULTIPLEXER_CONFIG.layout,
+        main_pane_size:
+          config.tmux.main_pane_size ??
+          DEFAULT_MULTIPLEXER_CONFIG.main_pane_size,
       },
     };
   }
 
-  return config;
+  return {
+    ...config,
+    multiplexer: { ...DEFAULT_MULTIPLEXER_CONFIG },
+  };
 }

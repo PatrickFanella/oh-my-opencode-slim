@@ -54,4 +54,6 @@ Empty templates created in each folder for explorers to fill with:
 
 ## Installation
 
-Installed automatically via oh-my-opencode-lite installer when custom skills are enabled.
+Bundled with the package, but not installed automatically by the default slim
+installer. Copy or install this skill explicitly when cartography/codemap
+generation should be available in OpenCode.

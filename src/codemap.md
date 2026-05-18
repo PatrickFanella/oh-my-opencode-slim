@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-- `src/index.ts` delivers the plugin assembly layer: it loads configuration, resolves agent definitions, precomputes runtime model fallback chains, wires multiplexer/session orchestration, registers tools/MCPs/hooks, and returns the OpenCode plugin registration object.
+- `src/index.ts` delivers the plugin assembly layer: it loads configuration, resolves agent definitions, precomputes runtime model fallback chains, wires multiplexer/session orchestration, registers tools/hooks, materializes the curated managed skills path, and returns the OpenCode plugin registration object.
 - `config/`, `agents/`, `tools/`, `multiplexer/`, `hooks/`, and `utils/` contain the reusable building blocks (loader/schema/constants, agent factories/permission helpers, tool factories, session mirroring managers, hook implementations, and runtime utilities) that power that entry point.
 - `hooks/task-session-manager` is now part of the core plugin flow to support resumable child task sessions with concise aliases and reminder injection for orchestrator calls.
 - `cli/` remains the installer surface (argument parsing, interactive prompts, config edits, skill/provider installation).
@@ -21,14 +21,14 @@
   - `createAgents` + `getAgentConfigs` construct final agent registry and resolved prompts.
   - Runtime model chains are built from configured arrays plus fallback chains.
   - `SubagentDepthTracker`, `MultiplexerSessionManager`, `CouncilManager`, `ForegroundFallbackManager`, and hook factories are initialized before registration.
-- Plugin registration: `index.ts` merges/overlays agent configs into OpenCode's config, registers tools (`council`, `webfetch`, `ast_grep_*`, todo tools), MCPs (`createBuiltinMcps`), and all hook handlers (`event`, `tool.execute.before/after`, `experimental.chat.system/messages.transform`, `command.execute.before`, etc.).
+- Plugin registration: `index.ts` merges/overlays agent configs into OpenCode's config, registers tools (`council`, `webfetch`, `ast_grep_*`, todo tools), registers OMOC sidebar commands, materializes only the bundled skills referenced by enabled agents into a managed path, applies host MCP enable/disable policy to already-installed MCP definitions, and wires all hook handlers (`event`, `tool.execute.before/after`, `experimental.chat.system/messages.transform`, `command.execute.before`, etc.). MCP definitions themselves are installed into host OpenCode config by the CLI so native auth works.
 - Runtime event flow (`event`): updates depth tree, multiplexer pane state, auto-update checks, interview/preset state, and task-session cleanup for deleted sessions.
 - `experimental.chat.system.transform` pipeline:
   - injects orchestrator/system-level reminders when required,
   - applies task/session prompt enrichment from `task-session-manager`,
   - collapses all system entries into one message via `collapseSystemInPlace` for providers that reject multi-message system arrays.
 - `tool.execute.before/after` (`task`): records pending task calls, resolves short aliases to canonical IDs, parses outputs for new task IDs, and updates/removes remembered sessions.
-- CLI flow: `cli/install.ts` parses flags, optionally prompts, checks OpenCode installation, updates config via `cli/config-io.ts` and `cli/paths.ts`, disables default agents, writes lite config, and installs skills (`cli/skills.ts`, `cli/custom-skills.ts`).
+- CLI flow: `cli/install.ts` parses flags, checks OpenCode installation, updates config via `cli/config-io.ts` and `cli/paths.ts`, writes built-in MCP definitions to host config, disables default agents, and writes lite config.
 
 ## Integration
 

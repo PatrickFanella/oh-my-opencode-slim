@@ -4,7 +4,7 @@
     "total_skills": 175,
     "categories": {
       "agent-ecosystem": 8,
-      "analytics-observability": 4,
+      "analytics-observability": 3,
       "backend-architecture": 11,
       "cloud-infra": 5,
       "creative-media": 9,
@@ -24,7 +24,7 @@
       "quality-review": 6,
       "security": 12,
       "testing": 6,
-      "tooling-integrations": 13,
+      "tooling-integrations": 14,
       "worldbuilding-fiction": 14,
       "writing-craft": 24
     }
@@ -78,11 +78,6 @@
     {
       "name": "prometheus-configuration",
       "path": "skills/analytics-observability/prometheus-configuration/SKILL.md",
-      "category": "analytics-observability"
-    },
-    {
-      "name": "sentry",
-      "path": "skills/analytics-observability/sentry/SKILL.md",
       "category": "analytics-observability"
     },
     {
@@ -678,6 +673,11 @@
     {
       "name": "opentui",
       "path": "skills/tooling-integrations/opentui/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "scheduled-tasks",
+      "path": "skills/tooling-integrations/scheduled-tasks/SKILL.md",
       "category": "tooling-integrations"
     },
     {

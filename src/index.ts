@@ -14,7 +14,7 @@ import {
   type Preset,
 } from './config';
 import { parseList } from './config/agent-mcps';
-import { AGENT_ALIASES } from './config/constants';
+import { AGENT_ALIASES, ALL_AGENT_NAMES } from './config/constants';
 import {
   getActiveRuntimePreset,
   getPreviousRuntimePreset,
@@ -37,12 +37,12 @@ import {
 } from './hooks';
 import { processImageAttachments } from './hooks/image-hook';
 import { createInterviewManager } from './interview';
-import { createBuiltinMcps } from './mcp';
 import {
   getMultiplexer,
   MultiplexerSessionManager,
   startAvailabilityCheck,
 } from './multiplexer';
+import { materializeCuratedSkills } from './skills/managed';
 import {
   createCavemanToolkit,
   createGithubToolkit,
@@ -62,7 +62,15 @@ import {
   createSubtaskTool,
   createWebfetchTool,
 } from './tools';
-import { recordTuiAgentModel, recordTuiAgentModels } from './tui-state';
+import {
+  handleTuiSidebarCommandExecuteBefore,
+  registerTuiSidebarCommands,
+} from './tui-sidebar-command';
+import {
+  recordTuiAgentModel,
+  recordTuiAgentModels,
+  type TuiAgentSnapshot,
+} from './tui-state';
 import {
   createDisplayNameMentionRewriter,
   resolveRuntimeAgentName,
@@ -98,8 +106,30 @@ async function appLog(
 const HEALTH_CHECK = {
   minAgents: 5,
   minTools: 5,
-  minMcps: 1,
 } as const;
+
+function ensureManagedSkillsPath(
+  opencodeConfig: Record<string, unknown>,
+  managedSkillsPath: string,
+): void {
+  const skills =
+    opencodeConfig.skills &&
+    typeof opencodeConfig.skills === 'object' &&
+    !Array.isArray(opencodeConfig.skills)
+      ? { ...(opencodeConfig.skills as Record<string, unknown>) }
+      : {};
+  const existingPaths = Array.isArray(skills.paths) ? skills.paths : [];
+  const paths = existingPaths.filter(
+    (path): path is string => typeof path === 'string',
+  );
+
+  if (!paths.includes(managedSkillsPath)) {
+    paths.push(managedSkillsPath);
+  }
+
+  skills.paths = paths;
+  opencodeConfig.skills = skills;
+}
 
 function getPresetOverrideForResolvedAgent(
   preset: Preset,
@@ -167,7 +197,6 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   let disabledAgents: Set<string>;
   let agentDefs: ReturnType<typeof createAgents>;
   let agents: ReturnType<typeof getAgentConfigs>;
-  let mcps: ReturnType<typeof createBuiltinMcps>;
   let modelArrayMap: Record<string, Array<{ id: string; variant?: string }>>;
   let runtimeChains: Record<string, string[]>;
   let multiplexerConfig: MultiplexerConfig;
@@ -355,11 +384,6 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
         )
       : {};
 
-    mcps = createBuiltinMcps(
-      config.disabled_mcps,
-      config.websearch,
-      config.enabled_mcps,
-    );
     webfetch = createWebfetchTool(ctx);
 
     // Initialize MultiplexerSessionManager to handle OpenCode's built-in
@@ -453,23 +477,14 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
 
   // ── Health check: validate registrations ────────────────────────────
   const agentCount = Object.keys(agents).length;
-  const mcpCount = Object.keys(mcps).length;
-  // Skip MCP threshold when user explicitly disabled all built-in MCPs
-  const mcpThreshold =
-    config.disabled_mcps && config.disabled_mcps.length > 0
-      ? 0
-      : HEALTH_CHECK.minMcps;
-
   if (
     agentCount < HEALTH_CHECK.minAgents ||
-    toolCount < HEALTH_CHECK.minTools ||
-    mcpCount < mcpThreshold
+    toolCount < HEALTH_CHECK.minTools
   ) {
     const msg = [
       'Health check: registrations suspiciously low.',
       `  agents: ${agentCount} (expected >=${HEALTH_CHECK.minAgents})`,
       `  tools:  ${toolCount} (expected >=${HEALTH_CHECK.minTools})`,
-      `  mcps:   ${mcpCount} (expected >=${mcpThreshold})`,
       'This usually means a dependency failed to resolve (jsdom, etc).',
       'If you recently updated opencode, see:',
       '  github.com/alvinunreal/oh-my-opencode-slim/issues/310',
@@ -480,7 +495,6 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
     log('[plugin] health check passed', {
       agents: agentCount,
       tools: toolCount,
-      mcps: mcpCount,
     });
   }
 
@@ -517,9 +531,13 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       read_session: createReadSessionTool(ctx.client, subtaskState),
     },
 
-    mcp: mcps,
-
     config: async (opencodeConfig: Record<string, unknown>) => {
+      const curatedSkills = materializeCuratedSkills(
+        config,
+        agentDefs.map((agentDef) => agentDef.name),
+      );
+      ensureManagedSkillsPath(opencodeConfig, curatedSkills.targetDir);
+
       // Only set default_agent if not already configured by the user
       // and the plugin config doesn't explicitly disable this behavior
       if (
@@ -780,6 +798,8 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       }
 
       const tuiAgentModels: Record<string, string> = {};
+      const tuiAgents: TuiAgentSnapshot[] = [];
+      const coreAgentNames = new Set<string>(ALL_AGENT_NAMES);
       for (const agentDef of agentDefs) {
         if (agentDef.name === 'councillor') continue;
 
@@ -796,24 +816,61 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
                 : undefined;
 
         tuiAgentModels[agentDef.name] = resolvedModel ?? 'default';
+        tuiAgents.push({
+          name: agentDef.name,
+          ...(agentDef.displayName
+            ? { displayName: agentDef.displayName }
+            : {}),
+          model: resolvedModel ?? 'default',
+          ...(typeof entry?.variant === 'string'
+            ? { variant: entry.variant }
+            : typeof agentDef.config.variant === 'string'
+              ? { variant: agentDef.config.variant }
+              : {}),
+          mode:
+            agentDef.name === 'orchestrator'
+              ? 'primary'
+              : agentDef.name === 'council'
+                ? 'all'
+                : 'subagent',
+          source: coreAgentNames.has(agentDef.name) ? 'core' : 'custom',
+        });
       }
-      recordTuiAgentModels({ agentModels: tuiAgentModels });
+      recordTuiAgentModels({
+        agentModels: tuiAgentModels,
+        agents: tuiAgents,
+        preset: config.preset,
+      });
 
-      // Merge MCP configs
-      const configMcp = opencodeConfig.mcp as
-        | Record<string, unknown>
-        | undefined;
-      if (!configMcp) {
-        opencodeConfig.mcp = { ...mcps };
-      } else {
-        Object.assign(configMcp, mcps);
-      }
-
-      // Get all MCP names from the merged config (built-in + custom)
+      // Get all MCP names from host OpenCode config. MCP definitions are
+      // installed into opencode.json(c), not exported by the plugin, so
+      // OpenCode's native authentication flow can manage auth-capable MCPs.
       const mergedMcpConfig = opencodeConfig.mcp as
         | Record<string, unknown>
         | undefined;
-      const allMcpNames = Object.keys(mergedMcpConfig ?? mcps);
+      const disabledMcpNames = new Set(config.disabled_mcps ?? []);
+      const enabledMcpNames = new Set(config.enabled_mcps ?? []);
+      if (mergedMcpConfig) {
+        for (const [mcpName, mcpConfig] of Object.entries(mergedMcpConfig)) {
+          if (
+            typeof mcpConfig !== 'object' ||
+            mcpConfig === null ||
+            Array.isArray(mcpConfig)
+          ) {
+            continue;
+          }
+
+          const entry = mcpConfig as Record<string, unknown>;
+          if (disabledMcpNames.has(mcpName)) {
+            entry.enabled = false;
+          } else if (enabledMcpNames.has(mcpName)) {
+            entry.enabled = true;
+          }
+        }
+      }
+      const allMcpNames = Object.keys(mergedMcpConfig ?? {}).filter(
+        (mcpName) => !disabledMcpNames.has(mcpName),
+      );
 
       // For each agent, create permission rules based on their mcps list
       for (const [agentName, agentConfig] of Object.entries(agents)) {
@@ -879,6 +936,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       reviewToolkit?.registerCommands(opencodeConfig);
       observeToolkit?.registerCommands(opencodeConfig);
       boardCommandManager?.registerCommand(opencodeConfig);
+      registerTuiSidebarCommands(opencodeConfig);
     },
 
     event: async (input) => {
@@ -1145,6 +1203,11 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
           command: string;
           arguments: string;
         },
+        output as { parts: Array<{ type: string; text?: string }> },
+      );
+
+      await handleTuiSidebarCommandExecuteBefore(
+        input as { command: string },
         output as { parts: Array<{ type: string; text?: string }> },
       );
     },
