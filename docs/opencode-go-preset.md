@@ -3,9 +3,8 @@
 `opencode-go` is a bundled generated preset for users who want to run the
 Pantheon agents through OpenCode Go models instead of the default OpenAI setup.
 
-The installer generates both `openai` and `opencode-go` presets. OpenAI stays
-active by default unless you select OpenCode Go during install or switch to it
-later.
+The installer writes only the selected generated preset. OpenAI stays active by
+default unless you select OpenCode Go during install.
 
 Because the `opencode-go` preset uses GLM-5.1 for Orchestrator and GLM is not
 multimodal, installing with `--preset=opencode-go` also enables the Observer
@@ -26,16 +25,17 @@ opencode models --refresh
 
 ## Switch at Runtime
 
-If both presets are already in your config, switch from inside OpenCode:
+If you manually keep both presets in your config, switch from inside OpenCode:
 
 ```text
 /preset opencode-go
 ```
 
 See [Preset Switching](preset-switching.md) for the full runtime switching
-workflow. If you originally installed with the default OpenAI preset, also add
-`"disabled_agents": []` to your config and restart OpenCode so Observer is
-available before switching to `opencode-go`.
+workflow. If you originally installed with the default OpenAI preset, first add
+an `opencode-go` preset manually, add `"disabled_agents": []` to your config,
+and restart OpenCode so Observer is available before switching to
+`opencode-go`.
 
 `disabled_agents` is global, not per-preset. If you later switch back to OpenAI
 and restart while keeping `"disabled_agents": []`, Observer will remain enabled

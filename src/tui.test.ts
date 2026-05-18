@@ -4,7 +4,12 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import {
   formatSidebarModelName,
+  getDefaultSidebarCollapseState,
+  getHomePanelLayout,
   getSidebarAgentNames,
+  getSidebarAgentSections,
+  getSidebarDisplaySections,
+  normalizeSidebarCollapseState,
   readConfigInvalid,
 } from './tui';
 import type { TuiSnapshot } from './tui-state';
@@ -14,6 +19,7 @@ function createSnapshot(overrides: Partial<TuiSnapshot> = {}): TuiSnapshot {
     version: 1,
     updatedAt: 0,
     agentModels: {},
+    agents: [],
     ...overrides,
   };
 }
@@ -43,6 +49,141 @@ describe('tui sidebar agents', () => {
     expect(agentNames).not.toContain('council');
     expect(agentNames).not.toContain('councillor');
   });
+
+  test('groups full-board agents with display handles first', () => {
+    const sections = getSidebarAgentSections(
+      createSnapshot({
+        preset: 'openai',
+        agents: [
+          {
+            name: 'orchestrator',
+            model: 'openai/gpt-5.5',
+            mode: 'primary',
+            source: 'core',
+          },
+          {
+            name: 'backend-architect',
+            displayName: 'api-forge',
+            model: 'openai/gpt-5.5',
+            mode: 'subagent',
+            source: 'custom',
+          },
+          {
+            name: 'database-advisor',
+            displayName: 'data-vault',
+            model: 'openai/gpt-5.5',
+            mode: 'subagent',
+            source: 'custom',
+          },
+        ],
+      }),
+    );
+
+    expect(sections[0]?.title).toBe('CORE BOARD');
+    expect(sections[0]?.rows[0]?.handle).toBe('orchestrator');
+    expect(sections.map((section) => section.title)).toContain('BUILD');
+    expect(sections.map((section) => section.title)).toContain('OPS');
+    expect(
+      sections.flatMap((section) => section.rows.map((row) => row.handle)),
+    ).toContain('api-forge');
+    expect(
+      sections.flatMap((section) => section.rows.map((row) => row.handle)),
+    ).toContain('data-vault');
+  });
+
+  test('defaults to compact sidebar with custom sections collapsed', () => {
+    const snapshot = createSnapshot({
+      agents: [
+        {
+          name: 'orchestrator',
+          model: 'openai/gpt-5.5',
+          mode: 'primary',
+          source: 'core',
+        },
+        {
+          name: 'backend-architect',
+          displayName: 'api-forge',
+          model: 'openai/gpt-5.5',
+          mode: 'subagent',
+          source: 'custom',
+        },
+      ],
+    });
+    const sections = getSidebarDisplaySections(
+      snapshot,
+      getDefaultSidebarCollapseState(),
+    );
+
+    expect(
+      sections.find((section) => section.title === 'CORE BOARD'),
+    ).toMatchObject({
+      collapsed: false,
+      visibleRows: [{ handle: 'orchestrator' }],
+    });
+    expect(sections.find((section) => section.title === 'BUILD')).toMatchObject(
+      {
+        collapsed: true,
+        rows: [{ handle: 'api-forge' }],
+        visibleRows: [],
+      },
+    );
+  });
+
+  test('full sidebar mode expands custom sections', () => {
+    const sections = getSidebarDisplaySections(
+      createSnapshot({
+        agents: [
+          {
+            name: 'backend-architect',
+            displayName: 'api-forge',
+            model: 'openai/gpt-5.5',
+            mode: 'subagent',
+            source: 'custom',
+          },
+        ],
+      }),
+      { mode: 'full', collapsedSections: [] },
+    );
+
+    expect(sections.find((section) => section.title === 'BUILD')).toMatchObject(
+      {
+        collapsed: false,
+        visibleRows: [{ handle: 'api-forge' }],
+      },
+    );
+  });
+
+  test('minimal and off sidebar modes hide board sections', () => {
+    const snapshot = createSnapshot({
+      agentModels: { explorer: 'openai/gpt-5.4-mini' },
+    });
+
+    expect(
+      getSidebarDisplaySections(snapshot, {
+        mode: 'minimal',
+        collapsedSections: [],
+      }),
+    ).toEqual([]);
+    expect(
+      getSidebarDisplaySections(snapshot, {
+        mode: 'off',
+        collapsedSections: [],
+      }),
+    ).toEqual([]);
+  });
+
+  test('normalizes persisted collapse state safely', () => {
+    expect(normalizeSidebarCollapseState({ mode: 'full' })).toEqual({
+      mode: 'full',
+      collapsedSections: [],
+    });
+    expect(
+      normalizeSidebarCollapseState({
+        mode: 'nope',
+        collapsedSections: ['BUILD', 'BUILD', 42],
+      }),
+    ).toEqual({ mode: 'compact', collapsedSections: ['BUILD'] });
+  });
 });
 
 describe('formatSidebarModelName', () => {
@@ -57,6 +198,29 @@ describe('formatSidebarModelName', () => {
 
   test('leaves model names without slashes unchanged', () => {
     expect(formatSidebarModelName('pending')).toBe('pending');
+  });
+});
+
+describe('getHomePanelLayout', () => {
+  test('right-aligns the home board card by default', () => {
+    const layout = getHomePanelLayout();
+
+    expect(layout.wrapper).toMatchObject({
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+    });
+    expect(layout.panel).toMatchObject({
+      width: '100%',
+      maxWidth: 82,
+      flexDirection: 'column',
+    });
+  });
+
+  test('can center the home board card if placement changes', () => {
+    const layout = getHomePanelLayout('center');
+
+    expect(layout.wrapper).toMatchObject({ justifyContent: 'center' });
   });
 });
 

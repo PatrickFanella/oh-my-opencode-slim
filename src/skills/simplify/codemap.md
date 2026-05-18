@@ -30,7 +30,7 @@
 
 ## Integration
 
-- Installed by plugin installer (`installCustomSkills`) using `src/cli/install.ts` via `installCustomSkill()`.
+- Bundled as package skill source; install or copy it explicitly when the `simplify` skill should be available in OpenCode.
 - Permission surface is enforced by hook layer in `src/hooks/filter-available-skills/index.ts` (`permissionRules`).
 - Release integrity: `scripts/verify-release-artifact.ts` checks for `src/skills/simplify/SKILL.md` in package tarballs.
 - Operationally paired with codemap/fixer flows in `src/index.ts` orchestrations for post-feature readability hardening.

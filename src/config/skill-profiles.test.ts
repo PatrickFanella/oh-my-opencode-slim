@@ -78,6 +78,7 @@ describe('skill profiles', () => {
       'context-engineer',
       'prompt-craft',
       'review-doc-consistency',
+      'scheduled-tasks',
     ]);
   });
 

@@ -261,7 +261,7 @@ Same browser routing concern as Testing. Avoid duplicate unresolved guidance; cr
 
 ### Tool-backed skills
 
-`caveman`, `sentry`, `stripe`, and `super-productivity-mcp` should stay active only if they add routing/preflight/fallback beyond tool docs.
+`caveman`, `stripe`, and `super-productivity-mcp` should stay active only if they add routing/preflight/fallback beyond tool docs.
 
 ## Worldbuilding fiction
 

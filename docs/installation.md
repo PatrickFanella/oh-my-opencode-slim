@@ -39,41 +39,51 @@ bun run bootstrap --yes --with-dcp --with-quota --with-rtk --with-scheduled-task
 
 The bootstrap command:
 
-- backs up existing OpenCode config files under
+- backs up the entire existing OpenCode config directory under
   `~/.config/opencode/backups/omoc-bootstrap-*`
+- resets `~/.config/opencode` before recreating the desired directory layout,
+  preserving only `backups/`
 - checks for `tmux`
 - installs or updates OpenCode with `curl -fsSL https://opencode.ai/install | bash`
 - runs `bun install --yes` and `bun run build`
 - runs the OMOC installer from the local checkout
 - optionally adds `@tarquinen/opencode-dcp@latest` and
-  `@slkiser/opencode-quota` to OpenCode's plugin list
+  `@slkiser/opencode-quota` to OpenCode's plugin list; quota is also added
+  to `tui.json(c)` so its TUI panels load
+- applies trusted host defaults to `opencode.json(c)`: `permission: "allow"`,
+  compaction `{ auto: false, prune: true, reserved: 10000 }`, and removes the
+  legacy `~/.agents/skills` path
+- when DCP/quota are selected, writes sidecar defaults to `dcp.jsonc` and
+  `opencode-quota/quota-toast.json`
 - optionally installs RTK with its official install script, then runs
   `rtk init -g --opencode --auto-patch` so OpenCode gets the RTK rewrite
   integration
 - optionally adds `opencode-tasks`, installs its launchd/systemd scheduler
-  daemon with `bunx opencode-tasks --install`, and installs its agent skill
-  with `bunx opencode-tasks --install-skill`
-- inserts a managed `omos` helper into `.zshrc`/`.bashrc` for launching
-  OpenCode with a random `OPENCODE_PORT` for tmux panes
+  daemon with `bunx opencode-tasks --install`, and installs its `/loop` slash
+  commands with `bunx opencode-tasks --install-commands`; the
+  `scheduled-tasks` agent skill is bundled and managed by OMOC
+- inserts managed `opencode`, `omos`, `oc`, and `occ` helpers into
+  `.zshrc`/`.bashrc` for launching OpenCode with a random `OPENCODE_PORT` for
+  tmux panes; `occ` runs `opencode --continue`
 
 Useful bootstrap flags:
 
 | Option | Description |
 |--------|-------------|
 | `--with-dcp` | Add `@tarquinen/opencode-dcp@latest` |
-| `--with-quota` | Add `@slkiser/opencode-quota` |
+| `--with-quota` | Add `@slkiser/opencode-quota` to OpenCode and TUI plugin lists |
 | `--with-rtk` | Install RTK and run `rtk init -g --opencode --auto-patch` |
-| `--with-scheduled-tasks` | Add `opencode-tasks`, install daemon, and install skill |
+| `--with-scheduled-tasks` | Add `opencode-tasks`, install daemon, and install `/loop` commands |
 | `--skip-opencode` | Do not run the OpenCode install/update command |
 | `--skip-build` | Do not run `bun install --yes` or `bun run build` |
 | `--skip-shell-helper` | Do not modify `.zshrc`/`.bashrc` |
 | `--skip-rtk-init` | Install RTK but do not run `rtk init` |
 | `--skip-scheduled-tasks-daemon` | Add plugin but skip launchd/systemd daemon install |
-| `--skip-scheduled-tasks-skill` | Add plugin/daemon but skip scheduled-tasks skill install |
+| `--skip-scheduled-tasks-commands` | Add plugin/daemon but skip `/loop` command install |
 | `--opencode-install-cmd=<cmd>` | Override the OpenCode install/update command |
 | `--rtk-install-cmd=<cmd>` | Override the RTK install command |
 | `--scheduled-tasks-daemon-cmd=<cmd>` | Override scheduled-tasks daemon install command |
-| `--scheduled-tasks-skill-cmd=<cmd>` | Override scheduled-tasks skill install command |
+| `--scheduled-tasks-commands-cmd=<cmd>` | Override scheduled-tasks command install command |
 | `--dry-run` | Show intended actions without writing files |
 
 ### Configuration Options
@@ -82,7 +92,7 @@ The installer supports the following options:
 
 | Option | Description |
 |--------|-------------|
-| `--skills=yes|no` | Install recommended and bundled skills (default: yes) |
+| `--skills=yes|no` | Enable code-managed bundled skills (default: yes); `no` writes explicit empty skill profiles |
 | `--preset=<name>` | Active generated config preset: `openai` or `opencode-go` (default: `openai`) |
 | `--no-tui` | Non-interactive mode |
 | `--dry-run` | Simulate install without writing files |
@@ -102,11 +112,18 @@ To force overwrite of your existing configuration, use the `--reset` flag:
 bunx oh-my-opencode-slim@latest install --reset
 ```
 
-**Note:** When using `--reset`, the installer creates a `.bak` backup file before overwriting, so your previous configuration is preserved.
+**Note:** When using `--reset`, the installer backs up the previous file under
+`~/.config/opencode/backups/omoc-install-*` before overwriting it.
 
 ### After Installation
 
-The installer generates both OpenAI and OpenCode Go presets, with OpenAI active by default (using `gpt-5.5` and `gpt-5.4-mini` models). To make OpenCode Go active during install, run `bunx oh-my-opencode-slim@latest install --preset=opencode-go`. That preset uses GLM-5.1 for Orchestrator, so the installer also enables Observer with `opencode-go/kimi-k2.6` for visual analysis. To switch providers later or build a mixed setup, use **[Configuration Reference](configuration.md)** for the full option reference and the preset docs for copyable examples.
+The default installer writes a schema-only OMOC config and lets code-owned defaults choose the active agent models. Passing `--preset=<name>` writes only that generated preset. It also writes built-in MCP definitions into `opencode.json(c)` so OpenCode's native MCP auth flow owns any OAuth/API authentication. It does not copy the whole bundled skill catalog into `~/.config/opencode/skills` or depend on `~/.agents/skills`; with the default `--skills=yes`, the plugin materializes only the curated union of code-owned skills referenced by enabled agents into a managed skill directory, then controls per-agent skill access through permissions. To make OpenCode Go active during install, run `bunx oh-my-opencode-slim@latest install --preset=opencode-go`. That preset uses GLM-5.1 for Orchestrator, so the installer also enables Observer with `opencode-go/kimi-k2.6` for visual analysis. To switch providers later or build a mixed setup, use **[Configuration Reference](configuration.md)** for the full option reference and the preset docs for copyable examples.
+
+The clone-based `bootstrap` command also applies trusted machine defaults in
+OpenCode's host config. Those defaults intentionally trust the local machine by
+setting `permission: "allow"`, tuning OpenCode compaction, removing the legacy
+`~/.agents/skills` path, and writing DCP/quota sidecar config when those
+integrations are selected.
 
 Then:
 
@@ -125,7 +142,12 @@ and adjust models if needed.
 The installer also registers the companion TUI sidebar plugin in
 `~/.config/opencode/tui.json`. If OpenCode shows the sidebar but the OMOC
 panel is absent, open the TUI plugin manager and enable the
-`oh-my-opencode-slim:tui` module once.
+`oh-my-opencode-slim:tui` module once. The panel shows the full board by
+default with a compact density: CORE agents stay visible, custom board groups
+start collapsed, and config/MCP/LSP/plugin/todo/diff status stays visible. The
+sidebar itself is render-only; use the real OpenCode commands `/board-toggle`,
+`/board-full`, `/board-compact`, `/board-minimal`, and `/board-off` to switch
+density or hide the OMOC sidebar content.
 
 Then run OpenCode and verify the agents:
 
@@ -174,7 +196,7 @@ If not installed, direct the user to https://opencode.ai/docs first.
 
 ### Step 2: Run the Installer
 
-The installer generates OpenAI and OpenCode Go presets, with OpenAI active by default:
+The default installer writes a schema-only OMOC config. Passing `--preset=<name>` writes only that generated preset:
 
 ```bash
 bunx oh-my-opencode-slim@latest install --no-tui --skills=yes
@@ -182,10 +204,10 @@ bunx oh-my-opencode-slim@latest install --no-tui --skills=yes
 
 **Examples:**
 ```bash
-# Interactive install (asks about tmux and skills)
+# Interactive install
 bunx oh-my-opencode-slim@latest install
 
-# Non-interactive with default skills
+# Non-interactive with code-managed bundled skills
 bunx oh-my-opencode-slim@latest install --no-tui --skills=yes
 
 # Make the generated OpenCode Go preset active
@@ -199,10 +221,14 @@ bunx oh-my-opencode-slim@latest install --reset
 ```
 
 The installer automatically:
-- Adds the plugin to `~/.config/opencode/opencode.json`
+- Adds the plugin to `~/.config/opencode/opencode.json` (or `.jsonc` if it exists)
+- Adds built-in MCP definitions to `opencode.json(c)` for native auth handling
 - Disables default OpenCode agents
 - Enables OpenCode LSP integration when no explicit `lsp` setting exists
 - Generates agent model mappings in `~/.config/opencode/oh-my-opencode-slim.json` (or `.jsonc`)
+- Leaves multiplexer settings to plugin defaults: tmux, `main-vertical`, and
+  `main_pane_size: 60`. Override `multiplexer` in plugin config only when you
+  want a different layout/backend or `type: "none"`.
 
 ### Step 3: Authenticate with Providers
 
@@ -247,13 +273,18 @@ Then manually create the config files at:
 
 If the installer reports that the configuration already exists, you have two options:
 
+If both `oh-my-opencode-slim.jsonc` and `oh-my-opencode-slim.json` exist,
+the installer updates/reports the JSONC file because it is the file loaded at
+runtime.
+
 1. **Keep existing config**: The installer will skip the configuration step and continue with other operations (like adding the plugin or installing skills).
 
 2. **Reset configuration**: Use `--reset` to overwrite:
    ```bash
    bunx oh-my-opencode-slim@latest install --reset
    ```
-   A `.bak` backup file will be created automatically.
+   A backup will be created automatically under
+   `~/.config/opencode/backups/omoc-install-*`.
 
 ### Agents Not Responding
 
@@ -324,7 +355,7 @@ See the [Multiplexer Integration Guide](multiplexer-integration.md) for more det
 2. **Remove configuration files (optional)**:
    ```bash
    rm -f ~/.config/opencode/oh-my-opencode-slim.json
-   rm -f ~/.config/opencode/oh-my-opencode-slim.json.bak
+   rm -rf ~/.config/opencode/backups/omoc-install-*
    ```
 
 3. **Remove skills (optional)**:

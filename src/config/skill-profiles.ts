@@ -15,6 +15,7 @@ export const DEFAULT_GLOBAL_SKILLS = [
   'context-engineer',
   'prompt-craft',
   'review-doc-consistency',
+  'scheduled-tasks',
 ] as const;
 
 export const DEFAULT_AGENT_SKILL_PROFILES: Record<string, readonly string[]> =

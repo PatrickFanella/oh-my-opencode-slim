@@ -1,5 +1,5 @@
 import { DEFAULT_AGENT_MCPS } from '../config/agent-mcps';
-import { getDefaultSkillProfilesConfig } from '../config/skill-profiles';
+import { ALL_AGENT_NAMES } from '../config/constants';
 import type { InstallConfig } from './types';
 
 const SCHEMA_URL =
@@ -79,9 +79,24 @@ export function getGeneratedPresetNames(): GeneratedPresetName[] {
   return [...GENERATED_PRESETS];
 }
 
+function getDisabledSkillProfilesConfig(): {
+  global: string[];
+  agents: Record<string, string[]>;
+} {
+  const agents: Record<string, string[]> = Object.fromEntries(
+    ALL_AGENT_NAMES.map((agentName) => [agentName, []]),
+  );
+
+  return { global: [], agents };
+}
+
 export function generateLiteConfig(
   installConfig: InstallConfig,
 ): Record<string, unknown> {
+  if (!installConfig.preset && installConfig.installSkills) {
+    return { $schema: SCHEMA_URL };
+  }
+
   const preset = installConfig.preset ?? 'openai';
   if (!isGeneratedPresetName(preset)) {
     throw new Error(
@@ -92,9 +107,12 @@ export function generateLiteConfig(
   const config: Record<string, unknown> = {
     $schema: SCHEMA_URL,
     preset,
-    skillProfiles: getDefaultSkillProfilesConfig(),
     presets: {},
   };
+
+  if (!installConfig.installSkills) {
+    config.skillProfiles = getDisabledSkillProfilesConfig();
+  }
 
   if (preset === 'opencode-go') {
     config.disabled_agents = [];
@@ -123,17 +141,7 @@ export function generateLiteConfig(
   };
 
   const presets = config.presets as Record<string, unknown>;
-  for (const presetName of GENERATED_PRESETS) {
-    presets[presetName] = buildPreset(presetName);
-  }
-
-  if (installConfig.hasTmux) {
-    config.tmux = {
-      enabled: true,
-      layout: 'main-vertical',
-      main_pane_size: 60,
-    };
-  }
+  presets[preset] = buildPreset(preset);
 
   return config;
 }

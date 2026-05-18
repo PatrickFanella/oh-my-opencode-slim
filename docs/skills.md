@@ -2,7 +2,9 @@
 
 Skills are specialized capabilities you can assign to agents. Unlike MCPs (which are running servers), skills are **prompt-based tool configurations** — instructions injected into an agent's system prompt that describe how to use a particular tool.
 
-Skills are installed via the `oh-my-opencode-slim` installer or manually with `npx skills add`.
+OMOC ships its own skill catalog, but it does not expose the whole catalog at
+once. At startup it materializes only the curated union of skills referenced by
+enabled agents. You do not need `~/.agents/skills` for OMOC skills.
 
 ---
 
@@ -10,18 +12,18 @@ Skills are installed via the `oh-my-opencode-slim` installer or manually with `n
 
 OMOC treats skills in three categories:
 
-1. **Bundled custom skills** live in `src/skills/` and are copied into the
-   OpenCode config directory by the installer. Use this for skills that are
-   core to OMOC workflows and maintained with this repo.
-2. **Recommended external skills** are installed through the skills CLI during
-   setup. Use this only for skills with an upstream owner or external runtime
-   dependency.
+1. **Bundled code-managed skills** live in `src/skills/`, are shipped with the
+   package, and are copied into a managed skill directory only when an enabled
+   agent's resolved skill profile references them. Per-agent permissions decide
+   which of these curated skills are visible/runnable.
+2. **External skills** can still be installed manually when you intentionally
+   want non-OMOC skill packages.
 3. **Permission-only skills** are not installed by OMOC. OMOC only grants
    agent permission for users who already have them.
 
-For OMOC as the distribution layer, prefer bundled custom skills for core
-orchestration workflows. Keep DCP/quota-related skills outside OMOC unless a
-future integration contract explicitly defines that boundary.
+For OMOC as the distribution layer, prefer code-owned availability rather than a
+personal global skill folder. Keep DCP/quota-related skills outside OMOC unless
+a future integration contract explicitly defines that boundary.
 
 Bundled skill discovery is recursive (`src/skills/**/SKILL.md`) and generated
 at runtime from frontmatter metadata. This removes manual registry maintenance
@@ -31,7 +33,7 @@ as the in-repo catalog grows.
 
 ## Available Skills
 
-### Recommended (via installer)
+### Code-managed by OMOC
 
 | Skill | Description | Assigned to by default |
 |-------|-------------|----------------------|
@@ -39,11 +41,12 @@ as the in-repo catalog grows.
 
 ### Bundled in repo
 
-| Skill | Description | Assigned to by default |
-|-------|-------------|----------------------|
+| Skill | Description | Built-in fallback assignment |
+|-------|-------------|-----------------------------|
 | [`simplify`](#simplify) | Behavior-preserving code simplification | `oracle` |
 | [`codemap`](#codemap) | Repository codemap generation | `orchestrator` |
 | [`clonedeps`](#clonedeps) | Local dependency source cloning | `orchestrator` |
+| [`scheduled-tasks`](#scheduled-tasks) | OpenCode task scheduling guidance | all agents |
 
 In addition to those OMOC defaults, this repo now bundles the migrated skills
 catalog under category paths like:
@@ -57,22 +60,17 @@ Top-level catalog docs are also preserved in `src/skills/` (`README.md`,
 `CATALOG.md`, `QUALITY.md`, `AUDIT_WORKFLOW.md`, `STACK_PROFILE.md`,
 `index.json`, `index.md`, plus `audits/`).
 
-Default auto-assignment is controlled by skill profiles. Every agent gets a
-broad cross-cutting core (`summarization`, `systematic-debugging`, `github-pro`,
-research, review, refactor, planning, handoff, and documentation skills), then
-the skills for its role. The defaults intentionally start broad so teams can
-prune after observing real context use.
+Skill assignment is controlled by skill profiles and explicit agent `skills`
+arrays. The installer-generated config omits `skillProfiles` by default, so the
+code-owned built-in profiles are active. If you run with `--skills=no`, the
+generated config writes explicit empty profiles for every built-in agent.
 
-Generated configs use deny-by-default skill permissions. The bundled catalog can
-stay installed without appearing in every prompt: OMOC filters OpenCode's global
-`<available_skills>` block down to the active agent's resolved allow-list. Niche
-skills stay invisible unless assigned through a profile or explicit agent
-`skills` array.
+Generated configs use deny-by-default skill permissions. Niche skills stay
+invisible unless code-owned profiles or explicit agent `skills` arrays allow
+them.
 
-`agent-browser` remains a recommended external skill because it also installs a
-runtime CLI. The migrated catalog copy is kept as source material but is not
-installed as a bundled custom skill, preventing the installer from overwriting
-the external skill payload.
+`agent-browser` is bundled as a skill definition, but its runtime CLI still must
+exist on the host for browser automation commands to work.
 
 ---
 
@@ -147,6 +145,25 @@ See **[Clonedeps](clonedeps.md)** for the full workflow and file layout.
 
 ---
 
+## scheduled-tasks
+
+**One-off, recurring, and session-loop task scheduling for OpenCode.**
+
+`scheduled-tasks` is bundled from the `opencode-tasks` plugin's agent skill so
+OMOC can manage it through the same curated skill materialization path as the
+rest of the in-repo catalog. It explains the `opencode-tasks` scheduling tools,
+permission rules for background `opencode run` executions, recurring task file
+format, daemon setup, and `/loop` session commands.
+
+The skill is part of the default global profile because scheduling requests can
+arrive through any foreground agent. The runtime tools and slash commands still
+come from the external `opencode-tasks` plugin. Use bootstrap's
+`--with-scheduled-tasks` option to add that plugin, install the system scheduler
+daemon, and install `/loop` commands. Bootstrap no longer runs
+`bunx opencode-tasks --install-skill` because OMOC now owns the skill copy.
+
+---
+
 ## Skills Assignment
 
 Control which skills each agent can use in `~/.config/opencode/oh-my-opencode-slim.json` (or `.jsonc`):
@@ -169,9 +186,9 @@ Control which skills each agent can use in `~/.config/opencode/oh-my-opencode-sl
   defaults
 
 **Recommended host config:** avoid globally loading every personal skill folder
-unless you intentionally want those external skills available. Prefer letting
-OMOC install and filter its bundled catalog. In OpenCode host config, omit broad
-paths like:
+unless you intentionally want those external skills available. OMOC already
+materializes the curated skills needed by enabled agents into a managed path. In
+OpenCode host config, omit broad paths like:
 
 ```jsonc
 "skills": {
@@ -179,24 +196,17 @@ paths like:
 }
 ```
 
-Use OMOC's plugin config for focused agent visibility instead:
+Use OMOC's plugin config for focused agent visibility instead, or omit
+`skillProfiles` to use the code-owned built-in defaults:
 
 ```jsonc
 {
   "skillProfiles": {
-    "global": [
-      "summarization",
-      "systematic-debugging",
-      "github-pro",
-      "deep-research",
-      "review-quality",
-      "writing-plans",
-      "session-handoff"
-    ],
+    "global": [],
     "agents": {
-      "orchestrator": ["codemap", "clonedeps", "cartography"],
-      "oracle": ["improve-codebase-architecture", "security-threat-model"],
-      "designer": ["frontend-design", "react-pro", "agent-browser"]
+      "orchestrator": [],
+      "oracle": [],
+      "designer": ["agent-browser"]
     }
   }
 }

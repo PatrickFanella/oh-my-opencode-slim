@@ -8,6 +8,12 @@ import { loadAgentPrompt, loadPluginConfig } from './loader';
 // Test deepMerge indirectly through loadPluginConfig behavior
 // since deepMerge is not exported
 
+const DEFAULT_MULTIPLEXER = {
+  type: 'tmux',
+  layout: 'main-vertical',
+  main_pane_size: 60,
+} as const;
+
 describe('loadPluginConfig', () => {
   let tempDir: string;
   let userConfigDir: string;
@@ -27,11 +33,11 @@ describe('loadPluginConfig', () => {
     process.env = originalEnv;
   });
 
-  test('returns empty config when no config files exist', () => {
+  test('returns default multiplexer config when no config files exist', () => {
     const projectDir = path.join(tempDir, 'project');
     fs.mkdirSync(projectDir, { recursive: true });
     const config = loadPluginConfig(projectDir);
-    expect(config).toEqual({});
+    expect(config).toEqual({ multiplexer: DEFAULT_MULTIPLEXER });
   });
 
   test('loads project config from .opencode directory', () => {
@@ -258,14 +264,18 @@ describe('loadPluginConfig', () => {
       path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
       JSON.stringify({ agents: { oracle: { temperature: 5 } } }),
     );
-    expect(loadPluginConfig(projectDir)).toEqual({});
+    expect(loadPluginConfig(projectDir)).toEqual({
+      multiplexer: DEFAULT_MULTIPLEXER,
+    });
 
     // Test 2: Malformed JSON
     fs.writeFileSync(
       path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
       '{ invalid json }',
     );
-    expect(loadPluginConfig(projectDir)).toEqual({});
+    expect(loadPluginConfig(projectDir)).toEqual({
+      multiplexer: DEFAULT_MULTIPLEXER,
+    });
   });
 
   test('rejects custom-only prompt fields on built-in agents in config files', () => {
@@ -285,7 +295,9 @@ describe('loadPluginConfig', () => {
       }),
     );
 
-    expect(loadPluginConfig(projectDir)).toEqual({});
+    expect(loadPluginConfig(projectDir)).toEqual({
+      multiplexer: DEFAULT_MULTIPLEXER,
+    });
   });
 
   test('respects OPENCODE_CONFIG_DIR for user config location', () => {
@@ -374,7 +386,7 @@ describe('onWarning callback', () => {
       path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
     );
     expect(warnings[0]?.message).toBe('Config does not match schema');
-    expect(config).toEqual({});
+    expect(config).toEqual({ multiplexer: DEFAULT_MULTIPLEXER });
   });
 
   test('invalid JSON calls onWarning with invalid-json', () => {
@@ -396,7 +408,7 @@ describe('onWarning callback', () => {
     expect(warnings[0]?.path).toBe(
       path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
     );
-    expect(config).toEqual({});
+    expect(config).toEqual({ multiplexer: DEFAULT_MULTIPLEXER });
   });
 
   test('silent option suppresses console warnings', () => {
@@ -417,7 +429,7 @@ describe('onWarning callback', () => {
       });
 
       expect(warnings).toHaveLength(1);
-      expect(config).toEqual({});
+      expect(config).toEqual({ multiplexer: DEFAULT_MULTIPLEXER });
       expect(warnSpy).not.toHaveBeenCalled();
     } finally {
       warnSpy.mockRestore();
@@ -455,7 +467,7 @@ describe('onWarning callback', () => {
       expect(warnings[0]?.kind).toBe('read-error');
       expect(warnings[0]?.path).toBe(configPath);
       expect(warnings[0]?.message).toBe('Permission denied');
-      expect(config).toEqual({});
+      expect(config).toEqual({ multiplexer: DEFAULT_MULTIPLEXER });
     } finally {
       readSpy.mockRestore();
     }
@@ -640,6 +652,68 @@ describe('deepMerge behavior', () => {
     expect(config.tmux?.enabled).toBe(false); // From project (override)
     expect(config.tmux?.layout).toBe('tiled'); // From project
     expect(config.tmux?.main_pane_size).toBe(60); // From user (preserved)
+    expect(config.multiplexer).toEqual({
+      type: 'none',
+      layout: 'tiled',
+      main_pane_size: 60,
+    });
+  });
+
+  test('defaults to tmux multiplexer when no config is present', () => {
+    const projectDir = path.join(tempDir, 'project');
+    fs.mkdirSync(projectDir, { recursive: true });
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.multiplexer).toEqual({
+      type: 'tmux',
+      layout: 'main-vertical',
+      main_pane_size: 60,
+    });
+  });
+
+  test('explicit multiplexer config overrides defaults', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        multiplexer: {
+          type: 'none',
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.multiplexer).toEqual({
+      type: 'none',
+      layout: 'main-vertical',
+      main_pane_size: 60,
+    });
+  });
+
+  test('partial multiplexer config inherits tmux defaults', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        multiplexer: {
+          layout: 'tiled',
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+
+    expect(config.multiplexer).toEqual({
+      type: 'tmux',
+      layout: 'tiled',
+      main_pane_size: 60,
+    });
   });
 
   test("preserves user tmux.enabled when project doesn't specify", () => {
@@ -669,6 +743,11 @@ describe('deepMerge behavior', () => {
 
     expect(config.tmux?.enabled).toBe(true); // Preserved from user
     expect(config.tmux?.layout).toBe('main-vertical'); // Preserved from user
+    expect(config.multiplexer).toEqual({
+      type: 'tmux',
+      layout: 'main-vertical',
+      main_pane_size: 60,
+    });
   });
 
   test('project config overrides top-level arrays', () => {
@@ -924,8 +1003,10 @@ describe('preset resolution', () => {
       }),
     );
 
-    // Should return empty config due to validation failure
-    expect(loadPluginConfig(projectDir)).toEqual({});
+    // Should return only defaults due to validation failure
+    expect(loadPluginConfig(projectDir)).toEqual({
+      multiplexer: DEFAULT_MULTIPLEXER,
+    });
   });
 
   test('nonexistent preset from config warns and falls back to root agents', () => {
@@ -1095,7 +1176,7 @@ describe('package resolution', () => {
         preset: 'dev',
         packageDefinitions: {
           engineering: {
-            disabled_mcps: ['sentry'],
+            disabled_mcps: ['stripe'],
             enabled_mcps: ['playwright'],
             presets: {
               dev: {
@@ -1126,7 +1207,7 @@ describe('package resolution', () => {
     expect(config.agents?.['backend-architect']?.prompt).toBe(
       'You are Backend Architect.',
     );
-    expect(config.disabled_mcps).toEqual(['sentry']);
+    expect(config.disabled_mcps).toEqual(['stripe']);
     expect(config.enabled_mcps).toEqual(['playwright']);
   });
 

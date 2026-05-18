@@ -48,6 +48,18 @@ const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
 const SESSION_IDLE_GRACE_MS = POLL_INTERVAL_BACKGROUND_MS * 3;
 const SESSION_MISSING_GRACE_MS = POLL_INTERVAL_BACKGROUND_MS * 3;
 
+export function resolveMultiplexerServerUrl(ctx: PluginInput): string {
+  if (process.env.OPENCODE_SERVER_URL) {
+    return process.env.OPENCODE_SERVER_URL;
+  }
+
+  if (process.env.OPENCODE_PORT) {
+    return `http://localhost:${process.env.OPENCODE_PORT}`;
+  }
+
+  return ctx.serverUrl?.toString() ?? 'http://localhost:4096';
+}
+
 /**
  * Tracks child sessions and spawns/closes multiplexer panes for them.
  *
@@ -67,9 +79,7 @@ export class MultiplexerSessionManager {
 
   constructor(ctx: PluginInput, config: MultiplexerConfig) {
     this.directory = ctx.directory;
-    const defaultPort = process.env.OPENCODE_PORT ?? '4096';
-    this.serverUrl =
-      ctx.serverUrl?.toString() ?? `http://localhost:${defaultPort}`;
+    this.serverUrl = resolveMultiplexerServerUrl(ctx);
 
     this.multiplexer = getMultiplexer(config);
     this.enabled =

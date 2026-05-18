@@ -1,12 +1,46 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   addPluginsToConfig,
+  applyBootstrapHostDefaults,
+  backupOpenCodeConfig,
+  buildDcpConfig,
+  buildQuotaToastConfig,
+  ensureDesiredOpenCodeDirectory,
+  getOptionalTuiPluginSpecs,
   parseBootstrapArgs,
+  resetOpenCodeConfigDirectory,
   tmuxHelperBlock,
   upsertManagedBlock,
 } from './bootstrap';
 
 describe('bootstrap CLI helpers', () => {
+  let tmpDir: string;
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), 'bootstrap-test-'));
+    delete process.env.OPENCODE_CONFIG_DIR;
+    process.env.XDG_CONFIG_HOME = tmpDir;
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+    if (tmpDir && existsSync(tmpDir)) {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
   test('parseBootstrapArgs parses automation flags', () => {
     expect(
       parseBootstrapArgs([
@@ -19,7 +53,7 @@ describe('bootstrap CLI helpers', () => {
         '--skip-shell-helper',
         '--skip-rtk-init',
         '--skip-scheduled-tasks-daemon',
-        '--skip-scheduled-tasks-skill',
+        '--skip-scheduled-tasks-commands',
         '--skills=no',
         '--preset=opencode-go',
         '--reset',
@@ -28,7 +62,7 @@ describe('bootstrap CLI helpers', () => {
         '--opencode-install-cmd=true',
         '--rtk-install-cmd=true',
         '--scheduled-tasks-daemon-cmd=true',
-        '--scheduled-tasks-skill-cmd=true',
+        '--scheduled-tasks-commands-cmd=true',
       ]),
     ).toEqual({
       dryRun: true,
@@ -41,7 +75,7 @@ describe('bootstrap CLI helpers', () => {
       skipShellHelper: true,
       skipRtkInit: true,
       skipScheduledTasksDaemon: true,
-      skipScheduledTasksSkill: true,
+      skipScheduledTasksCommands: true,
       withDcp: true,
       withQuota: true,
       withRtk: true,
@@ -49,7 +83,20 @@ describe('bootstrap CLI helpers', () => {
       opencodeInstallCommand: 'true',
       rtkInstallCommand: 'true',
       scheduledTasksDaemonCommand: 'true',
-      scheduledTasksSkillCommand: 'true',
+      scheduledTasksCommandsCommand: 'true',
+    });
+  });
+
+  test('parseBootstrapArgs accepts legacy scheduled task skill flags', () => {
+    expect(
+      parseBootstrapArgs([
+        '--skip-scheduled-tasks-skill',
+        '--scheduled-tasks-skill-cmd=true',
+      ]),
+    ).toEqual({
+      skills: 'yes',
+      skipScheduledTasksCommands: true,
+      scheduledTasksCommandsCommand: 'true',
     });
   });
 
@@ -66,10 +113,23 @@ describe('bootstrap CLI helpers', () => {
     );
 
     expect(config.plugin).toEqual([
+      '@tarquinen/opencode-dcp@latest',
       'oh-my-opencode-slim',
       '@slkiser/opencode-quota',
       ['tuple-plugin', { enabled: true }],
+    ]);
+  });
+
+  test('addPluginsToConfig inserts optional plugins before local OMOC plugin', () => {
+    const config = addPluginsToConfig(
+      { plugin: ['/repo/oh-my-opencode-slim'] },
+      ['@tarquinen/opencode-dcp@latest', '@slkiser/opencode-quota'],
+    );
+
+    expect(config.plugin).toEqual([
       '@tarquinen/opencode-dcp@latest',
+      '@slkiser/opencode-quota',
+      '/repo/oh-my-opencode-slim',
     ]);
   });
 
@@ -79,13 +139,160 @@ describe('bootstrap CLI helpers', () => {
     expect(config.plugin).toEqual(['opencode-tasks']);
   });
 
+  test('getOptionalTuiPluginSpecs adds quota TUI plugin only', () => {
+    expect(getOptionalTuiPluginSpecs({ withQuota: true })).toEqual([
+      '@slkiser/opencode-quota',
+    ]);
+    expect(
+      getOptionalTuiPluginSpecs({
+        withDcp: true,
+        withScheduledTasks: true,
+      }),
+    ).toEqual([]);
+  });
+
+  test('applyBootstrapHostDefaults configures trusted host defaults', () => {
+    const config = applyBootstrapHostDefaults(
+      {
+        plugin: ['existing-plugin'],
+        compaction: { auto: true, extra: 'preserved' },
+        skills: { paths: ['/existing/skills', '/home/test/.agents/skills'] },
+      },
+      { removeSkillPaths: ['/home/test/.agents/skills'] },
+    );
+
+    expect(config.plugin).toEqual(['existing-plugin']);
+    expect(config.permission).toBe('allow');
+    expect(config.compaction).toEqual({
+      auto: false,
+      prune: true,
+      reserved: 10_000,
+      extra: 'preserved',
+    });
+    expect(config.skills).toEqual({
+      paths: ['/existing/skills'],
+    });
+  });
+
+  test('applyBootstrapHostDefaults removes empty skills paths object', () => {
+    const config = applyBootstrapHostDefaults(
+      { skills: { paths: ['/home/test/.agents/skills'] } },
+      { removeSkillPaths: ['/home/test/.agents/skills'] },
+    );
+
+    expect(config.skills).toBeUndefined();
+  });
+
+  test('buildDcpConfig writes range compression defaults', () => {
+    const config = buildDcpConfig({ compress: { showCompression: true } });
+
+    expect(config.enabled).toBe(true);
+    expect(config.compress).toMatchObject({
+      mode: 'range',
+      permission: 'allow',
+      minContextLimit: '35%',
+      maxContextLimit: '65%',
+      showCompression: false,
+      summaryBuffer: true,
+    });
+    expect(config.experimental).toMatchObject({ allowSubAgents: true });
+    expect(config.strategies).toMatchObject({
+      deduplication: { enabled: true },
+      purgeErrors: { enabled: true, turns: 4 },
+    });
+  });
+
+  test('buildQuotaToastConfig writes nuc-style quota defaults', () => {
+    const config = buildQuotaToastConfig({ enableToast: true });
+
+    expect(config.enableToast).toBe(false);
+    expect(config.showSessionTokens).toBe(true);
+    expect(config.tuiSidebarPanel).toEqual({ enabled: true });
+    expect(config.tuiCompactStatus).toEqual({
+      enabled: true,
+      homeBottom: true,
+      sessionPrompt: true,
+      suppressWhenNativeProviderQuota: true,
+    });
+  });
+
+  test('resetOpenCodeConfigDirectory removes everything except backups', () => {
+    const configDir = join(tmpDir, 'opencode');
+    mkdirSync(join(configDir, 'backups', 'existing'), { recursive: true });
+    mkdirSync(join(configDir, 'skills'), { recursive: true });
+    writeFileSync(join(configDir, 'opencode.jsonc'), '{}');
+    writeFileSync(join(configDir, 'backups', 'existing', 'old.json'), '{}');
+
+    const result = resetOpenCodeConfigDirectory(false);
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(configDir, 'opencode.jsonc'))).toBe(false);
+    expect(existsSync(join(configDir, 'skills'))).toBe(false);
+    expect(existsSync(join(configDir, 'backups', 'existing', 'old.json'))).toBe(
+      true,
+    );
+  });
+
+  test('backupOpenCodeConfig backs up the whole config directory except backups', async () => {
+    const configDir = join(tmpDir, 'opencode');
+    mkdirSync(join(configDir, 'commands'), { recursive: true });
+    mkdirSync(join(configDir, 'backups', 'existing'), { recursive: true });
+    writeFileSync(join(configDir, 'opencode.jsonc'), '{"current":true}');
+    writeFileSync(join(configDir, 'commands', 'loop.md'), 'loop');
+    writeFileSync(join(configDir, 'backups', 'existing', 'old.json'), '{}');
+
+    const result = await backupOpenCodeConfig(false);
+
+    expect(result.ok).toBe(true);
+    const backupRoot = join(configDir, 'backups');
+    const backupDirs = readdirSync(backupRoot).filter((entry) =>
+      entry.startsWith('omoc-bootstrap-'),
+    );
+    expect(backupDirs).toHaveLength(1);
+    const backupDir = join(backupRoot, backupDirs[0] ?? '');
+    expect(readFileSync(join(backupDir, 'opencode.jsonc'), 'utf-8')).toBe(
+      '{"current":true}',
+    );
+    expect(readFileSync(join(backupDir, 'commands', 'loop.md'), 'utf-8')).toBe(
+      'loop',
+    );
+    expect(existsSync(join(backupDir, 'backups'))).toBe(false);
+  });
+
+  test('ensureDesiredOpenCodeDirectory creates expected base layout', () => {
+    const configDir = join(tmpDir, 'opencode');
+
+    const result = ensureDesiredOpenCodeDirectory(false);
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(configDir, 'backups'))).toBe(true);
+    expect(existsSync(join(configDir, 'commands'))).toBe(true);
+    expect(existsSync(join(configDir, 'oh-my-opencode-slim'))).toBe(true);
+    expect(existsSync(join(configDir, 'plugins'))).toBe(true);
+    expect(existsSync(join(configDir, 'skills'))).toBe(true);
+    expect(readFileSync(join(configDir, '.gitignore'), 'utf-8')).toContain(
+      'node_modules',
+    );
+    const packageJson = JSON.parse(
+      readFileSync(join(configDir, 'package.json'), 'utf-8'),
+    );
+    expect(packageJson.dependencies['@opencode-ai/plugin']).toBe('1.15.3');
+  });
+
   test('tmuxHelperBlock defines omos with portable port selection', () => {
     const block = tmuxHelperBlock();
 
+    expect(block).toContain('__omoc_opencode_with_port()');
     expect(block).toContain('omos()');
+    expect(block).toContain('opencode()');
+    expect(block).toContain('oc()');
+    expect(block).toContain('occ()');
+    expect(block).toContain('unalias opencode oc occ');
     expect(block).toContain(
-      'OPENCODE_PORT="$port" opencode --port "$port" "$@"',
+      'OPENCODE_PORT="$port" command opencode --port "$port" "$@"',
     );
+    expect(block).toContain('__omoc_opencode_with_port --continue "$@"');
+    expect(block).toContain('Bypass shell functions and aliases');
     expect(block).toContain('command -v shuf');
     expect(block).toContain('command -v jot');
   });
@@ -95,5 +302,53 @@ describe('bootstrap CLI helpers', () => {
     const second = upsertManagedBlock(first, 'managed-block');
 
     expect(second).toBe('before\n\nmanaged-block\n');
+  });
+
+  test('upsertManagedBlock preserves safe legacy helper', () => {
+    const legacy = `prefix\n
+omos() {
+  local port
+  port="4096"
+  OPENCODE_PORT="$port" "$OPENCODE_BIN" --port "$port" "$@"
+}
+
+opencode() {
+  omos "$@"
+}
+
+alias oc="omos"
+alias occ="omos --continue"
+`;
+
+    expect(upsertManagedBlock(legacy, tmuxHelperBlock())).toBe(legacy);
+  });
+
+  test('upsertManagedBlock appends after incomplete legacy helper', () => {
+    const legacy = `prefix
+
+omos() {
+  local port
+  port="4096"
+  OPENCODE_PORT="$port" "$OPENCODE_BIN" --port "$port" "$@"
+}
+`;
+
+    const result = upsertManagedBlock(legacy, tmuxHelperBlock());
+    expect(result).toContain('__omoc_opencode_with_port()');
+    expect(result).toContain('opencode()');
+    expect(result).toContain('occ()');
+  });
+
+  test('upsertManagedBlock appends after unsafe legacy helper', () => {
+    const legacy = `prefix\n
+omos() {
+  local port
+  port="4096"
+  OPENCODE_PORT="$port" opencode --port "$port" "$@"
+}\n`;
+
+    expect(upsertManagedBlock(legacy, tmuxHelperBlock())).toContain(
+      'OPENCODE_PORT="$port" command opencode --port "$port" "$@"',
+    );
   });
 });

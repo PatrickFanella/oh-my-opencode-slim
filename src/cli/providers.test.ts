@@ -15,11 +15,10 @@ describe('providers', () => {
     ]);
   });
 
-  test('generateLiteConfig defaults to openai and includes generated presets', () => {
+  test('generateLiteConfig defaults to openai and includes only the active preset', () => {
     const config = generateLiteConfig({
       hasTmux: false,
       installSkills: false,
-      installCustomSkills: false,
       reset: false,
     });
 
@@ -28,10 +27,7 @@ describe('providers', () => {
     );
     expect(config.preset).toBe('openai');
     expect(config.disabled_agents).toBeUndefined();
-    expect((config.presets as any)['opencode-go']).toBeDefined();
-    expect((config.presets as any)['opencode-go'].observer.model).toBe(
-      'opencode-go/kimi-k2.6',
-    );
+    expect((config.presets as any)['opencode-go']).toBeUndefined();
     const agents = (config.presets as any).openai;
     expect(agents).toBeDefined();
     expect(agents.orchestrator.model).toBe('openai/gpt-5.5');
@@ -43,11 +39,23 @@ describe('providers', () => {
     expect(agents.observer.model).toBe('openai/gpt-5.4-mini');
   });
 
+  test('generateLiteConfig writes schema-only config for default install', () => {
+    const config = generateLiteConfig({
+      hasTmux: false,
+      installSkills: true,
+      reset: false,
+    });
+
+    expect(config).toEqual({
+      $schema:
+        'https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json',
+    });
+  });
+
   test('generateLiteConfig uses correct OpenAI models', () => {
     const config = generateLiteConfig({
       hasTmux: false,
       installSkills: false,
-      installCustomSkills: false,
       reset: false,
     });
 
@@ -71,14 +79,13 @@ describe('providers', () => {
     const config = generateLiteConfig({
       hasTmux: false,
       installSkills: false,
-      installCustomSkills: false,
       preset: 'opencode-go',
       reset: false,
     });
 
     expect(config.preset).toBe('opencode-go');
     expect(config.disabled_agents).toEqual([]);
-    expect((config.presets as any).openai).toBeDefined();
+    expect((config.presets as any).openai).toBeUndefined();
     const agents = (config.presets as any)['opencode-go'];
     expect(agents).toBeDefined();
     expect(agents.orchestrator.model).toBe('opencode-go/glm-5.1');
@@ -99,7 +106,6 @@ describe('providers', () => {
       generateLiteConfig({
         hasTmux: false,
         installSkills: false,
-        installCustomSkills: false,
         preset: 'not-real',
         reset: false,
       }),
@@ -111,7 +117,6 @@ describe('providers', () => {
       generateLiteConfig({
         hasTmux: false,
         installSkills: false,
-        installCustomSkills: false,
         preset: 'kimi',
         reset: false,
       }),
@@ -123,31 +128,28 @@ describe('providers', () => {
       generateLiteConfig({
         hasTmux: false,
         installSkills: false,
-        installCustomSkills: false,
         preset: 'toString',
         reset: false,
       }),
     ).toThrow('Unsupported preset "toString"');
   });
 
-  test('generateLiteConfig enables tmux when requested', () => {
+  test('generateLiteConfig omits multiplexer because plugin owns defaults', () => {
     const config = generateLiteConfig({
       hasTmux: true,
       installSkills: false,
-      installCustomSkills: false,
       reset: false,
     });
 
-    expect(config.tmux).toBeDefined();
-    expect((config.tmux as any).enabled).toBe(true);
-    expect((config.tmux as any).layout).toBe('main-vertical');
+    expect(config.tmux).toBeUndefined();
+    expect(config.multiplexer).toBeUndefined();
   });
 
-  test('generateLiteConfig includes default skill profiles', () => {
+  test('generateLiteConfig omits skillProfiles when code-managed skills are enabled', () => {
     const config = generateLiteConfig({
       hasTmux: false,
       installSkills: true,
-      installCustomSkills: false,
+      preset: 'openai',
       reset: false,
     });
 
@@ -156,30 +158,28 @@ describe('providers', () => {
     expect(agents.oracle.skills).toBeUndefined();
     expect(agents.designer.skills).toBeUndefined();
 
+    expect(config.skillProfiles).toBeUndefined();
+  });
+
+  test('generateLiteConfig disables skill profiles when skills are disabled', () => {
+    const config = generateLiteConfig({
+      hasTmux: false,
+      installSkills: false,
+      reset: false,
+    });
+
     const profiles = config.skillProfiles as any;
-    expect(profiles.global).toContain('summarization');
-    expect(profiles.global).toContain('systematic-debugging');
-    expect(profiles.global).toContain('github-pro');
-    expect(profiles.global).toContain('review-quality');
-    expect(profiles.global).toContain('session-handoff');
-    expect(profiles.agents.orchestrator).toContain('codemap');
-    expect(profiles.agents.orchestrator).toContain('clonedeps');
-    expect(profiles.agents.oracle).toContain('review-quality');
-    expect(profiles.agents.oracle).toContain('security-threat-model');
-    expect(profiles.agents.designer).toContain('agent-browser');
-    expect(profiles.agents.designer).toContain('wcag-audit-patterns');
-    expect(profiles.agents.fixer).toContain('tdd');
-    expect(profiles.agents.fixer).toContain('typescript-pro');
-    expect(profiles.agents.fixer).toContain('golang-pro');
-    expect(profiles.agents.fixer).toContain('python-tooling-patterns');
-    expect(profiles.agents.fixer).not.toContain('*');
+    expect(profiles.global).toEqual([]);
+    expect(profiles.agents.orchestrator).toEqual([]);
+    expect(profiles.agents.oracle).toEqual([]);
+    expect(profiles.agents.designer).toEqual([]);
+    expect(profiles.agents.fixer).toEqual([]);
   });
 
   test('generateLiteConfig includes mcps field', () => {
     const config = generateLiteConfig({
       hasTmux: false,
       installSkills: false,
-      installCustomSkills: false,
       reset: false,
     });
 
@@ -194,7 +194,6 @@ describe('providers', () => {
     const config = generateLiteConfig({
       hasTmux: false,
       installSkills: false,
-      installCustomSkills: false,
       reset: false,
     });
 

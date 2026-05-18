@@ -55,7 +55,7 @@ export function getConfigSearchDirs(): string[] {
 }
 
 export function getOpenCodeConfigPaths(): string[] {
-  const configDir = getDefaultOpenCodeConfigDir();
+  const configDir = getConfigDir();
   return [join(configDir, 'opencode.json'), join(configDir, 'opencode.jsonc')];
 }
 
@@ -87,11 +87,11 @@ export function getTuiConfigJsonc(): string {
 }
 
 export function getExistingLiteConfigPath(): string {
-  const jsonPath = getLiteConfig();
-  if (existsSync(jsonPath)) return jsonPath;
-
   const jsoncPath = getLiteConfigJsonc();
   if (existsSync(jsoncPath)) return jsoncPath;
+
+  const jsonPath = getLiteConfig();
+  if (existsSync(jsonPath)) return jsonPath;
 
   return jsonPath;
 }
@@ -100,21 +100,21 @@ export function getExistingTuiConfigPath(): string {
   const customConfigPath = getCustomTuiConfigPath();
   if (customConfigPath) return customConfigPath;
 
-  const jsonPath = join(getConfigDir(), 'tui.json');
-  if (existsSync(jsonPath)) return jsonPath;
-
   const jsoncPath = getTuiConfigJsonc();
   if (existsSync(jsoncPath)) return jsoncPath;
+
+  const jsonPath = join(getConfigDir(), 'tui.json');
+  if (existsSync(jsonPath)) return jsonPath;
 
   return jsonPath;
 }
 
 export function getExistingConfigPath(): string {
-  const jsonPath = getConfigJson();
-  if (existsSync(jsonPath)) return jsonPath;
-
   const jsoncPath = getConfigJsonc();
   if (existsSync(jsoncPath)) return jsoncPath;
+
+  const jsonPath = getConfigJson();
+  if (existsSync(jsonPath)) return jsonPath;
 
   return jsonPath;
 }

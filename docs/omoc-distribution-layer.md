@@ -56,19 +56,20 @@ External systems stay external:
 
 ## MCP Registry Merge
 
-OMOC's built-in MCP registry is allowed to absorb shared `.agents` MCP entries
-when the entry has a portable OpenCode representation. Remote MCPs can usually
-be copied directly. Local MCPs must avoid user-specific absolute paths and
-secrets; prefer stable commands such as `npx`, `docker`, `gh`, or `sp-mcp` and
-document host prerequisites instead.
+OMOC's built-in MCP registry is allowed to absorb portable MCP entries, but the
+installer writes them to OpenCode's host config so native MCP authentication can
+handle OAuth/API credentials. Remote MCP definitions must avoid embedded
+secrets. Local MCPs must avoid user-specific absolute paths; prefer stable
+commands such as `npx`, `docker`, `gh`, or `sp-mcp` and document host
+prerequisites instead.
 
 Merged entries currently include GitHub, Playwright, Chrome DevTools, Context7,
-Microsoft Learn, Sentry, Stripe, Hugging Face, Super Productivity, Exa
-websearch, and grep.app.
+Stripe, Super Productivity, Exa websearch, and grep.app.
 
-Host-dependent local MCPs and auth/product remotes remain opt-in through
-`enabled_mcps`; merging the registry should not silently start local processes,
-connect to product services, or broaden default agent permissions.
+Built-in MCPs are registered enabled by default. Host-dependent local MCPs and
+auth/product remotes must document prerequisites, remain globally removable via
+`disabled_mcps`, and still require per-agent MCP permissions before agents can
+call them.
 
 ## Decision Rules
 
@@ -83,7 +84,7 @@ Skill migration is intentionally skipped for now. The repo is prepared by
 keeping the packaging policy explicit:
 
 - core OMOC workflow skills belong in `src/skills/` and the `CUSTOM_SKILLS`
-  installer registry;
+  metadata registry, but should not be bulk-installed by default;
 - externally maintained skills stay in the recommended-skill installer path;
 - user-private, DCP, and quota skills stay outside OMOC or permission-only;
 - any future migration should start with an inventory of real workflow usage,

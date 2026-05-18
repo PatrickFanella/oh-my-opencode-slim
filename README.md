@@ -37,9 +37,10 @@ Install and configure oh-my-opencode-slim: https://raw.githubusercontent.com/pat
 bunx oh-my-opencode-slim@latest install
 ```
 
-For a full clone-based bootstrap that backs up OpenCode config, installs or
-updates OpenCode, builds this repo, configures OMOC, optionally adds DCP/quota,
-and installs the tmux helper:
+For a full clone-based bootstrap that backs up the entire OpenCode config
+directory, resets `~/.config/opencode`, installs or updates OpenCode, builds
+this repo, configures OMOC, optionally adds DCP/quota, and installs the
+tmux-aware `opencode`/`oc`/`occ` helpers:
 
 ```bash
 git clone https://github.com/patrickfanella/oh-my-opencode-slim.git
@@ -47,18 +48,43 @@ cd oh-my-opencode-slim
 bun run bootstrap --yes --with-dcp --with-quota --with-rtk --with-scheduled-tasks
 ```
 
+Bootstrap also adds quota to `tui.json(c)` when `--with-quota` is selected so
+the quota panels load in the TUI. It also applies trusted host defaults in
+`opencode.json(c)`: it sets
+`permission: "allow"`, OpenCode compaction `{ auto: false, prune: true,
+reserved: 10000 }`, and removes the legacy `~/.agents/skills` path. With
+`--with-dcp` or `--with-quota`, it also writes the matching
+`dcp.jsonc` and `opencode-quota/quota-toast.json` sidecar defaults.
+
 The installer also registers the companion TUI plugin in OpenCode's
-`tui.json`, which adds a small sidebar showing specialist-agent status plus
-active/reusable task sessions. It also warms OpenCode's plugin cache so bunx
-installs keep loading even after temporary directories are cleaned up. For
-manual setups, add `oh-my-opencode-slim` to the `plugin` array in
-`opencode.json` and `oh-my-opencode-slim/tui` to the `plugin` array in
-`tui.json`. If the sidebar is visible but the OMOC panel is missing, open the
-TUI plugin manager and enable the `oh-my-opencode-slim:tui` plugin module.
+`tui.json`, which renders a full-board sidebar: core agents, custom SUBCULT
+board handles, config health, MCP/LSP/plugin counts, todos, and diff activity.
+The sidebar starts compact with CORE visible and custom groups collapsed. The
+sidebar itself is render-only; use the real OpenCode commands `/board-toggle`,
+`/board-full`, `/board-compact`, `/board-minimal`, or `/board-off` to change
+density.
+On the home screen, the compact OMOC board card is right-aligned in the bottom
+slot so it stays out of the main prompt area.
+It also warms OpenCode's plugin cache so bunx installs keep loading even after
+temporary directories are cleaned up. For manual setups, add
+`oh-my-opencode-slim` to the `plugin` array in `opencode.json` and
+`oh-my-opencode-slim/tui` to the `plugin` array in `tui.json`. If the sidebar
+is visible but the OMOC panel is missing, open the TUI plugin manager and
+enable the `oh-my-opencode-slim:tui` plugin module.
 
 ### Getting Started
 
-The installer generates both OpenAI and OpenCode Go presets, with OpenAI active by default. OpenAI uses `openai/gpt-5.5` for the higher-judgment agents and `openai/gpt-5.4-mini` for the faster scoped agents. To make OpenCode Go active during install, run `bunx oh-my-opencode-slim@latest install --preset=opencode-go` or change the default preset name in `~/.config/opencode/oh-my-opencode-slim.json` after installation.
+The default installer writes a schema-only OMOC config and lets code-owned
+defaults choose the active agent models. Passing `--preset=<name>` writes only
+that generated preset. It writes built-in
+MCP definitions to `opencode.json(c)` so OpenCode's native MCP auth flow owns
+remote authentication. It does **not** copy the bundled skill catalog or depend
+on `~/.agents/skills`; the plugin materializes only the curated union of
+code-owned skills referenced by enabled agents into a managed skill directory,
+then applies per-agent skill permissions as the second gate.
+
+To generate OpenCode Go instead, run
+`bunx oh-my-opencode-slim@latest install --preset=opencode-go`.
 
 Then:
 
@@ -79,27 +105,29 @@ Then:
 > [!TIP]
 > It's **recommended** to understand how automatic delegation works. The **[Orchestrator prompt](https://github.com/alvinunreal/oh-my-opencode-slim/blob/master/src/agents/orchestrator.ts#L28)** contains the delegation rules, specialist routing logic, and the thresholds for when the main agent should hand work off to subagents. You can alway delegate manually by calling a subagent via: `@agentName <task>`
 
-The default generated configuration includes both `openai` and `opencode-go` presets.
+The default generated configuration is intentionally minimal:
+
+```jsonc
+{
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json"
+}
+```
+
+Passing `--preset=openai` or `--preset=opencode-go` writes only that active
+generated preset.
+Skill profiles are omitted by default so the code-owned built-in agent defaults
+control skill availability. Use `--skills=no` if you want the generated config
+to explicitly deny all skills.
+
+With `--preset=openai`, the installer writes:
 
 ```jsonc
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
   "preset": "openai",
-  "skillProfiles": {
-    "global": ["summarization", "systematic-debugging", "github-pro", "deep-research", "review-quality", "writing-plans", "session-handoff"],
-    "agents": {
-      "orchestrator": ["codemap", "clonedeps", "requirements-interview", "customize-opencode", "cartography"],
-      "oracle": ["review-quality", "improve-codebase-architecture", "security-threat-model"],
-      "librarian": ["web-search", "openai-docs", "fact-check"],
-      "explorer": ["cartography", "fact-check", "security-ownership-map"],
-      "designer": ["frontend-design", "react-pro", "webapp-testing", "agent-browser", "wcag-audit-patterns"],
-      "fixer": ["tdd", "typescript-pro", "python-tooling-patterns", "golang-pro"],
-      "council": ["good-thinking", "multi-reviewer-patterns", "blind-spot-detective"]
-    }
-  },
   "presets": {
     "openai": {
-      "orchestrator": { "model": "openai/gpt-5.5", "mcps": ["*", "!context7"] },
+      "orchestrator": { "model": "openai/gpt-5.5", "mcps": ["websearch", "grep_app"] },
       "oracle": { "model": "openai/gpt-5.5", "variant": "high", "mcps": [] },
       "council": { "model": "openai/gpt-5.5", "variant": "high", "mcps": [] },
       "librarian": { "model": "openai/gpt-5.4-mini", "variant": "low", "mcps": ["websearch", "context7", "grep_app"] },
@@ -107,15 +135,6 @@ The default generated configuration includes both `openai` and `opencode-go` pre
       "designer": { "model": "openai/gpt-5.4-mini", "variant": "medium", "mcps": [] },
       "fixer": { "model": "openai/gpt-5.4-mini", "variant": "low", "mcps": [] },
       "observer": { "model": "openai/gpt-5.4-mini", "mcps": [] }
-    },
-    "opencode-go": {
-      "orchestrator": { "model": "opencode-go/glm-5.1", "mcps": [ "*", "!context7" ] },
-      "oracle": { "model": "opencode-go/deepseek-v4-pro", "variant": "max", "mcps": [] },
-      "council": { "model": "opencode-go/deepseek-v4-pro", "variant": "high", "mcps": [] },
-      "librarian": { "model": "opencode-go/minimax-m2.7", "mcps": [ "websearch", "context7", "grep_app" ] },
-      "explorer": { "model": "opencode-go/minimax-m2.7", "mcps": [] },
-      "designer": { "model": "opencode-go/kimi-k2.6", "variant": "medium", "mcps": [] },
-      "fixer": { "model": "opencode-go/deepseek-v4-flash", "variant": "high", "mcps": [] }
     }
   }
 }

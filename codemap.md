@@ -9,7 +9,7 @@
 - expose additional tools and MCP integrations,
 - manage delegated/resumable session orchestration and terminal multiplexer visualization,
 - inject workflow-enforcement hooks plus runtime command handlers,
-- ship install-time skills and a bootstrap CLI.
+- ship a bundled skill catalog, optional recommended-skill installer, and a bootstrap CLI.
 
 This codemap intentionally covers the plugin repository itself and excludes the nested `opencode/` upstream checkout.
 
@@ -18,7 +18,7 @@ This codemap intentionally covers the plugin repository itself and excludes the 
 | Path | Role |
 |---|---|
 | `package.json` | Package manifest, dependency graph, release scripts, published file list. |
-| `src/index.ts` | Main plugin bootstrap: wires agents, tools, MCPs, hooks, council/session managers, multiplexer session mirroring, interview/preset managers, task-session tracking, and config merge behavior. |
+| `src/index.ts` | Main plugin bootstrap: wires agents, tools, hooks, curated managed skill path injection, council/session managers, multiplexer session mirroring, interview/preset managers, task-session tracking, and config merge behavior. |
 | `src/cli/index.ts` | CLI entrypoint for installation/bootstrap workflows. |
 | `src/config/schema.ts` | Source-of-truth runtime config schema used by validation and schema generation. |
 | `scripts/generate-schema.ts` | Generates `oh-my-opencode-slim.schema.json` from the Zod config schema. |
@@ -29,7 +29,7 @@ This codemap intentionally covers the plugin repository itself and excludes the 
 |---|---|---|
 | `src/` | Main application surface that composes plugin bootstrap, runtime model chains, hook orchestration, task-session aliasing, and installer-facing code. | [View Map](src/codemap.md) |
 | `src/agents/` | Agent factory layer for orchestrator and specialists, including prompt/model overrides, display-name normalization, MCP assignment, and permission shaping. | [View Map](src/agents/codemap.md) |
-| `src/cli/` | Installer, config editing, provider preset generation, and built-in skill installation. | [View Map](src/cli/codemap.md) |
+| `src/cli/` | Installer, config editing, host MCP installation, and provider preset generation. | [View Map](src/cli/codemap.md) |
 | `src/config/` | Configuration schema, layered loaders, preset merging, compatibility migrations, constant tables, and agent/MCP policy helpers. | [View Map](src/config/codemap.md) |
 | `src/council/` | Multi-model council orchestration with preset resolution, councillor execution modes, retries, timeout handling, and synthesis fallback flow. | [View Map](src/council/codemap.md) |
 | `src/hooks/` | Aggregated runtime hook surface for prompt transforms, recovery logic, task-session aliasing, nudges, and lifecycle policies. | [View Map](src/hooks/codemap.md) |
@@ -48,7 +48,7 @@ This codemap intentionally covers the plugin repository itself and excludes the 
 | `src/multiplexer/` | Terminal multiplexer abstraction layer with backend selection, session mirroring, polling fallback, and shutdown lifecycle orchestration. | [View Map](src/multiplexer/codemap.md) |
 | `src/multiplexer/tmux/` | tmux backend implementation for pane lifecycle and layout management. | [View Map](src/multiplexer/tmux/codemap.md) |
 | `src/multiplexer/zellij/` | zellij backend implementation for tab/pane lifecycle. | [View Map](src/multiplexer/zellij/codemap.md) |
-| `src/skills/` | Bundled install-time OpenCode skills shipped as static payloads. | [View Map](src/skills/codemap.md) |
+| `src/skills/` | Bundled OpenCode skill catalog shipped as static payloads for intentional/manual installation. | [View Map](src/skills/codemap.md) |
 | `src/skills/codemap/` | Repository-mapping skill package and codemap state-management script. | [View Map](src/skills/codemap/codemap.md) |
 | `src/skills/clonedeps/` | Workflow-only dependency source mirroring skill that routes discovery/ref resolution through librarian and direct orchestrator git operations. | [View Map](src/skills/clonedeps/codemap.md) |
 | `src/skills/simplify/` | Behavior-preserving simplification skill package. | [View Map](src/skills/simplify/codemap.md) |
@@ -81,14 +81,14 @@ This codemap intentionally covers the plugin repository itself and excludes the 
 
 4. **Install/release path**
    - `src/cli/` configures host OpenCode instances.
-   - `src/skills/` is copied into the user skill directory.
+   - Recommended external skills may be installed; bundled skills are not copied in bulk by default.
    - `scripts/` validates generated schema, package completeness, and host-load behavior.
 
 ## Key Cross-Module Integration Points
 
 - `src/index.ts` is the central composition root for nearly every runtime subsystem.
 - `src/config/` feeds `src/agents/`, session/delegation utilities, and MCP registration.
-- `src/cli/skills.ts` and `src/cli/custom-skills.ts` bridge install-time skill packaging with runtime permission policy.
+- `src/cli/skills.ts` bridges code-owned skill profiles with runtime permission policy; `src/cli/custom-skills.ts` indexes bundled skill payloads for package validation and manual copy workflows.
 - Session/delegation utilities depend on `src/multiplexer/` and cooperate with helpers in `src/utils/` for depth tracking, result extraction, task output parsing, and alias state.
 - `src/tools/council.ts` delegates into `src/council/`.
 - `src/tools/preset-manager.ts` hooks command execution and updates runtime agent models from configured presets.

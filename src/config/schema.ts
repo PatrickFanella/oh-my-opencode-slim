@@ -134,12 +134,18 @@ export type TmuxLayout = MultiplexerLayout;
 
 // Multiplexer integration configuration (new unified config)
 export const MultiplexerConfigSchema = z.object({
-  type: MultiplexerTypeSchema.default('none'),
+  type: MultiplexerTypeSchema.default('tmux'),
   layout: MultiplexerLayoutSchema.default('main-vertical'),
   main_pane_size: z.number().min(20).max(80).default(60), // percentage for main pane
 });
 
 export type MultiplexerConfig = z.infer<typeof MultiplexerConfigSchema>;
+
+export const DEFAULT_MULTIPLEXER_CONFIG: MultiplexerConfig = {
+  type: 'tmux',
+  layout: 'main-vertical',
+  main_pane_size: 60,
+};
 
 // Legacy Tmux integration configuration (for backward compatibility)
 // When tmux.enabled is true, it's equivalent to multiplexer.type = 'tmux'
@@ -219,7 +225,7 @@ export const PackageDefinitionSchema = z
       .array(z.string())
       .optional()
       .describe(
-        'MCP server IDs to opt into when a built-in MCP is registered disabled by default.',
+        'MCP server IDs to force-enable if a host config or package disabled them. Built-in MCPs are enabled by default unless listed in disabled_mcps.',
       ),
     board: BoardConfigSchema.optional(),
     toolkits: ToolkitConfigSchema.optional(),
@@ -241,10 +247,7 @@ export const McpNameSchema = z.enum([
   'playwright',
   'chrome-devtools',
   'context7',
-  'microsoft-learn',
-  'sentry',
   'stripe',
-  'huggingface',
   'super-productivity',
   'websearch',
   'grep_app',
@@ -426,7 +429,7 @@ export const PluginConfigSchema = z
       .array(z.string())
       .optional()
       .describe(
-        'MCP server IDs to opt into when a built-in MCP is registered disabled by default.',
+        'MCP server IDs to force-enable if a host config or package disabled them. Built-in MCPs are enabled by default unless listed in disabled_mcps.',
       ),
     board: BoardConfigSchema.optional(),
     toolkits: ToolkitConfigSchema.optional(),

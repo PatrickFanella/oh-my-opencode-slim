@@ -368,7 +368,7 @@
             }
           },
           "enabled_mcps": {
-            "description": "MCP server IDs to opt into when a built-in MCP is registered disabled by default.",
+            "description": "MCP server IDs to force-enable if a host config or package disabled them. Built-in MCPs are enabled by default unless listed in disabled_mcps.",
             "type": "array",
             "items": {
               "type": "string"
@@ -693,7 +693,7 @@
       }
     },
     "enabled_mcps": {
-      "description": "MCP server IDs to opt into when a built-in MCP is registered disabled by default.",
+      "description": "MCP server IDs to force-enable if a host config or package disabled them. Built-in MCPs are enabled by default unless listed in disabled_mcps.",
       "type": "array",
       "items": {
         "type": "string"
@@ -836,7 +836,7 @@
       "type": "object",
       "properties": {
         "type": {
-          "default": "none",
+          "default": "tmux",
           "type": "string",
           "enum": [
             "auto",

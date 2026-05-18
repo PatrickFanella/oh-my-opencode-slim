@@ -2,7 +2,11 @@ import type { McpName, WebsearchConfig } from '../config';
 import { context7 } from './context7';
 import { grep_app } from './grep-app';
 import type { LocalMcpConfig, McpConfig } from './types';
-import { createWebsearchConfig, websearch } from './websearch';
+import {
+  createHostWebsearchConfig,
+  createWebsearchConfig,
+  websearch,
+} from './websearch';
 
 export type { LocalMcpConfig, McpConfig, RemoteMcpConfig } from './types';
 
@@ -30,21 +34,9 @@ const allBuiltinMcps: Record<McpName, McpConfig> = {
     ],
   },
   context7,
-  'microsoft-learn': {
-    type: 'remote',
-    url: 'https://learn.microsoft.com/api/mcp',
-  },
-  sentry: {
-    type: 'remote',
-    url: 'https://mcp.sentry.dev/mcp',
-  },
   stripe: {
     type: 'remote',
     url: 'https://mcp.stripe.com/',
-  },
-  huggingface: {
-    type: 'remote',
-    url: 'https://huggingface.co/mcp?login',
   },
   'super-productivity': {
     type: 'local',
@@ -58,17 +50,6 @@ const allBuiltinMcps: Record<McpName, McpConfig> = {
   grep_app,
 };
 
-const OPT_IN_MCPS = new Set<McpName>([
-  'github',
-  'playwright',
-  'chrome-devtools',
-  'microsoft-learn',
-  'sentry',
-  'stripe',
-  'huggingface',
-  'super-productivity',
-]);
-
 function createGithubMcpConfig(): LocalMcpConfig {
   const command = [
     'token="$' + '{GITHUB_PERSONAL_ACCESS_TOKEN:-}"',
@@ -80,9 +61,7 @@ function createGithubMcpConfig(): LocalMcpConfig {
     'exit 1',
     'fi',
     'export GITHUB_PERSONAL_ACCESS_TOKEN="$token"',
-    'exec docker run -i --rm',
-    '-e GITHUB_PERSONAL_ACCESS_TOKEN',
-    'ghcr.io/github/github-mcp-server stdio',
+    'exec docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server stdio',
   ].join('\n');
 
   return {
@@ -110,22 +89,47 @@ export function createBuiltinMcps(
   websearchConfig?: WebsearchConfig,
   enabledMcps: readonly string[] = [],
 ): Record<string, McpConfig> {
-  const enabled = new Set(enabledMcps);
+  // Kept for config compatibility. Built-in MCPs now start enabled unless
+  // explicitly listed in disabledMcps.
+  void enabledMcps;
   const mcps = Object.fromEntries(
     Object.entries(allBuiltinMcps)
       .filter(([name]) => !disabledMcps.includes(name))
-      .map(([name, config]) => {
-        if (OPT_IN_MCPS.has(name as McpName) && !enabled.has(name)) {
-          return [name, { ...config, enabled: false }];
-        }
-
-        return [name, config];
-      }),
+      .map(([name, config]) => [name, config]),
   );
 
   // Override websearch with user-configured provider (default: Exa)
   if (!disabledMcps.includes('websearch')) {
     mcps.websearch = createWebsearchConfig(websearchConfig);
+  }
+
+  return mcps;
+}
+
+/**
+ * Creates MCP definitions intended to be written to OpenCode's host config.
+ *
+ * Remote MCPs that need OAuth/API auth must be configured through OpenCode's
+ * native MCP config so the host can manage authentication. This helper is
+ * therefore used by the installer/bootstrap path, not the runtime plugin MCP
+ * export.
+ */
+export function createHostBuiltinMcps(
+  disabledMcps: readonly string[] = [],
+  websearchConfig?: WebsearchConfig,
+  enabledMcps: readonly string[] = [],
+): Record<string, McpConfig> {
+  const mcps = createBuiltinMcps(disabledMcps, websearchConfig, enabledMcps);
+
+  for (const [name, config] of Object.entries(mcps)) {
+    if (!('url' in config)) continue;
+
+    const { headers: _headers, oauth: _oauth, ...hostConfig } = config;
+    mcps[name] = hostConfig;
+  }
+
+  if (!disabledMcps.includes('websearch')) {
+    mcps.websearch = createHostWebsearchConfig(websearchConfig);
   }
 
   return mcps;
