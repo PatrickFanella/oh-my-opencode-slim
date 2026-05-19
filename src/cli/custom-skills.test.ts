@@ -9,9 +9,11 @@ describe('custom skills discovery', () => {
   it('includes direct OMOC skills and migrated catalog skills', () => {
     const names = new Set(CUSTOM_SKILLS.map((skill) => skill.name));
 
+    expect(names.has('almaz')).toBe(true);
     expect(names.has('simplify')).toBe(true);
     expect(names.has('codemap')).toBe(true);
     expect(names.has('clonedeps')).toBe(true);
+    expect(names.has('nuc')).toBe(true);
     expect(names.has('typescript-pro')).toBe(true);
     expect(names.has('agent-browser')).toBe(false);
   });

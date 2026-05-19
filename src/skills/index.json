@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 175,
+    "total_skills": 177,
     "categories": {
       "agent-ecosystem": 8,
       "analytics-observability": 3,
@@ -16,6 +16,7 @@
       "games-interactive": 2,
       "git-github": 2,
       "growth-marketing": 16,
+      "homelab": 2,
       "language-go-rust": 2,
       "language-js-ts": 1,
       "language-python": 5,
@@ -454,6 +455,16 @@
       "name": "social-content",
       "path": "skills/growth-marketing/social-content/SKILL.md",
       "category": "growth-marketing"
+    },
+    {
+      "name": "almaz",
+      "path": "skills/homelab/almaz/SKILL.md",
+      "category": "homelab"
+    },
+    {
+      "name": "nuc",
+      "path": "skills/homelab/nuc/SKILL.md",
+      "category": "homelab"
     },
     {
       "name": "golang-pro",

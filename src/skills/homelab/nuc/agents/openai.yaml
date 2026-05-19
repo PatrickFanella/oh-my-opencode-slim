@@ -1,0 +1,4 @@
+interface:
+  display_name: "NUC Ops"
+  short_description: "NUC homelab operations and docs"
+  default_prompt: "Use $nuc to audit the NUC docs against live state."

@@ -2,6 +2,10 @@
 
 Complete installation instructions for oh-my-opencode-slim.
 
+For planned installer improvements such as simpler commands, an install TUI,
+default agent materialization, and scheduler/task-list work, see
+[Future Plans](future-plans.md).
+
 ## Table of Contents
 
 - [For Humans](#for-humans)
@@ -60,8 +64,10 @@ The bootstrap command:
   integration
 - optionally adds `opencode-tasks`, installs its launchd/systemd scheduler
   daemon with `bunx opencode-tasks --install`, and installs its `/loop` slash
-  commands with `bunx opencode-tasks --install-commands`; the
-  `scheduled-tasks` agent skill is bundled and managed by OMOC
+  commands with `bunx opencode-tasks --install-commands`; bootstrap also
+  prepares OpenCode's `opencode-tasks` plugin cache with the
+  `@opencode-ai/plugin` runtime peer dependency, and the `scheduled-tasks`
+  agent skill is bundled and managed by OMOC
 - inserts managed `opencode`, `omos`, `oc`, and `occ` helpers into
   `.zshrc`/`.bashrc` for launching OpenCode with a random `OPENCODE_PORT` for
   tmux panes; `occ` runs `opencode --continue`

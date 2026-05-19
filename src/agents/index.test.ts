@@ -245,18 +245,18 @@ describe('skill permissions', () => {
     )?.skill as Record<string, string>;
     expect(skillPerm?.['*']).toBe('deny');
     // Built-in fallback profiles include selected bundled skill names.
-    expect(skillPerm?.codemap).toBe('allow');
+    expect(skillPerm?.cartography).toBe('allow');
     expect(skillPerm?.clonedeps).toBe('allow');
   });
 
-  test('fixer does not get codemap skill allowed by default', () => {
+  test('fixer gets global skills but not removed codemap skill', () => {
     const agents = createAgents();
     const fixer = agents.find((a) => a.name === 'fixer');
     expect(fixer).toBeDefined();
     const skillPerm = (fixer?.config.permission as Record<string, unknown>)
       ?.skill as Record<string, string>;
     expect(skillPerm?.codemap).not.toBe('allow');
-    expect(skillPerm?.clonedeps).not.toBe('allow');
+    expect(skillPerm?.clonedeps).toBe('allow');
   });
 
   test('oracle gets review-quality skill allowed by default', () => {

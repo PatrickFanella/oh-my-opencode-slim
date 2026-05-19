@@ -49,9 +49,10 @@ const HELPER_START = '# >>> oh-my-opencode-slim tmux helper >>>';
 const HELPER_END = '# <<< oh-my-opencode-slim tmux helper <<<';
 const DCP_SCHEMA_URL =
   'https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json';
+const OPENCODE_PLUGIN_PACKAGE_VERSION = '1.15.3';
 const OPENCODE_PLUGIN_TYPES_PACKAGE = {
   dependencies: {
-    '@opencode-ai/plugin': '1.15.3',
+    '@opencode-ai/plugin': OPENCODE_PLUGIN_PACKAGE_VERSION,
   },
 } as const;
 const OPENCODE_CONFIG_GITIGNORE = `node_modules
@@ -155,7 +156,7 @@ export interface BootstrapArgs {
   scheduledTasksCommandsCommand?: string;
 }
 
-interface StepResult {
+export interface StepResult {
   ok: boolean;
   message: string;
 }
@@ -565,6 +566,114 @@ function getOptionalOpenCodePluginSpecs(args: BootstrapArgs): string[] {
   return pluginSpecs;
 }
 
+function getOpenCodePackageCacheDir(packageName: string): string {
+  const cacheDir =
+    process.env.XDG_CACHE_HOME?.trim() || join(homedir(), '.cache');
+  return join(cacheDir, 'opencode', 'packages', `${packageName}@latest`);
+}
+
+export function getScheduledTasksPluginCacheDir(): string {
+  return getOpenCodePackageCacheDir(OPTIONAL_PLUGINS.scheduledTasks);
+}
+
+export function buildScheduledTasksPluginCacheManifest(): string {
+  return `${JSON.stringify(
+    {
+      dependencies: {
+        [OPTIONAL_PLUGINS.scheduledTasks]: 'latest',
+        '@opencode-ai/plugin': OPENCODE_PLUGIN_PACKAGE_VERSION,
+      },
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+function verifyScheduledTasksPluginCache(cacheDir: string): StepResult | null {
+  const expectedPackageJsons = [
+    join(
+      cacheDir,
+      'node_modules',
+      OPTIONAL_PLUGINS.scheduledTasks,
+      'package.json',
+    ),
+    join(cacheDir, 'node_modules', '@opencode-ai', 'plugin', 'package.json'),
+  ];
+
+  const missing = expectedPackageJsons.filter((path) => !existsSync(path));
+  if (missing.length === 0) return null;
+
+  return {
+    ok: false,
+    message: `Scheduled tasks plugin cache is missing: ${missing.join(', ')}`,
+  };
+}
+
+export async function ensureScheduledTasksPluginCache(
+  args: Pick<BootstrapArgs, 'dryRun' | 'withScheduledTasks'>,
+): Promise<StepResult> {
+  if (!args.withScheduledTasks) {
+    return { ok: true, message: 'Scheduled tasks plugin cache not selected' };
+  }
+
+  const cacheDir = getScheduledTasksPluginCacheDir();
+  if (args.dryRun) {
+    return {
+      ok: true,
+      message: `Would prepare opencode-tasks plugin cache in ${cacheDir}`,
+    };
+  }
+
+  try {
+    mkdirSync(cacheDir, { recursive: true });
+    writeFileSync(
+      join(cacheDir, 'package.json'),
+      buildScheduledTasksPluginCacheManifest(),
+    );
+  } catch (err) {
+    return {
+      ok: false,
+      message: `Failed to write scheduled tasks plugin cache manifest: ${err}`,
+    };
+  }
+
+  try {
+    const proc = crossSpawn(['bun', 'install', '--ignore-scripts'], {
+      cwd: cacheDir,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    });
+    await proc.exited;
+
+    if (proc.exitCode !== 0) {
+      const [stdout, stderr] = await Promise.all([
+        proc.stdout(),
+        proc.stderr(),
+      ]);
+      const output = stderr.trim() || stdout.trim();
+      return {
+        ok: false,
+        message:
+          output ||
+          `bun install --ignore-scripts exited with code ${proc.exitCode}`,
+      };
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      message: `Failed to prepare scheduled tasks plugin cache: ${err}`,
+    };
+  }
+
+  const verificationError = verifyScheduledTasksPluginCache(cacheDir);
+  if (verificationError) return verificationError;
+
+  return {
+    ok: true,
+    message: 'Prepared opencode-tasks plugin cache with @opencode-ai/plugin',
+  };
+}
+
 export function getOptionalTuiPluginSpecs(args: BootstrapArgs): string[] {
   const pluginSpecs: string[] = [];
   if (args.withQuota) pluginSpecs.push(OPTIONAL_TUI_PLUGINS.quota);
@@ -617,6 +726,13 @@ async function installOptionalPlugins(
     parsedTuiConfig = tuiConfig;
   }
 
+  const scheduledTasksCacheResult = args.withScheduledTasks
+    ? await ensureScheduledTasksPluginCache(args)
+    : null;
+  if (scheduledTasksCacheResult && !scheduledTasksCacheResult.ok) {
+    return scheduledTasksCacheResult;
+  }
+
   if (pluginSpecs.length > 0) {
     writeConfig(configPath, addPluginsToConfig(config ?? {}, pluginSpecs));
   }
@@ -630,6 +746,9 @@ async function installOptionalPlugins(
   const messages = [`OpenCode: ${pluginSpecs.join(', ')}`];
   if (tuiPluginSpecs.length > 0) {
     messages.push(`TUI: ${tuiPluginSpecs.join(', ')}`);
+  }
+  if (scheduledTasksCacheResult) {
+    messages.push(scheduledTasksCacheResult.message);
   }
 
   return {

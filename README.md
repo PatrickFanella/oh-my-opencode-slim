@@ -20,6 +20,7 @@ oh-my-opencode-slim is an agent orchestration plugin for OpenCode. It includes a
 The main idea is simple: instead of forcing one model to do everything, the plugin routes each part of the job to the agent best suited for it, balancing **quality, speed and cost**.
 
 To explore the agents themselves, see **[Meet the Pantheon](#meet-the-pantheon)**. For the full feature set, see **[Features & Workflows](#features-and-workflows)** below.
+For planned improvements, see **[Future Plans](docs/future-plans.md)**.
 
 ### Quick Start
 

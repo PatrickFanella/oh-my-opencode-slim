@@ -46,6 +46,8 @@ as the in-repo catalog grows.
 | [`simplify`](#simplify) | Behavior-preserving code simplification | `oracle` |
 | [`codemap`](#codemap) | Repository codemap generation | `orchestrator` |
 | [`clonedeps`](#clonedeps) | Local dependency source cloning | `orchestrator` |
+| [`almaz`](#almaz-and-nuc) | Almaz homelab operations and documentation | all agents |
+| [`nuc`](#almaz-and-nuc) | NUC homelab operations and documentation | all agents |
 | [`scheduled-tasks`](#scheduled-tasks) | OpenCode task scheduling guidance | all agents |
 
 In addition to those OMOC defaults, this repo now bundles the migrated skills
@@ -54,6 +56,7 @@ catalog under category paths like:
 - `src/skills/language-js-ts/<skill>/`
 - `src/skills/git-github/<skill>/`
 - `src/skills/dev-workflows/<skill>/`
+- `src/skills/homelab/<skill>/`
 - `src/skills/.system/<skill>/`
 
 Top-level catalog docs are also preserved in `src/skills/` (`README.md`,
@@ -142,6 +145,22 @@ Safety defaults:
 - ignore-file edits are limited to managed marker blocks.
 
 See **[Clonedeps](clonedeps.md)** for the full workflow and file layout.
+
+---
+
+## almaz and nuc
+
+**Host-specific homelab operations and documentation workflows.**
+
+`almaz` and `nuc` are bundled under `src/skills/homelab/` so OMOC installs and
+manages them with the rest of the curated repo-owned skills. They are part of
+the default global profile because homelab questions can arrive through any
+foreground agent.
+
+Both skills include safety contracts, topology references, audit scripts, health
+snapshot helpers, and reusable report/change-plan templates for the paired
+Almaz/NUC service split. Live state remains authoritative; the skills prefer
+read-only discovery and require explicit approval before operational changes.
 
 ---
 
