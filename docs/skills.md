@@ -176,10 +176,15 @@ format, daemon setup, and `/loop` session commands.
 
 The skill is part of the default global profile because scheduling requests can
 arrive through any foreground agent. The runtime tools and slash commands still
-come from the external `opencode-tasks` plugin. Use bootstrap's
-`--with-scheduled-tasks` option to add that plugin, install the system scheduler
-daemon, and install `/loop` commands. Bootstrap no longer runs
+come from the external `opencode-tasks` plugin. Bootstrap installs that plugin,
+the system scheduler daemon, and `/loop` commands by default; use
+`--no-scheduled-tasks` to opt out. Bootstrap no longer runs
 `bunx opencode-tasks --install-skill` because OMOC now owns the skill copy.
+
+Bootstrap also writes disabled recurring-task templates to
+`~/.config/opencode/task-templates/`. They are examples, not active scheduled
+jobs. Review a template, copy it into `~/.config/opencode/tasks/`, and flip
+`enabled: false` to `enabled: true` when you want it to run.
 
 ---
 

@@ -31,6 +31,22 @@ Or use non-interactive mode:
 bunx oh-my-opencode-slim@latest install --no-tui --skills=yes
 ```
 
+For a cloned checkout, the short commands are:
+
+```bash
+bun run setup
+bun run preview
+bun run update
+bun run repair
+```
+
+`setup` is the recommended full bootstrap path. Advanced bootstrap flags still
+work when you need them:
+
+```bash
+bun run src/cli/index.ts bootstrap --with-dcp --with-quota --with-rtk
+```
+
 ### Clone-Based Bootstrap
 
 For a full machine bootstrap from a cloned checkout:
@@ -38,10 +54,10 @@ For a full machine bootstrap from a cloned checkout:
 ```bash
 git clone https://github.com/patrickfanella/oh-my-opencode-slim.git
 cd oh-my-opencode-slim
-bun run bootstrap --yes --with-dcp --with-quota --with-rtk --with-scheduled-tasks
+bun run setup
 ```
 
-The bootstrap command:
+The bootstrap flow:
 
 - backs up the entire existing OpenCode config directory under
   `~/.config/opencode/backups/omoc-bootstrap-*`
@@ -62,12 +78,13 @@ The bootstrap command:
 - optionally installs RTK with its official install script, then runs
   `rtk init -g --opencode --auto-patch` so OpenCode gets the RTK rewrite
   integration
-- optionally adds `opencode-tasks`, installs its launchd/systemd scheduler
-  daemon with `bunx opencode-tasks --install`, and installs its `/loop` slash
-  commands with `bunx opencode-tasks --install-commands`; bootstrap also
+- adds `opencode-tasks` by default, installs its launchd/systemd scheduler
+  daemon with `bunx opencode-tasks --install`, installs its `/loop` slash
+  commands with `bunx opencode-tasks --install-commands`, writes disabled
+  recurring-task templates under `~/.config/opencode/task-templates/`, and
   prepares OpenCode's `opencode-tasks` plugin cache with the
-  `@opencode-ai/plugin` runtime peer dependency, and the `scheduled-tasks`
-  agent skill is bundled and managed by OMOC
+  `@opencode-ai/plugin` runtime peer dependency; the `scheduled-tasks` agent
+  skill is bundled and managed by OMOC
 - inserts managed `opencode`, `omos`, `oc`, and `occ` helpers into
   `.zshrc`/`.bashrc` for launching OpenCode with a random `OPENCODE_PORT` for
   tmux panes; `occ` runs `opencode --continue`
@@ -79,13 +96,15 @@ Useful bootstrap flags:
 | `--with-dcp` | Add `@tarquinen/opencode-dcp@latest` |
 | `--with-quota` | Add `@slkiser/opencode-quota` to OpenCode and TUI plugin lists |
 | `--with-rtk` | Install RTK and run `rtk init -g --opencode --auto-patch` |
-| `--with-scheduled-tasks` | Add `opencode-tasks`, install daemon, and install `/loop` commands |
+| `--with-scheduled-tasks` | Add `opencode-tasks`, install daemon/commands, and write templates (default) |
+| `--no-scheduled-tasks` | Skip `opencode-tasks`, daemon/commands, and templates |
 | `--skip-opencode` | Do not run the OpenCode install/update command |
 | `--skip-build` | Do not run `bun install --yes` or `bun run build` |
 | `--skip-shell-helper` | Do not modify `.zshrc`/`.bashrc` |
 | `--skip-rtk-init` | Install RTK but do not run `rtk init` |
 | `--skip-scheduled-tasks-daemon` | Add plugin but skip launchd/systemd daemon install |
 | `--skip-scheduled-tasks-commands` | Add plugin/daemon but skip `/loop` command install |
+| `--skip-scheduled-task-templates` | Add plugin/daemon but skip writing disabled task templates |
 | `--opencode-install-cmd=<cmd>` | Override the OpenCode install/update command |
 | `--rtk-install-cmd=<cmd>` | Override the RTK install command |
 | `--scheduled-tasks-daemon-cmd=<cmd>` | Override scheduled-tasks daemon install command |
@@ -130,6 +149,11 @@ OpenCode's host config. Those defaults intentionally trust the local machine by
 setting `permission: "allow"`, tuning OpenCode compaction, removing the legacy
 `~/.agents/skills` path, and writing DCP/quota sidecar config when those
 integrations are selected.
+
+Scheduled task templates are offered but not enabled. Bootstrap writes them to
+`~/.config/opencode/task-templates/`; review one, copy it to
+`~/.config/opencode/tasks/`, and change `enabled: false` to `enabled: true` when
+you want it to run.
 
 Then:
 

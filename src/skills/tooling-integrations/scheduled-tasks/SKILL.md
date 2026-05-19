@@ -144,6 +144,12 @@ Check status: `bunx opencode-tasks --status`
 
 If the daemon is not installed, warn the user and suggest they install it.
 
+OMOC bootstrap installs the scheduler daemon and `/loop` commands by default
+unless the user passes `--no-scheduled-tasks`. It also writes disabled example
+templates under `~/.config/opencode/task-templates/`. Treat those files as
+starting points: review one, copy it to `~/.config/opencode/tasks/`, adapt paths
+or permissions, then set `enabled: true`.
+
 ## Session Behavior
 
 - By default (no `session_name`), each run creates a fresh session. Good for independent tasks.

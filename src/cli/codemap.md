@@ -7,13 +7,15 @@
 Current responsibilities:
 
 - parse/install command arguments
+- expose copyable shortcut commands for common bootstrap/install flows
 - install-time validation and environment checks
 - OpenCode configuration mutation (atomic)
 - lite config generation for provider/agent presets
 - host MCP definition installation for OpenCode-native auth handling
 - code-managed bundled skill availability toggles
 - clone-based bootstrap defaults for host permissions, compaction, legacy
-  external skill path cleanup, and DCP/quota sidecar files
+  external skill path cleanup, scheduled-task install/templates, and DCP/quota
+  sidecar files
 - optional TUI plugin registration for integrations with TUI panels, currently
   quota
 - companion TUI plugin behavior lives in `src/tui.ts`, including collapsible
@@ -31,6 +33,13 @@ Current responsibilities:
     - `--dry-run`
     - `--reset`
     - `--help`
+- shortcut entrypoints expand before parsing:
+  - `setup` → `bootstrap --with-dcp --with-quota --with-rtk`
+  - `preview` → same as `setup` plus `--dry-run`
+  - `update` → `install --no-tui --skills=yes`
+  - `repair` → `bootstrap --with-dcp --with-quota --with-rtk --reset`
+  - scheduled-task plugin/daemon/commands/templates are bootstrap defaults;
+    `--no-scheduled-tasks` opts out
 
 The CLI is intentionally non-interactive-only now; it prints usage and steps to stdout with exit codes.
 
@@ -84,6 +93,10 @@ config (`permission: "allow"`, compaction defaults, and legacy
 writes sidecar defaults to `dcp.jsonc` and `opencode-quota/quota-toast.json`.
 `--with-quota` also adds the quota plugin to `tui.json(c)` so its TUI
 sidebar/status panels load.
+Scheduled-task support is enabled by default: bootstrap installs the
+`opencode-tasks` plugin/daemon/commands, prepares the plugin cache, and writes
+disabled examples under `task-templates/` unless `--no-scheduled-tasks` or
+`--skip-scheduled-task-templates` is used.
 
 ## Runtime integration
 
