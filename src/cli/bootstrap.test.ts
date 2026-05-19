@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -16,8 +17,11 @@ import {
   backupOpenCodeConfig,
   buildDcpConfig,
   buildQuotaToastConfig,
+  buildScheduledTasksPluginCacheManifest,
   ensureDesiredOpenCodeDirectory,
+  ensureScheduledTasksPluginCache,
   getOptionalTuiPluginSpecs,
+  getScheduledTasksPluginCacheDir,
   parseBootstrapArgs,
   resetOpenCodeConfigDirectory,
   tmuxHelperBlock,
@@ -277,6 +281,57 @@ describe('bootstrap CLI helpers', () => {
       readFileSync(join(configDir, 'package.json'), 'utf-8'),
     );
     expect(packageJson.dependencies['@opencode-ai/plugin']).toBe('1.15.3');
+  });
+
+  test('buildScheduledTasksPluginCacheManifest installs runtime peer dependency', () => {
+    const packageJson = JSON.parse(buildScheduledTasksPluginCacheManifest());
+
+    expect(packageJson.dependencies['opencode-tasks']).toBe('latest');
+    expect(packageJson.dependencies['@opencode-ai/plugin']).toBe('1.15.3');
+  });
+
+  test('ensureScheduledTasksPluginCache prepares OpenCode cache with required packages', async () => {
+    const fakeBin = join(tmpDir, 'bin');
+    const fakeBun = join(fakeBin, 'bun');
+    mkdirSync(fakeBin, { recursive: true });
+    writeFileSync(
+      fakeBun,
+      `#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p node_modules/opencode-tasks node_modules/@opencode-ai/plugin
+printf '{"name":"opencode-tasks"}\n' > node_modules/opencode-tasks/package.json
+printf '{"name":"@opencode-ai/plugin"}\n' > node_modules/@opencode-ai/plugin/package.json
+`,
+    );
+    chmodSync(fakeBun, 0o755);
+    process.env.XDG_CACHE_HOME = join(tmpDir, 'cache');
+    process.env.PATH = `${fakeBin}:${process.env.PATH ?? ''}`;
+
+    const result = await ensureScheduledTasksPluginCache({
+      withScheduledTasks: true,
+    });
+    const cacheDir = getScheduledTasksPluginCacheDir();
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cacheDir, 'package.json'), 'utf-8')).toBe(
+      buildScheduledTasksPluginCacheManifest(),
+    );
+    expect(
+      existsSync(
+        join(cacheDir, 'node_modules', 'opencode-tasks', 'package.json'),
+      ),
+    ).toBe(true);
+    expect(
+      existsSync(
+        join(
+          cacheDir,
+          'node_modules',
+          '@opencode-ai',
+          'plugin',
+          'package.json',
+        ),
+      ),
+    ).toBe(true);
   });
 
   test('tmuxHelperBlock defines omos with portable port selection', () => {

@@ -45,6 +45,8 @@ const packagedRequiredFiles = [
   'src/skills/simplify/SKILL.md',
   'src/skills/codemap/SKILL.md',
   'src/skills/clonedeps/SKILL.md',
+  'src/skills/homelab/almaz/SKILL.md',
+  'src/skills/homelab/nuc/SKILL.md',
   'src/skills/language-js-ts/typescript-pro/SKILL.md',
   'src/skills/tooling-integrations/caveman/SKILL.md',
 ];
@@ -195,7 +197,10 @@ function verifyFreshInstall(tarballPath: string) {
 
     const smokeScript = [
       "import pkg, { CUSTOM_SKILLS } from 'oh-my-opencode-slim';",
-      "if (typeof pkg !== 'function') throw new Error('default export is not a function');",
+      "const pluginServer = typeof pkg === 'function' ? pkg : pkg?.server;",
+      "if (typeof pluginServer !== 'function') throw new Error('default export is not a plugin module');",
+      "if (!CUSTOM_SKILLS.find((s) => s.name === 'almaz')) throw new Error('root bundle missing almaz skill');",
+      "if (!CUSTOM_SKILLS.find((s) => s.name === 'nuc')) throw new Error('root bundle missing nuc skill');",
       "if (!CUSTOM_SKILLS.find((s) => s.name === 'typescript-pro')) throw new Error('root bundle missing migrated skill');",
       "if (CUSTOM_SKILLS.find((s) => s.name === 'agent-browser')) throw new Error('root bundle should keep agent-browser external');",
       "console.log('package loads');",
@@ -218,6 +223,8 @@ function verifyFreshInstall(tarballPath: string) {
     ).href;
     const cliSmokeScript = [
       `import { CUSTOM_SKILLS } from ${JSON.stringify(cliEntryUrl)};`,
+      "if (!CUSTOM_SKILLS.find((s) => s.name === 'almaz')) throw new Error('missing almaz skill');",
+      "if (!CUSTOM_SKILLS.find((s) => s.name === 'nuc')) throw new Error('missing nuc skill');",
       "if (!CUSTOM_SKILLS.find((s) => s.name === 'typescript-pro')) throw new Error('missing migrated skill');",
       "if (CUSTOM_SKILLS.find((s) => s.name === 'agent-browser')) throw new Error('agent-browser should stay external');",
       "console.log('custom skills: ' + CUSTOM_SKILLS.length);",
