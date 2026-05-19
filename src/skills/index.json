@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 177,
+    "total_skills": 179,
     "categories": {
       "agent-ecosystem": 8,
       "analytics-observability": 3,
@@ -25,7 +25,7 @@
       "quality-review": 6,
       "security": 12,
       "testing": 6,
-      "tooling-integrations": 14,
+      "tooling-integrations": 16,
       "worldbuilding-fiction": 14,
       "writing-craft": 24
     }
@@ -702,8 +702,18 @@
       "category": "tooling-integrations"
     },
     {
+      "name": "super-productivity-maintenance",
+      "path": "skills/tooling-integrations/super-productivity-maintenance/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
       "name": "super-productivity-mcp",
       "path": "skills/tooling-integrations/super-productivity-mcp/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "super-productivity-planning",
+      "path": "skills/tooling-integrations/super-productivity-planning/SKILL.md",
       "category": "tooling-integrations"
     },
     {

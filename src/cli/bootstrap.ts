@@ -146,6 +146,7 @@ export interface BootstrapArgs {
   skipRtkInit?: boolean;
   skipScheduledTasksDaemon?: boolean;
   skipScheduledTasksCommands?: boolean;
+  skipScheduledTaskTemplates?: boolean;
   withDcp?: boolean;
   withQuota?: boolean;
   withRtk?: boolean;
@@ -162,7 +163,7 @@ export interface StepResult {
 }
 
 export function parseBootstrapArgs(args: string[]): BootstrapArgs {
-  const result: BootstrapArgs = { skills: 'yes' };
+  const result: BootstrapArgs = { skills: 'yes', withScheduledTasks: true };
 
   for (const arg of args) {
     if (arg === '--dry-run') result.dryRun = true;
@@ -179,6 +180,8 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
       arg === '--skip-scheduled-tasks-skill'
     ) {
       result.skipScheduledTasksCommands = true;
+    } else if (arg === '--skip-scheduled-task-templates') {
+      result.skipScheduledTaskTemplates = true;
     } else if (arg === '--with-dcp') result.withDcp = true;
     else if (arg === '--with-quota') result.withQuota = true;
     else if (arg === '--with-rtk') result.withRtk = true;
@@ -520,6 +523,223 @@ async function installScheduledTasksDaemon(
     message: args.skipScheduledTasksDaemon
       ? 'Scheduled tasks commands installed'
       : 'Scheduled tasks daemon and commands installed',
+  };
+}
+
+const SCHEDULED_TASK_TEMPLATE_DIR = 'task-templates';
+
+const DANGEROUS_SCHEDULED_TASK_BASH_DENIES = [
+  'sudo *',
+  'su *',
+  'rm -rf *',
+  'rm -fr *',
+  'mkfs *',
+  'mount *',
+  'umount *',
+  'reboot *',
+  'shutdown *',
+  'poweroff *',
+  'systemctl restart *',
+  'systemctl stop *',
+  'systemctl disable *',
+  'systemctl mask *',
+  'systemctl --user restart *',
+  'systemctl --user stop *',
+  'systemctl --user disable *',
+  'apt *',
+  'apt-get *',
+  'dnf *',
+  'pacman *',
+] as const;
+
+function yamlString(value: string): string {
+  return JSON.stringify(value);
+}
+
+function renderScheduledTaskPermissions(
+  externalDirectoryGlobs: readonly string[],
+): string {
+  const bashRules = [
+    '    "*": "allow"',
+    ...DANGEROUS_SCHEDULED_TASK_BASH_DENIES.map(
+      (pattern) => `    ${yamlString(pattern)}: "deny"`,
+    ),
+  ];
+  const externalRules = externalDirectoryGlobs.map(
+    (pattern) => `    ${yamlString(pattern)}: "allow"`,
+  );
+
+  return `permission:
+  bash:
+${bashRules.join('\n')}
+  read: "allow"
+  edit: "allow"
+  external_directory:
+${externalRules.join('\n')}`;
+}
+
+function renderScheduledTaskTemplate(input: {
+  description: string;
+  schedule: string;
+  cwd: string;
+  sessionName: string;
+  externalDirectoryGlobs: readonly string[];
+  body: string;
+}): string {
+  return `---
+description: ${yamlString(input.description)}
+schedule: ${yamlString(input.schedule)}
+cwd: ${yamlString(input.cwd)}
+session_name: ${yamlString(input.sessionName)}
+${renderScheduledTaskPermissions(input.externalDirectoryGlobs)}
+enabled: false
+---
+
+${input.body.trim()}
+`;
+}
+
+export function buildScheduledTaskTemplateFiles(
+  configDir = getConfigDir(),
+  homeDir = homedir(),
+): Record<string, string> {
+  const reportDir = join(configDir, 'task-reports');
+  const configGlob = `${configDir}/**`;
+  const schedulerReport = join(reportDir, 'scheduler-health-watch.md');
+  const dailyReport = join(reportDir, 'linux-server-daily-audit.md');
+  const weeklyReport = join(reportDir, 'linux-server-weekly-hygiene.md');
+
+  return {
+    'scheduler-health-watch.md': renderScheduledTaskTemplate({
+      description: 'Watch OpenCode scheduled-task scheduler health',
+      schedule: '22 * * * *',
+      cwd: homeDir,
+      sessionName: 'scheduler-health-watch',
+      externalDirectoryGlobs: [configGlob, '/run/**', '/tmp/**'],
+      body: `Watch the OpenCode scheduled-task scheduler itself.
+
+Check:
+- scheduler status with \`bunx opencode-tasks --status\` when available;
+- recurring task files in the OpenCode config directory parse and remain in the expected enabled/disabled state;
+- the task database exists and is not rapidly growing;
+- recent task runs show no repeated failures or empty loops;
+- platform scheduler health when readable without privileges (systemd user units on Linux, launchd user agent on macOS).
+
+Safety:
+- Do not delete tasks, uninstall the scheduler, restart services, or change recurring task schedules.
+- If a recurring task file is malformed, fix only the minimal YAML/frontmatter issue.
+
+Write/update \`${schedulerReport}\` with status, failures, and any minimal fix applied.`,
+    }),
+    'linux-server-daily-audit.md': renderScheduledTaskTemplate({
+      description: 'Daily safe local Linux server maintenance audit',
+      schedule: '17 6 * * *',
+      cwd: homeDir,
+      sessionName: 'linux-server-daily-audit',
+      externalDirectoryGlobs: [
+        configGlob,
+        '/proc/**',
+        '/sys/**',
+        '/run/**',
+        '/var/log/**',
+        '/etc/**',
+        '/tmp/**',
+      ],
+      body: `Run a daily safe maintenance audit for this local Linux server.
+
+Check:
+- disk usage and inode pressure across mounted filesystems;
+- memory/swap pressure and top resource consumers by command name;
+- failed systemd units/timers and failed user units/timers;
+- OpenCode scheduled-task scheduler status and recent scheduler journal entries;
+- pending OS/security updates using non-mutating commands only;
+- large user-level cache/log directories under the current user's home directory;
+- recent auth, OOM, disk, network, and service errors from journals/logs readable without sudo.
+
+Safety:
+- Do not install, upgrade, remove, restart, stop, reboot, delete, or modify system services.
+- Do not inspect secrets or \`.env\` files.
+- Only write the report file below unless an obvious low-risk recurring-task frontmatter fix is needed.
+
+Write/update \`${dailyReport}\` with concise findings, risk level, and exact human-approved commands if action is needed.`,
+    }),
+    'linux-server-weekly-hygiene.md': renderScheduledTaskTemplate({
+      description: 'Weekly deeper local Linux server hygiene review',
+      schedule: '41 8 * * 0',
+      cwd: homeDir,
+      sessionName: 'linux-server-weekly-hygiene',
+      externalDirectoryGlobs: [
+        configGlob,
+        '/proc/**',
+        '/sys/**',
+        '/run/**',
+        '/var/log/**',
+        '/etc/**',
+        '/tmp/**',
+      ],
+      body: `Run a weekly deeper hygiene review for this local Linux server.
+
+Review:
+- recurring task health and stale reports;
+- failed or disabled important timers/services visible without sudo;
+- disk growth trends under the current user's home directory and cache/log hotspots;
+- readable config drift or suspicious world-writable files under the current user's config directory;
+- backup indicators if tools/configs are present, without creating or deleting backups;
+- open/listening services using safe read-only commands;
+- package/security update availability using non-mutating commands only.
+
+Safety:
+- No sudo, package mutation, service mutation, reboot, destructive deletion, firewall changes, secret inspection, or credential changes.
+- Prefer report-only. If a tiny recurring-task formatting problem blocks scheduler parsing, fix that one issue and document it.
+
+Write/update \`${weeklyReport}\` with findings, risk level, recommended human actions, and exact commands where useful.
+
+Anti-stale requirement: overwrite the report with fresh values every run. Include a fresh ISO timestamp for the current run, and explicitly state if a prior failure is historical but the latest run completed.`,
+    }),
+  };
+}
+
+export function installScheduledTaskTemplates(
+  args: Pick<
+    BootstrapArgs,
+    'dryRun' | 'skipScheduledTaskTemplates' | 'withScheduledTasks'
+  >,
+): StepResult {
+  if (!args.withScheduledTasks) {
+    return { ok: true, message: 'Scheduled task templates not selected' };
+  }
+  if (args.skipScheduledTaskTemplates) {
+    return { ok: true, message: 'Skipped scheduled task templates' };
+  }
+
+  const templateDir = join(getConfigDir(), SCHEDULED_TASK_TEMPLATE_DIR);
+  const templates = buildScheduledTaskTemplateFiles();
+  const templateNames = Object.keys(templates);
+
+  if (args.dryRun) {
+    return {
+      ok: true,
+      message: `Would write ${templateNames.length} templates to ${templateDir}`,
+    };
+  }
+
+  mkdirSync(templateDir, { recursive: true });
+  let written = 0;
+  let preserved = 0;
+
+  for (const [filename, content] of Object.entries(templates)) {
+    const outputPath = join(templateDir, filename);
+    if (existsSync(outputPath)) {
+      preserved += 1;
+      continue;
+    }
+    writeFileSync(outputPath, content);
+    written += 1;
+  }
+
+  return {
+    ok: true,
+    message: `Installed ${written} scheduled task templates to ${templateDir}; preserved ${preserved}`,
   };
 }
 
@@ -1020,7 +1240,7 @@ async function step(
 export async function bootstrap(args: BootstrapArgs): Promise<number> {
   printHeader();
 
-  const total = 12;
+  const total = 13;
   let index = 1;
 
   if (
@@ -1074,6 +1294,12 @@ export async function bootstrap(args: BootstrapArgs): Promise<number> {
   if (
     !(await step(index++, total, 'Install scheduled tasks daemon', () =>
       installScheduledTasksDaemon(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install scheduled task templates', async () =>
+      installScheduledTaskTemplates(args),
     ))
   )
     return 1;
