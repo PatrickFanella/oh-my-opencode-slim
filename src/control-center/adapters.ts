@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { homedir, platform } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import {
   normalizeRunStatus,
   parseRecurringTaskMarkdown,
@@ -323,7 +323,10 @@ export class ReportRepository {
   constructor(private readonly paths: ControlCenterPaths) {}
 
   readReport(taskName: string): ReportSnapshot | undefined {
-    const directPath = join(this.paths.taskReportsDir, `${taskName}.md`);
+    const directPath = resolveContainedPath(
+      this.paths.taskReportsDir,
+      `${taskName}.md`,
+    );
     if (existsSync(directPath)) return readReportFile(directPath);
     if (!existsSync(this.paths.taskReportsDir)) return undefined;
     const match = readdirSync(this.paths.taskReportsDir)
@@ -333,6 +336,16 @@ export class ReportRepository {
       ? readReportFile(join(this.paths.taskReportsDir, match))
       : undefined;
   }
+}
+
+function resolveContainedPath(root: string, child: string): string {
+  const rootPath = resolve(root);
+  const targetPath = resolve(rootPath, child);
+  const pathFromRoot = relative(rootPath, targetPath);
+  if (pathFromRoot.startsWith('..') || isAbsolute(pathFromRoot)) {
+    return join(rootPath, '__invalid__');
+  }
+  return targetPath;
 }
 
 function readReportFile(path: string): ReportSnapshot {
