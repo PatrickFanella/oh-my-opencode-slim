@@ -10,6 +10,11 @@ import {
   parseControlCenterArgs,
   printControlCenterHelp,
 } from './control-center';
+import {
+  controlCenterWeb,
+  parseControlCenterWebArgs,
+  printControlCenterWebHelp,
+} from './control-center-web';
 import { doctor, parseDoctorArgs } from './doctor';
 import { install } from './install';
 import { getGeneratedPresetNames, isGeneratedPresetName } from './providers';
@@ -62,6 +67,7 @@ Usage:
   bunx oh-my-opencode-slim install [OPTIONS]
   bunx oh-my-opencode-slim bootstrap [OPTIONS]
   bunx oh-my-opencode-slim control-center [OPTIONS]
+  bunx oh-my-opencode-slim control-center-web [OPTIONS]
   bunx oh-my-opencode-slim agents <list|validate|create> [OPTIONS]
   bunx oh-my-opencode-slim doctor [OPTIONS]
 
@@ -112,6 +118,13 @@ Control center options:
   --json                 Print the backend snapshot as JSON and exit
   --config-dir=<path>    Read an alternate OpenCode config directory
 
+Control center web options:
+  --host=<host>           Host to bind (default: 127.0.0.1)
+  --port=<port>           Port to bind (default: 47671)
+  --api-only              Serve only the read-only API
+  --allow-network         Permit non-loopback hosts; exposes task metadata
+  --open                  Open the dashboard URL in the default browser
+
 Doctor options:
   --json                 Print diagnostics as JSON
 
@@ -136,6 +149,7 @@ Examples:
   bunx oh-my-opencode-slim repair
   bunx oh-my-opencode-slim control-center
   bunx oh-my-opencode-slim control-center --no-tui
+  bunx oh-my-opencode-slim control-center-web --open
   bunx oh-my-opencode-slim agents list
   bunx oh-my-opencode-slim doctor
 `);
@@ -183,6 +197,14 @@ async function main(): Promise<void> {
     }
     const controlCenterArgs = parseControlCenterArgs(expanded.args);
     const exitCode = await controlCenter(controlCenterArgs);
+    process.exit(exitCode);
+  } else if (expanded.command === 'control-center-web') {
+    if (expanded.args[0] === '-h' || expanded.args[0] === '--help') {
+      printControlCenterWebHelp();
+      process.exit(0);
+    }
+    const controlCenterWebArgs = parseControlCenterWebArgs(expanded.args);
+    const exitCode = await controlCenterWeb(controlCenterWebArgs);
     process.exit(exitCode);
   } else if (expanded.command === 'doctor') {
     const doctorArgs = parseDoctorArgs(expanded.args);

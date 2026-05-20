@@ -4,7 +4,8 @@
 
 `src/control-center/` implements the scheduled-task control center described in
 `docs/tui-control-center.md`. It keeps task monitoring reusable by separating
-renderer-neutral domain/services from the OpenTUI terminal frontend.
+renderer-neutral domain/services from OpenTUI terminal rendering and the local
+web HTTP/SSE transport.
 
 ## Files
 
@@ -21,6 +22,8 @@ renderer-neutral domain/services from the OpenTUI terminal frontend.
   detail panels, stream tabs, filters, and health summaries.
 - `tui-app.ts`: OpenTUI lifecycle, keyboard handling, refresh polling, and
   screen updates.
+- `web-api.ts`: read-only HTTP/SSE routes over the shared services plus static
+  asset serving for the Vite web dashboard.
 - `index.ts`: public barrel for non-CLI consumers.
 
 ## Flow
@@ -36,6 +39,12 @@ cli/control-center.ts
       ├─ OpenTUI dashboard (default)
       ├─ plain text snapshot (--no-tui)
       └─ JSON snapshot (--json)
+
+cli/control-center-web.ts
+  └─ startControlCenterWebServer()
+      ├─ /api/snapshot, /api/tasks, /api/health/scheduler
+      ├─ /api/events/scheduler (SSE)
+      └─ apps/control-center-web/dist static assets
 ```
 
 ## Design Notes
@@ -45,6 +54,6 @@ cli/control-center.ts
   future confirmation flow.
 - The SQLite adapter introspects table/column names instead of assuming the
   external `opencode-tasks` schema is stable.
-- OpenTUI code imports the shared services directly. A future web UI should wrap
-  the same contracts with HTTP/SSE/WebSocket rather than share terminal
+- OpenTUI code imports the shared services directly. The React web UI uses
+  `web-api.ts` HTTP/SSE routes and shares only domain types, not terminal
   components.
