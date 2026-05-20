@@ -18,6 +18,9 @@
     "oh-my-opencode-slim": "./dist/cli/index.js"
   },
   "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "license": "MIT",
   "keywords": [
     "opencode",
@@ -45,6 +48,7 @@
     "scripts/validate-hub.sh",
     "scripts/audit_skills.py",
     "scripts/hub_doctor.py",
+    "apps/control-center-web/dist",
     "oh-my-opencode-slim.schema.json",
     "custom-agent.schema.json",
     "README.md",
@@ -53,8 +57,9 @@
   "scripts": {
     "build:plugin": "bun build src/index.ts src/tui.ts --outdir dist --target node --format esm --external @ast-grep/napi --external @opencode-ai/plugin --external @opencode-ai/sdk --external @opentui/core --external @opentui/solid --external jsdom --external zod",
     "build:cli": "bun build src/cli/index.ts --outdir dist/cli --target node --format esm --external @ast-grep/napi --external @opencode-ai/plugin --external @opencode-ai/sdk --external @opentui/core --external jsdom --external zod",
+    "build:web": "bun run --filter @oh-my-opencode-slim/control-center-web build",
     "copy:divoom-assets": "bun run scripts/copy-divoom-assets.ts",
-    "build": "bun run build:plugin && bun run build:cli && bun run copy:divoom-assets && tsc --emitDeclarationOnly && bun run generate-schema",
+    "build": "bun run build:web && bun run build:plugin && bun run build:cli && bun run copy:divoom-assets && tsc --emitDeclarationOnly && bun run generate-schema",
     "prepare": "bun run build",
     "contributors:add": "all-contributors add",
     "contributors:check": "all-contributors check",
@@ -68,6 +73,10 @@
     "update": "bun run src/cli/index.ts update",
     "repair": "bun run src/cli/index.ts repair",
     "control-center": "bun run src/cli/index.ts control-center",
+    "control-center:web": "bun run src/cli/index.ts control-center-web",
+    "control-center:web:api": "bun run src/cli/index.ts control-center-web --api-only",
+    "control-center:web:dev": "bun run --filter @oh-my-opencode-slim/control-center-web dev",
+    "test:web": "bun run --filter @oh-my-opencode-slim/control-center-web test",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "lint": "biome lint .",

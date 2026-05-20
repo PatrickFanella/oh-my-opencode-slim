@@ -8,7 +8,8 @@ Current responsibilities:
 
 - parse/install command arguments
 - expose copyable shortcut commands for common bootstrap/install flows
-- expose the scheduled-task control-center launcher and snapshot modes
+- expose scheduled-task control-center launchers for OpenTUI, snapshots, and
+  the local web dashboard
 - install-time validation and environment checks
 - OpenCode configuration mutation (atomic)
 - lite config generation for provider/agent presets
@@ -46,6 +47,11 @@ Current responsibilities:
   - `--no-tui`: plain text snapshot
   - `--json`: backend snapshot JSON
   - `--config-dir=<path>`: alternate OpenCode config directory
+- `control-center-web` launches the read-only browser dashboard:
+  - default: serve built Vite assets plus local `/api/*` routes
+  - `--api-only`: serve only the API for a separate Vite dev server
+  - `--host=<host>` / `--port=<port>`: bind address
+  - `--open`: open the dashboard URL in the default browser
 
 The CLI is intentionally non-interactive-only now; it prints usage and steps to stdout with exit codes.
 
@@ -63,6 +69,8 @@ The CLI is intentionally non-interactive-only now; it prints usage and steps to 
   and reset, optional integration plugin registration, trusted host defaults,
   DCP/quota sidecar defaults, and shell helper installation.
 - `control-center.ts`: CLI parser/runner for the scheduled-task control center.
+- `control-center-web.ts`: CLI parser/runner for the local web dashboard and
+  read-only API server.
 - `types.ts`: install/config DTOs.
 
 ## Flow

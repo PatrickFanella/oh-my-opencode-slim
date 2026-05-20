@@ -1,20 +1,23 @@
 # TUI Control Center
 
 Status: implemented as a read-only scheduled-task control center with an
-OpenTUI terminal dashboard, text/JSON snapshot modes, and reusable backend
-services. The mutating task-creation/editing and future web renderer paths are
-prepared at the domain/service boundary but are not exposed from the monitor UI.
+OpenTUI terminal dashboard, Vite/React/Tailwind web dashboard, text/JSON
+snapshot modes, and reusable backend services. Mutating task-creation/editing
+paths are prepared at the domain/service boundary but are not exposed from any
+monitor UI.
 
 Run it from a cloned checkout:
 
 ```bash
 bun run control-center
+bun run control-center:web
 ```
 
 Or use the installed CLI:
 
 ```bash
 bunx oh-my-opencode-slim control-center
+bunx oh-my-opencode-slim control-center-web
 ```
 
 Useful non-interactive modes:
@@ -23,11 +26,13 @@ Useful non-interactive modes:
 bun run control-center -- --no-tui
 bun run control-center -- --json
 bun run control-center -- --config-dir=/path/to/opencode --no-tui
+bun run control-center:web -- --api-only
+bun run control-center:web -- --open
 ```
 
-The dashboard is intentionally read-only. It reads scheduled-task definitions,
-recent run history, scheduler status, scheduler logs, and task reports, then
-shows what is running, what failed, and where the output lives.
+Both dashboards are intentionally read-only. They read scheduled-task
+definitions, recent run history, scheduler status, scheduler logs, and task
+reports, then show what is running, what failed, and where the output lives.
 
 ## Goal
 
@@ -93,7 +98,10 @@ Current implementation:
 | `src/control-center/services.ts` | Local task/health/stream services and snapshot composition. |
 | `src/control-center/tui-render.ts` | Pure text layout for task list, detail panel, health, and stream tabs. |
 | `src/control-center/tui-app.ts` | OpenTUI renderer lifecycle, keybindings, refresh loop, and dashboard state. |
+| `src/control-center/web-api.ts` | Local read-only HTTP/SSE wrapper around the shared services plus static asset serving. |
 | `src/cli/control-center.ts` | CLI parser and `control-center` command runner. |
+| `src/cli/control-center-web.ts` | CLI parser and `control-center-web` HTTP server runner. |
+| `apps/control-center-web/` | Vite/React/Tailwind web renderer; shares only types and HTTP/SSE JSON contracts. |
 
 ## Shared backend boundary
 
@@ -122,9 +130,9 @@ export interface HealthService {
 }
 ```
 
-For the local TUI, these services can call local adapters directly. For the
-future web UI, the same service contracts can be wrapped by HTTP/WebSocket or
-Server-Sent Events.
+For the local TUI, these services call local adapters directly. For the web UI,
+`src/control-center/web-api.ts` wraps the same service contracts in local
+HTTP/SSE routes.
 
 ## Data sources
 
@@ -222,10 +230,10 @@ Treat streams as independent inputs into a shared event buffer:
   If not, the MVP can open `opencode -s <session-id>` as a separate pane or
   terminal process rather than trying to scrape an interactive nested TUI.
 
-## Future web UI path
+## Web UI path
 
-The web UI should reuse the backend service contracts and domain models, but
-implement separate web components.
+The web UI reuses the backend service contracts and domain models, but
+implements separate browser components.
 
 ```text
 OpenTUI app
@@ -233,17 +241,22 @@ OpenTUI app
   uses terminal-specific panes and keybindings
 
 Web app
-  calls same service contracts through HTTP/SSE/WebSocket transport
+  calls same service contracts through HTTP/SSE transport
   uses browser-specific routes, forms, tables, and log viewers
 ```
 
-Transport can be added later with a thin wrapper:
+Current read-only transport:
 
+- `GET /api/snapshot`
 - `GET /api/tasks`
 - `GET /api/tasks/:name`
 - `GET /api/tasks/:name/runs`
 - `GET /api/health/scheduler`
-- `GET /api/streams/scheduler` via SSE/WebSocket
+- `GET /api/events/scheduler` via SSE
+
+Future mutating transport remains intentionally absent until the task-creation
+and edit flows have explicit preview and confirmation screens:
+
 - `POST /api/tasks` for future task creation
 - `PATCH /api/tasks/:name` for future edit/enable/disable flows
 
@@ -282,8 +295,8 @@ Transport can be added later with a thin wrapper:
 
 ### Phase 5: Web-ready backend
 
-- [ ] Wrap services behind HTTP/SSE/WebSocket.
-- [ ] Add a separate React web renderer.
+- [x] Wrap services behind read-only HTTP/SSE routes.
+- [x] Add a separate React web renderer.
 - [x] Keep web components independent from OpenTUI components by sharing only the
   backend contracts and domain types.
 

@@ -27,6 +27,7 @@ This codemap intentionally covers the plugin repository itself and excludes the 
 
 | Directory | Responsibility Summary | Detailed Map |
 |---|---|---|
+| `apps/control-center-web/` | Vite/React/Tailwind browser renderer for the scheduled-task control center, backed by local read-only HTTP/SSE APIs. | [View Map](apps/control-center-web/codemap.md) |
 | `src/` | Main application surface that composes plugin bootstrap, runtime model chains, hook orchestration, task-session aliasing, and installer-facing code. | [View Map](src/codemap.md) |
 | `src/agents/` | Agent factory layer for orchestrator and specialists, including prompt/model overrides, display-name normalization, MCP assignment, and permission shaping. | [View Map](src/agents/codemap.md) |
 | `src/cli/` | Installer, config editing, host MCP installation, and provider preset generation. | [View Map](src/cli/codemap.md) |
