@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 179,
+    "total_skills": 180,
     "categories": {
       "agent-ecosystem": 8,
       "analytics-observability": 3,
@@ -14,7 +14,7 @@
       "docs-documents": 7,
       "frontend-ui": 2,
       "games-interactive": 2,
-      "git-github": 2,
+      "git-github": 3,
       "growth-marketing": 16,
       "homelab": 2,
       "language-go-rust": 2,
@@ -369,6 +369,11 @@
     {
       "name": "git-advanced-workflows",
       "path": "skills/git-github/git-advanced-workflows/SKILL.md",
+      "category": "git-github"
+    },
+    {
+      "name": "gitea-repo-overhaul",
+      "path": "skills/git-github/gitea-repo-overhaul/SKILL.md",
       "category": "git-github"
     },
     {
