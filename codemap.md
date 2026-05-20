@@ -31,6 +31,7 @@ This codemap intentionally covers the plugin repository itself and excludes the 
 | `src/agents/` | Agent factory layer for orchestrator and specialists, including prompt/model overrides, display-name normalization, MCP assignment, and permission shaping. | [View Map](src/agents/codemap.md) |
 | `src/cli/` | Installer, config editing, host MCP installation, and provider preset generation. | [View Map](src/cli/codemap.md) |
 | `src/config/` | Configuration schema, layered loaders, preset merging, compatibility migrations, constant tables, and agent/MCP policy helpers. | [View Map](src/config/codemap.md) |
+| `src/control-center/` | Scheduled-task control center domain, local adapters, services, text renderer, and OpenTUI dashboard. | [View Map](src/control-center/codemap.md) |
 | `src/council/` | Multi-model council orchestration with preset resolution, councillor execution modes, retries, timeout handling, and synthesis fallback flow. | [View Map](src/council/codemap.md) |
 | `src/hooks/` | Aggregated runtime hook surface for prompt transforms, recovery logic, task-session aliasing, nudges, and lifecycle policies. | [View Map](src/hooks/codemap.md) |
 | `src/hooks/apply-patch/` | Structured `apply_patch` parsing, matching, recovery, and rewrite pipeline. | [View Map](src/hooks/apply-patch/codemap.md) |

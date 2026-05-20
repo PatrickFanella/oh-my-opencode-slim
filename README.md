@@ -38,6 +38,7 @@ bun run setup
 bun run preview
 bun run update
 bun run repair
+bun run control-center
 ```
 
 `setup` is the recommended full bootstrap path. Advanced bootstrap flags are
@@ -76,6 +77,12 @@ reserved: 10000 }`, and removes the legacy `~/.agents/skills` path. With
 Bootstrap installs `opencode-tasks` daemon/commands by default and writes
 disabled recurring-task examples under `~/.config/opencode/task-templates/`.
 Use `--no-scheduled-tasks` to skip that integration.
+
+Use `bun run control-center` after scheduler setup to open a read-only OpenTUI
+dashboard for scheduled tasks, recent runs, scheduler health, and task reports.
+For scripts or support captures, `bun run control-center -- --no-tui` prints the
+same snapshot as plain text and `bun run control-center -- --json` prints the
+backend snapshot as JSON.
 
 The installer also registers the companion TUI plugin in OpenCode's
 `tui.json`, which renders a full-board sidebar: core agents, custom SUBCULT

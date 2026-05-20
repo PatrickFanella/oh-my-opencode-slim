@@ -5,6 +5,11 @@ export { CUSTOM_SKILLS } from './custom-skills';
 
 import { agents, parseAgentsArgs, printAgentsCommandHelp } from './agents';
 import { bootstrap, parseBootstrapArgs } from './bootstrap';
+import {
+  controlCenter,
+  parseControlCenterArgs,
+  printControlCenterHelp,
+} from './control-center';
 import { doctor, parseDoctorArgs } from './doctor';
 import { install } from './install';
 import { getGeneratedPresetNames, isGeneratedPresetName } from './providers';
@@ -56,6 +61,7 @@ oh-my-opencode-slim installer
 Usage:
   bunx oh-my-opencode-slim install [OPTIONS]
   bunx oh-my-opencode-slim bootstrap [OPTIONS]
+  bunx oh-my-opencode-slim control-center [OPTIONS]
   bunx oh-my-opencode-slim agents <list|validate|create> [OPTIONS]
   bunx oh-my-opencode-slim doctor [OPTIONS]
 
@@ -101,6 +107,11 @@ Agents commands:
   agents create <name> --model=<provider/model>
                              Create a custom JSON agent definition
 
+Control center options:
+  --no-tui               Print a task/scheduler snapshot and exit
+  --json                 Print the backend snapshot as JSON and exit
+  --config-dir=<path>    Read an alternate OpenCode config directory
+
 Doctor options:
   --json                 Print diagnostics as JSON
 
@@ -123,6 +134,8 @@ Examples:
   bunx oh-my-opencode-slim preview
   bunx oh-my-opencode-slim update
   bunx oh-my-opencode-slim repair
+  bunx oh-my-opencode-slim control-center
+  bunx oh-my-opencode-slim control-center --no-tui
   bunx oh-my-opencode-slim agents list
   bunx oh-my-opencode-slim doctor
 `);
@@ -162,6 +175,14 @@ async function main(): Promise<void> {
     }
     const agentsArgs = parseAgentsArgs(expanded.args);
     const exitCode = await agents(agentsArgs);
+    process.exit(exitCode);
+  } else if (expanded.command === 'control-center') {
+    if (expanded.args[0] === '-h' || expanded.args[0] === '--help') {
+      printControlCenterHelp();
+      process.exit(0);
+    }
+    const controlCenterArgs = parseControlCenterArgs(expanded.args);
+    const exitCode = await controlCenter(controlCenterArgs);
     process.exit(exitCode);
   } else if (expanded.command === 'doctor') {
     const doctorArgs = parseDoctorArgs(expanded.args);
