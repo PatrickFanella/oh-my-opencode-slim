@@ -347,10 +347,26 @@ function mkdirTemp(): string {
 function writeCachedPluginPackage(cacheDir?: string): void {
   if (!cacheDir) return;
 
-  const pluginRoot = join(cacheDir, 'node_modules', 'oh-my-opencode-slim');
-  mkdirSync(pluginRoot, { recursive: true });
-  writeFileSync(
-    join(pluginRoot, 'package.json'),
-    JSON.stringify({ name: 'oh-my-opencode-slim' }),
-  );
+  let packageNames = ['oh-my-opencode-slim'];
+  try {
+    const manifest = JSON.parse(
+      readFileSync(join(cacheDir, 'package.json'), 'utf-8'),
+    ) as { dependencies?: Record<string, unknown> };
+    packageNames = Object.keys(manifest.dependencies ?? {});
+  } catch {
+    // Keep the fallback package for tests that do not need a manifest.
+  }
+
+  for (const packageName of packageNames) {
+    const packageRoot = join(
+      cacheDir,
+      'node_modules',
+      ...packageName.split('/'),
+    );
+    mkdirSync(packageRoot, { recursive: true });
+    writeFileSync(
+      join(packageRoot, 'package.json'),
+      JSON.stringify({ name: packageName }),
+    );
+  }
 }

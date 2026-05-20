@@ -5,9 +5,20 @@ export { CUSTOM_SKILLS } from './custom-skills';
 
 import { agents, parseAgentsArgs, printAgentsCommandHelp } from './agents';
 import { bootstrap, parseBootstrapArgs } from './bootstrap';
+import {
+  controlCenter,
+  parseControlCenterArgs,
+  printControlCenterHelp,
+} from './control-center';
 import { doctor, parseDoctorArgs } from './doctor';
 import { install } from './install';
 import { getGeneratedPresetNames, isGeneratedPresetName } from './providers';
+import {
+  expandShortcutArgs,
+  formatShortcutHelpSection,
+  hasHelpFlag,
+  isShortcutCommand,
+} from './shortcuts';
 import type { BooleanArg, InstallArgs } from './types';
 
 function parseArgs(args: string[]): InstallArgs {
@@ -50,6 +61,7 @@ oh-my-opencode-slim installer
 Usage:
   bunx oh-my-opencode-slim install [OPTIONS]
   bunx oh-my-opencode-slim bootstrap [OPTIONS]
+  bunx oh-my-opencode-slim control-center [OPTIONS]
   bunx oh-my-opencode-slim agents <list|validate|create> [OPTIONS]
   bunx oh-my-opencode-slim doctor [OPTIONS]
 
@@ -65,7 +77,10 @@ Bootstrap options:
   --with-dcp             Add @tarquinen/opencode-dcp@latest to OpenCode plugins
   --with-quota           Add @slkiser/opencode-quota to OpenCode/TUI plugins
   --with-rtk             Install rtk and run rtk init -g --opencode --auto-patch
-  --with-scheduled-tasks Add opencode-tasks and install daemon/commands
+  --with-scheduled-tasks Add opencode-tasks and install daemon/commands (default)
+  --no-scheduled-tasks   Skip opencode-tasks plugin, daemon, commands, templates
+  --skip-scheduled-task-templates
+                         Skip writing bundled scheduled task templates
   --yes, -y              Non-interactive bootstrap confirmation flag
   --skip-opencode        Skip OpenCode install/update
   --skip-build           Skip bun install and bun run build
@@ -84,11 +99,18 @@ Bootstrap options:
   --scheduled-tasks-commands-cmd=<cmd>
                          Override scheduled-tasks command install command
 
+${formatShortcutHelpSection()}
+
 Agents commands:
   agents list [--json]       List built-in and custom JSON agents
   agents validate [--json]   Validate custom JSON agents
   agents create <name> --model=<provider/model>
                              Create a custom JSON agent definition
+
+Control center options:
+  --no-tui               Print a task/scheduler snapshot and exit
+  --json                 Print the backend snapshot as JSON and exit
+  --config-dir=<path>    Read an alternate OpenCode config directory
 
 Doctor options:
   --json                 Print diagnostics as JSON
@@ -107,45 +129,70 @@ Examples:
   bunx oh-my-opencode-slim install --no-tui --skills=yes
   bunx oh-my-opencode-slim install --preset=opencode-go
   bunx oh-my-opencode-slim install --reset
-  bunx oh-my-opencode-slim bootstrap --with-dcp --with-quota --with-rtk --with-scheduled-tasks
+  bunx oh-my-opencode-slim bootstrap --with-dcp --with-quota --with-rtk
+  bunx oh-my-opencode-slim setup
+  bunx oh-my-opencode-slim preview
+  bunx oh-my-opencode-slim update
+  bunx oh-my-opencode-slim repair
+  bunx oh-my-opencode-slim control-center
+  bunx oh-my-opencode-slim control-center --no-tui
   bunx oh-my-opencode-slim agents list
   bunx oh-my-opencode-slim doctor
 `);
 }
 
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+  const rawArgs = process.argv.slice(2);
+  const expanded = rawArgs[0]
+    ? expandShortcutArgs(rawArgs[0], rawArgs.slice(1))
+    : { command: undefined, args: [] as string[] };
 
-  if (args.length === 0 || args[0] === 'install') {
-    const hasSubcommand = args[0] === 'install';
-    const installArgs = parseArgs(args.slice(hasSubcommand ? 1 : 0));
+  if (
+    rawArgs[0] &&
+    isShortcutCommand(rawArgs[0]) &&
+    hasHelpFlag(rawArgs.slice(1))
+  ) {
+    printHelp();
+    process.exit(0);
+  }
+
+  if (!expanded.command || expanded.command === 'install') {
+    const installArgs = parseArgs(expanded.args);
     const exitCode = await install(installArgs);
     process.exit(exitCode);
-  } else if (args[0] === 'bootstrap') {
-    if (args[1] === '-h' || args[1] === '--help') {
+  } else if (expanded.command === 'bootstrap') {
+    if (expanded.args[0] === '-h' || expanded.args[0] === '--help') {
       printHelp();
       process.exit(0);
     }
-    const bootstrapArgs = parseBootstrapArgs(args.slice(1));
+    const bootstrapArgs = parseBootstrapArgs(expanded.args);
     const exitCode = await bootstrap(bootstrapArgs);
     process.exit(exitCode);
-  } else if (args[0] === 'agents') {
-    if (args[1] === '-h' || args[1] === '--help') {
+  } else if (expanded.command === 'agents') {
+    if (expanded.args[0] === '-h' || expanded.args[0] === '--help') {
       printAgentsCommandHelp();
       process.exit(0);
     }
-    const agentsArgs = parseAgentsArgs(args.slice(1));
+    const agentsArgs = parseAgentsArgs(expanded.args);
     const exitCode = await agents(agentsArgs);
     process.exit(exitCode);
-  } else if (args[0] === 'doctor') {
-    const doctorArgs = parseDoctorArgs(args.slice(1));
+  } else if (expanded.command === 'control-center') {
+    if (expanded.args[0] === '-h' || expanded.args[0] === '--help') {
+      printControlCenterHelp();
+      process.exit(0);
+    }
+    const controlCenterArgs = parseControlCenterArgs(expanded.args);
+    const exitCode = await controlCenter(controlCenterArgs);
+    process.exit(exitCode);
+  } else if (expanded.command === 'doctor') {
+    const doctorArgs = parseDoctorArgs(expanded.args);
     const exitCode = await doctor(doctorArgs);
     process.exit(exitCode);
-  } else if (args[0] === '-h' || args[0] === '--help') {
+  } else if (expanded.command === '-h' || expanded.command === '--help') {
     printHelp();
     process.exit(0);
   } else {
-    console.error(`Unknown command: ${args[0]}`);
+    console.error(`Unknown command: ${expanded.command}`);
     console.error('Run with --help for usage information');
     process.exit(1);
   }

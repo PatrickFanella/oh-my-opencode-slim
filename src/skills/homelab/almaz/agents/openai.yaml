@@ -1,0 +1,4 @@
+interface:
+  display_name: "Almaz Ops"
+  short_description: "Almaz homelab operations and docs"
+  default_prompt: "Use $almaz to audit almaz docs against live state."
