@@ -39,6 +39,7 @@ bun run preview
 bun run update
 bun run repair
 bun run control-center
+bun run control-center:web
 ```
 
 `setup` is the recommended full bootstrap path. Advanced bootstrap flags still
@@ -168,6 +169,20 @@ It reads `~/.config/opencode/tasks/*.md`, `~/.config/opencode/.tasks.db`,
 `~/.config/opencode/task-reports/*.md`, `bunx opencode-tasks --status`, and
 available `systemctl`/`journalctl` user-unit status without mutating task files
 from the monitor view.
+
+For a browser dashboard with the same read-only data, run:
+
+```bash
+bun run control-center:web
+bun run control-center:web -- --open
+bun run control-center:web:api
+bun run control-center:web:dev
+```
+
+The web command binds to `127.0.0.1:47671` by default, serves built Vite assets
+when available, and exposes only read-only `/api/*` and scheduler SSE routes.
+Use `--allow-network` only if you intentionally want to expose task metadata,
+cwd paths, reports, scheduler logs, and session IDs beyond loopback.
 
 Then:
 

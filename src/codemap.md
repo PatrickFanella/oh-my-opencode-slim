@@ -10,7 +10,9 @@
   scheduled-task control-center launcher.
 - `control-center/` provides the renderer-neutral scheduled-task dashboard
   backend plus an OpenTUI frontend for task definitions, run history,
-  scheduler health, and reports.
+  scheduler health, and reports. `control-center/web-api.ts` exposes the same
+  data through read-only HTTP/SSE for the Vite web app under
+  `apps/control-center-web/`.
 
 ## Design
 
@@ -19,8 +21,9 @@
 - Hook composition is centralized in `src/index.ts`: lifecycle event handlers and tool transform handlers fan out to specialized hooks, then some hooks post-process system messages in-place for provider compatibility.
 - Supplemental tools bundle AST-grep search/replace, council orchestration, and web fetching behind the OpenCode `tool` interface and are mounted in `index.ts` alongside hooks and MCP helpers.
 - The control-center module keeps task monitoring out of the OpenCode sidebar
-  plugin: domain/adapters/services are reusable by a future web UI, while
-  `tui-app.ts` owns only terminal rendering and key handling.
+  plugin: domain/adapters/services are reused by the OpenTUI and React web
+  renderers, while `tui-app.ts` owns terminal rendering and the Vite app owns
+  browser rendering.
 
 ## Flow
 
@@ -40,7 +43,8 @@
   updates config via `cli/config-io.ts` and `cli/paths.ts`, writes built-in MCP
   definitions to host config, disables default agents, and writes lite config.
   `cli/control-center.ts` composes local control-center services and either
-  launches OpenTUI or prints text/JSON snapshots.
+  launches OpenTUI or prints text/JSON snapshots. `cli/control-center-web.ts`
+  serves the local read-only API and built Vite assets for browser monitoring.
 
 ## Integration
 

@@ -39,6 +39,7 @@ bun run preview
 bun run update
 bun run repair
 bun run control-center
+bun run control-center:web
 ```
 
 `setup` is the recommended full bootstrap path. Advanced bootstrap flags are
@@ -83,6 +84,14 @@ dashboard for scheduled tasks, recent runs, scheduler health, and task reports.
 For scripts or support captures, `bun run control-center -- --no-tui` prints the
 same snapshot as plain text and `bun run control-center -- --json` prints the
 backend snapshot as JSON.
+
+Use `bun run control-center:web` to serve the same read-only dashboard through a
+local Vite/React/Tailwind web UI on `127.0.0.1`. During development, run
+`bun run control-center:web:api` in one terminal and
+`bun run control-center:web:dev` in another.
+Binding the web server to a non-loopback host requires `--allow-network` because
+the read-only snapshot can include task prompts, cwd paths, report content,
+scheduler logs, and session IDs.
 
 The installer also registers the companion TUI plugin in OpenCode's
 `tui.json`, which renders a full-board sidebar: core agents, custom SUBCULT
