@@ -38,6 +38,7 @@ bun run setup
 bun run preview
 bun run update
 bun run repair
+bun run control-center
 ```
 
 `setup` is the recommended full bootstrap path. Advanced bootstrap flags still
@@ -154,6 +155,19 @@ Scheduled task templates are offered but not enabled. Bootstrap writes them to
 `~/.config/opencode/task-templates/`; review one, copy it to
 `~/.config/opencode/tasks/`, and change `enabled: false` to `enabled: true` when
 you want it to run.
+
+The control-center command gives scheduled work a local dashboard:
+
+```bash
+bun run control-center
+bun run control-center -- --no-tui
+bun run control-center -- --json
+```
+
+It reads `~/.config/opencode/tasks/*.md`, `~/.config/opencode/.tasks.db`,
+`~/.config/opencode/task-reports/*.md`, `bunx opencode-tasks --status`, and
+available `systemctl`/`journalctl` user-unit status without mutating task files
+from the monitor view.
 
 Then:
 

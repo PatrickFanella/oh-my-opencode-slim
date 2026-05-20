@@ -1,4 +1,33 @@
-# TUI Control Center Plan
+# TUI Control Center
+
+Status: implemented as a read-only scheduled-task control center with an
+OpenTUI terminal dashboard, text/JSON snapshot modes, and reusable backend
+services. The mutating task-creation/editing and future web renderer paths are
+prepared at the domain/service boundary but are not exposed from the monitor UI.
+
+Run it from a cloned checkout:
+
+```bash
+bun run control-center
+```
+
+Or use the installed CLI:
+
+```bash
+bunx oh-my-opencode-slim control-center
+```
+
+Useful non-interactive modes:
+
+```bash
+bun run control-center -- --no-tui
+bun run control-center -- --json
+bun run control-center -- --config-dir=/path/to/opencode --no-tui
+```
+
+The dashboard is intentionally read-only. It reads scheduled-task definitions,
+recent run history, scheduler status, scheduler logs, and task reports, then
+shows what is running, what failed, and where the output lives.
 
 ## Goal
 
@@ -54,6 +83,18 @@ src/
 The existing `src/tui.ts` sidebar entrypoint can remain separate until the
 control center is ready to integrate.
 
+Current implementation:
+
+| Path | Responsibility |
+|------|----------------|
+| `src/control-center/types.ts` | Renderer-neutral domain/service contracts. |
+| `src/control-center/domain.ts` | Frontmatter parsing, cron validation, next-run derivation, task draft rendering, run-status normalization, summaries. |
+| `src/control-center/adapters.ts` | Filesystem task/report readers, tolerant read-only SQLite run reader, scheduler health/log command adapters. |
+| `src/control-center/services.ts` | Local task/health/stream services and snapshot composition. |
+| `src/control-center/tui-render.ts` | Pure text layout for task list, detail panel, health, and stream tabs. |
+| `src/control-center/tui-app.ts` | OpenTUI renderer lifecycle, keybindings, refresh loop, and dashboard state. |
+| `src/cli/control-center.ts` | CLI parser and `control-center` command runner. |
+
 ## Shared backend boundary
 
 The shared backend should expose stable TypeScript interfaces that both the TUI
@@ -65,8 +106,8 @@ export interface TaskService {
   getTask(taskName: string): Promise<TaskDetail>;
   listRuns(taskName: string, limit?: number): Promise<TaskRun[]>;
   validateRecurringTask(input: RecurringTaskDraft): ValidationResult;
-  createRecurringTask(input: RecurringTaskDraft): Promise<void>;
-  updateRecurringTask(input: RecurringTaskUpdate): Promise<void>;
+  createRecurringTask(input: RecurringTaskDraft): Promise<TaskDefinition>;
+  updateRecurringTask(input: RecurringTaskUpdate): Promise<TaskDefinition>;
 }
 
 export interface StreamService {
@@ -162,11 +203,12 @@ Suggested keybindings:
 - `/`: filter tasks/logs
 - `r`: refresh snapshots
 - `f`: follow/unfollow live stream
-- `Enter`: open selected run/session detail
-- `o`: open `opencode -s <session-id>` externally or in a managed pane
-- `n`: future create task flow
-- `e`: future edit recurring task flow
-- `d`: future disable task flow with confirmation
+- `o`: show the `opencode -s <session-id>` command for the latest run
+- `q`: quit
+
+The current monitor does not expose `n`, `e`, or `d`. Mutations remain behind the
+service layer so future UI flows can require explicit validation, preview, and
+confirmation before writing task files.
 
 ## Stream strategy
 
@@ -209,40 +251,41 @@ Transport can be added later with a thin wrapper:
 
 ### Phase 1: Read-only backend
 
-- Add typed domain models.
-- Add `.tasks.db` read adapter.
-- Add recurring task file parser/validator.
-- Add scheduler health adapter using `systemctl`/`journalctl`.
-- Add tests for parsing, status derivation, and validation.
+- [x] Add typed domain models.
+- [x] Add `.tasks.db` read adapter.
+- [x] Add recurring task file parser/validator.
+- [x] Add scheduler health adapter using `systemctl`/`journalctl`.
+- [x] Add tests for parsing, status derivation, and validation.
 
 ### Phase 2: Read-only OpenTUI dashboard
 
-- Task list with enabled/status badges.
-- Selected task detail panel.
-- Recent run list.
-- Scheduler health summary.
-- Report viewer for matching report files.
+- [x] Task list with enabled/status badges.
+- [x] Selected task detail panel.
+- [x] Recent run list.
+- [x] Scheduler health summary.
+- [x] Report viewer for matching report files.
 
 ### Phase 3: Live streams
 
-- Stream scheduler logs.
-- Poll DB for new runs/status transitions.
-- Tail selected report file.
-- Provide `opencode -s <session-id>` launcher for task sessions.
+- [x] Stream recent scheduler logs into the dashboard event buffer.
+- [x] Poll DB for new runs/status transitions on dashboard refresh.
+- [x] Show selected report file tail in the report tab.
+- [x] Provide `opencode -s <session-id>` command discovery for task sessions.
 
 ### Phase 4: Task creation
 
-- Add recurring task creation wizard.
-- Validate frontmatter before writing.
-- Preview resulting markdown file.
-- Require confirmation before write.
-- Keep permission rules explicit and avoid scheduled-task `ask` permissions.
+- [ ] Add recurring task creation wizard.
+- [x] Validate frontmatter before writing in the service layer.
+- [x] Render resulting markdown drafts in the domain layer.
+- [ ] Require interactive confirmation before write.
+- [x] Keep permission rules explicit and reject scheduled-task `ask` permissions.
 
 ### Phase 5: Web-ready backend
 
-- Wrap services behind HTTP/SSE/WebSocket.
-- Add a separate React web renderer.
-- Keep web components independent from OpenTUI components.
+- [ ] Wrap services behind HTTP/SSE/WebSocket.
+- [ ] Add a separate React web renderer.
+- [x] Keep web components independent from OpenTUI components by sharing only the
+  backend contracts and domain types.
 
 ## Risks and open questions
 
