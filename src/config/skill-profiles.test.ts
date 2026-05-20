@@ -12,13 +12,15 @@ import {
 describe('skill profiles', () => {
   test('default profiles include global skills and agent-specific skills', () => {
     const orchestratorSkills = getDefaultSkillProfileForAgent('orchestrator');
+    expect(orchestratorSkills).toContain('almaz');
     expect(orchestratorSkills).toContain('summarization');
     expect(orchestratorSkills).toContain('systematic-debugging');
     expect(orchestratorSkills).toContain('review-quality');
-    expect(orchestratorSkills).toContain('codemap');
+    expect(orchestratorSkills).toContain('cartography');
     expect(orchestratorSkills).toContain('customize-opencode');
     expect(orchestratorSkills).toContain('team-composition-patterns');
 
+    expect(getDefaultSkillProfileForAgent('designer')).toContain('nuc');
     expect(getDefaultSkillProfileForAgent('designer')).toContain(
       'agent-browser',
     );
@@ -66,19 +68,7 @@ describe('skill profiles', () => {
 
   test('unknown agents still receive global profile skills', () => {
     expect(resolveAgentSkills({}, 'custom-agent')).toEqual([
-      'summarization',
-      'systematic-debugging',
-      'github-pro',
-      'deep-research',
-      'review-quality',
-      'refactor',
-      'simplify',
-      'writing-plans',
-      'session-handoff',
-      'context-engineer',
-      'prompt-craft',
-      'review-doc-consistency',
-      'scheduled-tasks',
+      ...DEFAULT_GLOBAL_SKILLS,
     ]);
   });
 
@@ -120,5 +110,31 @@ describe('skill profiles', () => {
     );
 
     expect(missingSkills).toEqual([]);
+  });
+
+  test('agent-specific default profiles do not duplicate global skills', () => {
+    const globalSkills = new Set<string>(DEFAULT_GLOBAL_SKILLS);
+
+    for (const [agentName, skills] of Object.entries(
+      DEFAULT_AGENT_SKILL_PROFILES,
+    )) {
+      const duplicates = skills.filter((skill) => globalSkills.has(skill));
+
+      expect(duplicates, `${agentName} duplicates global skills`).toEqual([]);
+    }
+  });
+
+  test('default profiles do not contain duplicate skills within a section', () => {
+    expect(new Set(DEFAULT_GLOBAL_SKILLS).size).toBe(
+      DEFAULT_GLOBAL_SKILLS.length,
+    );
+
+    for (const [agentName, skills] of Object.entries(
+      DEFAULT_AGENT_SKILL_PROFILES,
+    )) {
+      expect(new Set(skills).size, `${agentName} has duplicate skills`).toBe(
+        skills.length,
+      );
+    }
   });
 });

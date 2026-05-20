@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -16,8 +17,13 @@ import {
   backupOpenCodeConfig,
   buildDcpConfig,
   buildQuotaToastConfig,
+  buildScheduledTasksPluginCacheManifest,
+  buildScheduledTaskTemplateFiles,
   ensureDesiredOpenCodeDirectory,
+  ensureScheduledTasksPluginCache,
   getOptionalTuiPluginSpecs,
+  getScheduledTasksPluginCacheDir,
+  installScheduledTaskTemplates,
   parseBootstrapArgs,
   resetOpenCodeConfigDirectory,
   tmuxHelperBlock,
@@ -54,6 +60,7 @@ describe('bootstrap CLI helpers', () => {
         '--skip-rtk-init',
         '--skip-scheduled-tasks-daemon',
         '--skip-scheduled-tasks-commands',
+        '--skip-scheduled-task-templates',
         '--skills=no',
         '--preset=opencode-go',
         '--reset',
@@ -76,6 +83,7 @@ describe('bootstrap CLI helpers', () => {
       skipRtkInit: true,
       skipScheduledTasksDaemon: true,
       skipScheduledTasksCommands: true,
+      skipScheduledTaskTemplates: true,
       withDcp: true,
       withQuota: true,
       withRtk: true,
@@ -84,6 +92,17 @@ describe('bootstrap CLI helpers', () => {
       rtkInstallCommand: 'true',
       scheduledTasksDaemonCommand: 'true',
       scheduledTasksCommandsCommand: 'true',
+    });
+  });
+
+  test('parseBootstrapArgs enables scheduled tasks by default', () => {
+    expect(parseBootstrapArgs([])).toEqual({
+      skills: 'yes',
+      withScheduledTasks: true,
+    });
+    expect(parseBootstrapArgs(['--no-scheduled-tasks'])).toEqual({
+      skills: 'yes',
+      withScheduledTasks: false,
     });
   });
 
@@ -96,6 +115,7 @@ describe('bootstrap CLI helpers', () => {
     ).toEqual({
       skills: 'yes',
       skipScheduledTasksCommands: true,
+      withScheduledTasks: true,
       scheduledTasksCommandsCommand: 'true',
     });
   });
@@ -277,6 +297,94 @@ describe('bootstrap CLI helpers', () => {
       readFileSync(join(configDir, 'package.json'), 'utf-8'),
     );
     expect(packageJson.dependencies['@opencode-ai/plugin']).toBe('1.15.3');
+  });
+
+  test('buildScheduledTasksPluginCacheManifest installs runtime peer dependency', () => {
+    const packageJson = JSON.parse(buildScheduledTasksPluginCacheManifest());
+
+    expect(packageJson.dependencies['opencode-tasks']).toBe('latest');
+    expect(packageJson.dependencies['@opencode-ai/plugin']).toBe('1.15.3');
+  });
+
+  test('buildScheduledTaskTemplateFiles creates disabled task templates', () => {
+    const templates = buildScheduledTaskTemplateFiles(
+      '/tmp/opencode-config',
+      '/home/tester',
+    );
+
+    expect(Object.keys(templates).sort()).toEqual([
+      'linux-server-daily-audit.md',
+      'linux-server-weekly-hygiene.md',
+      'scheduler-health-watch.md',
+    ]);
+    expect(templates['scheduler-health-watch.md']).toContain('enabled: false');
+    expect(templates['scheduler-health-watch.md']).toContain(
+      '/tmp/opencode-config/task-reports/scheduler-health-watch.md',
+    );
+  });
+
+  test('installScheduledTaskTemplates writes templates without overwriting', () => {
+    const configDir = join(tmpDir, 'opencode');
+    const templateDir = join(configDir, 'task-templates');
+    mkdirSync(templateDir, { recursive: true });
+    writeFileSync(join(templateDir, 'scheduler-health-watch.md'), 'custom');
+
+    const result = installScheduledTaskTemplates({ withScheduledTasks: true });
+
+    expect(result.ok).toBe(true);
+    expect(
+      readFileSync(join(templateDir, 'scheduler-health-watch.md'), 'utf-8'),
+    ).toBe('custom');
+    expect(existsSync(join(templateDir, 'linux-server-daily-audit.md'))).toBe(
+      true,
+    );
+    expect(
+      existsSync(join(templateDir, 'linux-server-weekly-hygiene.md')),
+    ).toBe(true);
+  });
+
+  test('ensureScheduledTasksPluginCache prepares OpenCode cache with required packages', async () => {
+    const fakeBin = join(tmpDir, 'bin');
+    const fakeBun = join(fakeBin, 'bun');
+    mkdirSync(fakeBin, { recursive: true });
+    writeFileSync(
+      fakeBun,
+      `#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p node_modules/opencode-tasks node_modules/@opencode-ai/plugin
+printf '{"name":"opencode-tasks"}\n' > node_modules/opencode-tasks/package.json
+printf '{"name":"@opencode-ai/plugin"}\n' > node_modules/@opencode-ai/plugin/package.json
+`,
+    );
+    chmodSync(fakeBun, 0o755);
+    process.env.XDG_CACHE_HOME = join(tmpDir, 'cache');
+    process.env.PATH = `${fakeBin}:${process.env.PATH ?? ''}`;
+
+    const result = await ensureScheduledTasksPluginCache({
+      withScheduledTasks: true,
+    });
+    const cacheDir = getScheduledTasksPluginCacheDir();
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cacheDir, 'package.json'), 'utf-8')).toBe(
+      buildScheduledTasksPluginCacheManifest(),
+    );
+    expect(
+      existsSync(
+        join(cacheDir, 'node_modules', 'opencode-tasks', 'package.json'),
+      ),
+    ).toBe(true);
+    expect(
+      existsSync(
+        join(
+          cacheDir,
+          'node_modules',
+          '@opencode-ai',
+          'plugin',
+          'package.json',
+        ),
+      ),
+    ).toBe(true);
   });
 
   test('tmuxHelperBlock defines omos with portable port selection', () => {

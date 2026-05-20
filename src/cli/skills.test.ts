@@ -24,7 +24,9 @@ describe('skills permissions', () => {
     expect(oraclePerms['security-threat-model']).toBe('allow');
 
     const orchestratorPerms = getSkillPermissionsForAgent('orchestrator');
+    expect(orchestratorPerms.almaz).toBe('allow');
     expect(orchestratorPerms.clonedeps).toBe('allow');
+    expect(orchestratorPerms.nuc).toBe('allow');
     expect(orchestratorPerms.summarization).toBe('allow');
   });
 

@@ -52,7 +52,7 @@
   ],
   "scripts": {
     "build:plugin": "bun build src/index.ts src/tui.ts --outdir dist --target node --format esm --external @ast-grep/napi --external @opencode-ai/plugin --external @opencode-ai/sdk --external @opentui/core --external @opentui/solid --external jsdom --external zod",
-    "build:cli": "bun build src/cli/index.ts --outdir dist/cli --target node --format esm --external @ast-grep/napi --external @opencode-ai/plugin --external @opencode-ai/sdk --external jsdom --external zod",
+    "build:cli": "bun build src/cli/index.ts --outdir dist/cli --target node --format esm --external @ast-grep/napi --external @opencode-ai/plugin --external @opencode-ai/sdk --external @opentui/core --external jsdom --external zod",
     "copy:divoom-assets": "bun run scripts/copy-divoom-assets.ts",
     "build": "bun run build:plugin && bun run build:cli && bun run copy:divoom-assets && tsc --emitDeclarationOnly && bun run generate-schema",
     "prepare": "bun run build",
@@ -63,6 +63,11 @@
     "verify:release": "bun run scripts/verify-release-artifact.ts",
     "verify:host-smoke": "bun run scripts/verify-opencode-host-smoke.ts",
     "bootstrap": "bun run src/cli/index.ts bootstrap",
+    "setup": "bun run src/cli/index.ts setup",
+    "preview": "bun run src/cli/index.ts preview",
+    "update": "bun run src/cli/index.ts update",
+    "repair": "bun run src/cli/index.ts repair",
+    "control-center": "bun run src/cli/index.ts control-center",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "lint": "biome lint .",
@@ -86,6 +91,7 @@
     "turndown": "^7.2.4"
   },
   "optionalDependencies": {
+    "@opentui/core": "^0.1.97",
     "@opentui/solid": "^0.1.97"
   },
   "devDependencies": {

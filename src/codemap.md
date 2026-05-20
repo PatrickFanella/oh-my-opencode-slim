@@ -5,7 +5,12 @@
 - `src/index.ts` delivers the plugin assembly layer: it loads configuration, resolves agent definitions, precomputes runtime model fallback chains, wires multiplexer/session orchestration, registers tools/hooks, materializes the curated managed skills path, and returns the OpenCode plugin registration object.
 - `config/`, `agents/`, `tools/`, `multiplexer/`, `hooks/`, and `utils/` contain the reusable building blocks (loader/schema/constants, agent factories/permission helpers, tool factories, session mirroring managers, hook implementations, and runtime utilities) that power that entry point.
 - `hooks/task-session-manager` is now part of the core plugin flow to support resumable child task sessions with concise aliases and reminder injection for orchestrator calls.
-- `cli/` remains the installer surface (argument parsing, interactive prompts, config edits, skill/provider installation).
+- `cli/` remains the installer surface (argument parsing, interactive prompts,
+  config edits, skill/provider installation) and exposes the local
+  scheduled-task control-center launcher.
+- `control-center/` provides the renderer-neutral scheduled-task dashboard
+  backend plus an OpenTUI frontend for task definitions, run history,
+  scheduler health, and reports.
 
 ## Design
 
@@ -13,6 +18,9 @@
 - Session orchestration combines `SubagentDepthTracker`, `MultiplexerSessionManager`, `CouncilManager`, and `ForegroundFallbackManager`; these coordinate subagent depth limits, pane lifecycle, council session creation, and foreground model failover.
 - Hook composition is centralized in `src/index.ts`: lifecycle event handlers and tool transform handlers fan out to specialized hooks, then some hooks post-process system messages in-place for provider compatibility.
 - Supplemental tools bundle AST-grep search/replace, council orchestration, and web fetching behind the OpenCode `tool` interface and are mounted in `index.ts` alongside hooks and MCP helpers.
+- The control-center module keeps task monitoring out of the OpenCode sidebar
+  plugin: domain/adapters/services are reusable by a future web UI, while
+  `tui-app.ts` owns only terminal rendering and key handling.
 
 ## Flow
 
@@ -28,7 +36,11 @@
   - applies task/session prompt enrichment from `task-session-manager`,
   - collapses all system entries into one message via `collapseSystemInPlace` for providers that reject multi-message system arrays.
 - `tool.execute.before/after` (`task`): records pending task calls, resolves short aliases to canonical IDs, parses outputs for new task IDs, and updates/removes remembered sessions.
-- CLI flow: `cli/install.ts` parses flags, checks OpenCode installation, updates config via `cli/config-io.ts` and `cli/paths.ts`, writes built-in MCP definitions to host config, disables default agents, and writes lite config.
+- CLI flow: `cli/install.ts` parses flags, checks OpenCode installation,
+  updates config via `cli/config-io.ts` and `cli/paths.ts`, writes built-in MCP
+  definitions to host config, disables default agents, and writes lite config.
+  `cli/control-center.ts` composes local control-center services and either
+  launches OpenTUI or prints text/JSON snapshots.
 
 ## Integration
 

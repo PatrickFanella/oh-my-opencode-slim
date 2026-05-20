@@ -20,6 +20,7 @@ oh-my-opencode-slim is an agent orchestration plugin for OpenCode. It includes a
 The main idea is simple: instead of forcing one model to do everything, the plugin routes each part of the job to the agent best suited for it, balancing **quality, speed and cost**.
 
 To explore the agents themselves, see **[Meet the Pantheon](#meet-the-pantheon)**. For the full feature set, see **[Features & Workflows](#features-and-workflows)** below.
+For planned improvements, see **[Future Plans](docs/future-plans.md)**.
 
 ### Quick Start
 
@@ -28,6 +29,23 @@ Copy and paste this prompt to your LLM agent (Claude Code, AmpCode, Cursor, etc.
 
 ```
 Install and configure oh-my-opencode-slim: https://raw.githubusercontent.com/patrickfanella/oh-my-opencode-slim/refs/heads/master/README.md
+```
+
+For a cloned checkout, the short commands are:
+
+```bash
+bun run setup
+bun run preview
+bun run update
+bun run repair
+bun run control-center
+```
+
+`setup` is the recommended full bootstrap path. Advanced bootstrap flags are
+still available when you need them:
+
+```bash
+bun run src/cli/index.ts bootstrap --with-dcp --with-quota --with-rtk
 ```
 
 
@@ -39,13 +57,14 @@ bunx oh-my-opencode-slim@latest install
 
 For a full clone-based bootstrap that backs up the entire OpenCode config
 directory, resets `~/.config/opencode`, installs or updates OpenCode, builds
-this repo, configures OMOC, optionally adds DCP/quota, and installs the
-tmux-aware `opencode`/`oc`/`occ` helpers:
+this repo, configures OMOC, installs scheduled-task support by default,
+optionally adds DCP/quota, and installs the tmux-aware `opencode`/`oc`/`occ`
+helpers:
 
 ```bash
 git clone https://github.com/patrickfanella/oh-my-opencode-slim.git
 cd oh-my-opencode-slim
-bun run bootstrap --yes --with-dcp --with-quota --with-rtk --with-scheduled-tasks
+bun run setup
 ```
 
 Bootstrap also adds quota to `tui.json(c)` when `--with-quota` is selected so
@@ -55,6 +74,15 @@ the quota panels load in the TUI. It also applies trusted host defaults in
 reserved: 10000 }`, and removes the legacy `~/.agents/skills` path. With
 `--with-dcp` or `--with-quota`, it also writes the matching
 `dcp.jsonc` and `opencode-quota/quota-toast.json` sidecar defaults.
+Bootstrap installs `opencode-tasks` daemon/commands by default and writes
+disabled recurring-task examples under `~/.config/opencode/task-templates/`.
+Use `--no-scheduled-tasks` to skip that integration.
+
+Use `bun run control-center` after scheduler setup to open a read-only OpenTUI
+dashboard for scheduled tasks, recent runs, scheduler health, and task reports.
+For scripts or support captures, `bun run control-center -- --no-tui` prints the
+same snapshot as plain text and `bun run control-center -- --json` prints the
+backend snapshot as JSON.
 
 The installer also registers the companion TUI plugin in OpenCode's
 `tui.json`, which renders a full-board sidebar: core agents, custom SUBCULT

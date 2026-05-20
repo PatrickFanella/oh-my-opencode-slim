@@ -49,9 +49,10 @@ const HELPER_START = '# >>> oh-my-opencode-slim tmux helper >>>';
 const HELPER_END = '# <<< oh-my-opencode-slim tmux helper <<<';
 const DCP_SCHEMA_URL =
   'https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json';
+const OPENCODE_PLUGIN_PACKAGE_VERSION = '1.15.3';
 const OPENCODE_PLUGIN_TYPES_PACKAGE = {
   dependencies: {
-    '@opencode-ai/plugin': '1.15.3',
+    '@opencode-ai/plugin': OPENCODE_PLUGIN_PACKAGE_VERSION,
   },
 } as const;
 const OPENCODE_CONFIG_GITIGNORE = `node_modules
@@ -145,6 +146,7 @@ export interface BootstrapArgs {
   skipRtkInit?: boolean;
   skipScheduledTasksDaemon?: boolean;
   skipScheduledTasksCommands?: boolean;
+  skipScheduledTaskTemplates?: boolean;
   withDcp?: boolean;
   withQuota?: boolean;
   withRtk?: boolean;
@@ -155,13 +157,13 @@ export interface BootstrapArgs {
   scheduledTasksCommandsCommand?: string;
 }
 
-interface StepResult {
+export interface StepResult {
   ok: boolean;
   message: string;
 }
 
 export function parseBootstrapArgs(args: string[]): BootstrapArgs {
-  const result: BootstrapArgs = { skills: 'yes' };
+  const result: BootstrapArgs = { skills: 'yes', withScheduledTasks: true };
 
   for (const arg of args) {
     if (arg === '--dry-run') result.dryRun = true;
@@ -178,6 +180,8 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
       arg === '--skip-scheduled-tasks-skill'
     ) {
       result.skipScheduledTasksCommands = true;
+    } else if (arg === '--skip-scheduled-task-templates') {
+      result.skipScheduledTaskTemplates = true;
     } else if (arg === '--with-dcp') result.withDcp = true;
     else if (arg === '--with-quota') result.withQuota = true;
     else if (arg === '--with-rtk') result.withRtk = true;
@@ -522,6 +526,223 @@ async function installScheduledTasksDaemon(
   };
 }
 
+const SCHEDULED_TASK_TEMPLATE_DIR = 'task-templates';
+
+const DANGEROUS_SCHEDULED_TASK_BASH_DENIES = [
+  'sudo *',
+  'su *',
+  'rm -rf *',
+  'rm -fr *',
+  'mkfs *',
+  'mount *',
+  'umount *',
+  'reboot *',
+  'shutdown *',
+  'poweroff *',
+  'systemctl restart *',
+  'systemctl stop *',
+  'systemctl disable *',
+  'systemctl mask *',
+  'systemctl --user restart *',
+  'systemctl --user stop *',
+  'systemctl --user disable *',
+  'apt *',
+  'apt-get *',
+  'dnf *',
+  'pacman *',
+] as const;
+
+function yamlString(value: string): string {
+  return JSON.stringify(value);
+}
+
+function renderScheduledTaskPermissions(
+  externalDirectoryGlobs: readonly string[],
+): string {
+  const bashRules = [
+    '    "*": "allow"',
+    ...DANGEROUS_SCHEDULED_TASK_BASH_DENIES.map(
+      (pattern) => `    ${yamlString(pattern)}: "deny"`,
+    ),
+  ];
+  const externalRules = externalDirectoryGlobs.map(
+    (pattern) => `    ${yamlString(pattern)}: "allow"`,
+  );
+
+  return `permission:
+  bash:
+${bashRules.join('\n')}
+  read: "allow"
+  edit: "allow"
+  external_directory:
+${externalRules.join('\n')}`;
+}
+
+function renderScheduledTaskTemplate(input: {
+  description: string;
+  schedule: string;
+  cwd: string;
+  sessionName: string;
+  externalDirectoryGlobs: readonly string[];
+  body: string;
+}): string {
+  return `---
+description: ${yamlString(input.description)}
+schedule: ${yamlString(input.schedule)}
+cwd: ${yamlString(input.cwd)}
+session_name: ${yamlString(input.sessionName)}
+${renderScheduledTaskPermissions(input.externalDirectoryGlobs)}
+enabled: false
+---
+
+${input.body.trim()}
+`;
+}
+
+export function buildScheduledTaskTemplateFiles(
+  configDir = getConfigDir(),
+  homeDir = homedir(),
+): Record<string, string> {
+  const reportDir = join(configDir, 'task-reports');
+  const configGlob = `${configDir}/**`;
+  const schedulerReport = join(reportDir, 'scheduler-health-watch.md');
+  const dailyReport = join(reportDir, 'linux-server-daily-audit.md');
+  const weeklyReport = join(reportDir, 'linux-server-weekly-hygiene.md');
+
+  return {
+    'scheduler-health-watch.md': renderScheduledTaskTemplate({
+      description: 'Watch OpenCode scheduled-task scheduler health',
+      schedule: '22 * * * *',
+      cwd: homeDir,
+      sessionName: 'scheduler-health-watch',
+      externalDirectoryGlobs: [configGlob, '/run/**', '/tmp/**'],
+      body: `Watch the OpenCode scheduled-task scheduler itself.
+
+Check:
+- scheduler status with \`bunx opencode-tasks --status\` when available;
+- recurring task files in the OpenCode config directory parse and remain in the expected enabled/disabled state;
+- the task database exists and is not rapidly growing;
+- recent task runs show no repeated failures or empty loops;
+- platform scheduler health when readable without privileges (systemd user units on Linux, launchd user agent on macOS).
+
+Safety:
+- Do not delete tasks, uninstall the scheduler, restart services, or change recurring task schedules.
+- If a recurring task file is malformed, fix only the minimal YAML/frontmatter issue.
+
+Write/update \`${schedulerReport}\` with status, failures, and any minimal fix applied.`,
+    }),
+    'linux-server-daily-audit.md': renderScheduledTaskTemplate({
+      description: 'Daily safe local Linux server maintenance audit',
+      schedule: '17 6 * * *',
+      cwd: homeDir,
+      sessionName: 'linux-server-daily-audit',
+      externalDirectoryGlobs: [
+        configGlob,
+        '/proc/**',
+        '/sys/**',
+        '/run/**',
+        '/var/log/**',
+        '/etc/**',
+        '/tmp/**',
+      ],
+      body: `Run a daily safe maintenance audit for this local Linux server.
+
+Check:
+- disk usage and inode pressure across mounted filesystems;
+- memory/swap pressure and top resource consumers by command name;
+- failed systemd units/timers and failed user units/timers;
+- OpenCode scheduled-task scheduler status and recent scheduler journal entries;
+- pending OS/security updates using non-mutating commands only;
+- large user-level cache/log directories under the current user's home directory;
+- recent auth, OOM, disk, network, and service errors from journals/logs readable without sudo.
+
+Safety:
+- Do not install, upgrade, remove, restart, stop, reboot, delete, or modify system services.
+- Do not inspect secrets or \`.env\` files.
+- Only write the report file below unless an obvious low-risk recurring-task frontmatter fix is needed.
+
+Write/update \`${dailyReport}\` with concise findings, risk level, and exact human-approved commands if action is needed.`,
+    }),
+    'linux-server-weekly-hygiene.md': renderScheduledTaskTemplate({
+      description: 'Weekly deeper local Linux server hygiene review',
+      schedule: '41 8 * * 0',
+      cwd: homeDir,
+      sessionName: 'linux-server-weekly-hygiene',
+      externalDirectoryGlobs: [
+        configGlob,
+        '/proc/**',
+        '/sys/**',
+        '/run/**',
+        '/var/log/**',
+        '/etc/**',
+        '/tmp/**',
+      ],
+      body: `Run a weekly deeper hygiene review for this local Linux server.
+
+Review:
+- recurring task health and stale reports;
+- failed or disabled important timers/services visible without sudo;
+- disk growth trends under the current user's home directory and cache/log hotspots;
+- readable config drift or suspicious world-writable files under the current user's config directory;
+- backup indicators if tools/configs are present, without creating or deleting backups;
+- open/listening services using safe read-only commands;
+- package/security update availability using non-mutating commands only.
+
+Safety:
+- No sudo, package mutation, service mutation, reboot, destructive deletion, firewall changes, secret inspection, or credential changes.
+- Prefer report-only. If a tiny recurring-task formatting problem blocks scheduler parsing, fix that one issue and document it.
+
+Write/update \`${weeklyReport}\` with findings, risk level, recommended human actions, and exact commands where useful.
+
+Anti-stale requirement: overwrite the report with fresh values every run. Include a fresh ISO timestamp for the current run, and explicitly state if a prior failure is historical but the latest run completed.`,
+    }),
+  };
+}
+
+export function installScheduledTaskTemplates(
+  args: Pick<
+    BootstrapArgs,
+    'dryRun' | 'skipScheduledTaskTemplates' | 'withScheduledTasks'
+  >,
+): StepResult {
+  if (!args.withScheduledTasks) {
+    return { ok: true, message: 'Scheduled task templates not selected' };
+  }
+  if (args.skipScheduledTaskTemplates) {
+    return { ok: true, message: 'Skipped scheduled task templates' };
+  }
+
+  const templateDir = join(getConfigDir(), SCHEDULED_TASK_TEMPLATE_DIR);
+  const templates = buildScheduledTaskTemplateFiles();
+  const templateNames = Object.keys(templates);
+
+  if (args.dryRun) {
+    return {
+      ok: true,
+      message: `Would write ${templateNames.length} templates to ${templateDir}`,
+    };
+  }
+
+  mkdirSync(templateDir, { recursive: true });
+  let written = 0;
+  let preserved = 0;
+
+  for (const [filename, content] of Object.entries(templates)) {
+    const outputPath = join(templateDir, filename);
+    if (existsSync(outputPath)) {
+      preserved += 1;
+      continue;
+    }
+    writeFileSync(outputPath, content);
+    written += 1;
+  }
+
+  return {
+    ok: true,
+    message: `Installed ${written} scheduled task templates to ${templateDir}; preserved ${preserved}`,
+  };
+}
+
 function getPluginSpec(entry: unknown): string | undefined {
   if (typeof entry === 'string') return entry;
   if (Array.isArray(entry) && typeof entry[0] === 'string') return entry[0];
@@ -563,6 +784,114 @@ function getOptionalOpenCodePluginSpecs(args: BootstrapArgs): string[] {
     pluginSpecs.push(OPTIONAL_PLUGINS.scheduledTasks);
   }
   return pluginSpecs;
+}
+
+function getOpenCodePackageCacheDir(packageName: string): string {
+  const cacheDir =
+    process.env.XDG_CACHE_HOME?.trim() || join(homedir(), '.cache');
+  return join(cacheDir, 'opencode', 'packages', `${packageName}@latest`);
+}
+
+export function getScheduledTasksPluginCacheDir(): string {
+  return getOpenCodePackageCacheDir(OPTIONAL_PLUGINS.scheduledTasks);
+}
+
+export function buildScheduledTasksPluginCacheManifest(): string {
+  return `${JSON.stringify(
+    {
+      dependencies: {
+        [OPTIONAL_PLUGINS.scheduledTasks]: 'latest',
+        '@opencode-ai/plugin': OPENCODE_PLUGIN_PACKAGE_VERSION,
+      },
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+function verifyScheduledTasksPluginCache(cacheDir: string): StepResult | null {
+  const expectedPackageJsons = [
+    join(
+      cacheDir,
+      'node_modules',
+      OPTIONAL_PLUGINS.scheduledTasks,
+      'package.json',
+    ),
+    join(cacheDir, 'node_modules', '@opencode-ai', 'plugin', 'package.json'),
+  ];
+
+  const missing = expectedPackageJsons.filter((path) => !existsSync(path));
+  if (missing.length === 0) return null;
+
+  return {
+    ok: false,
+    message: `Scheduled tasks plugin cache is missing: ${missing.join(', ')}`,
+  };
+}
+
+export async function ensureScheduledTasksPluginCache(
+  args: Pick<BootstrapArgs, 'dryRun' | 'withScheduledTasks'>,
+): Promise<StepResult> {
+  if (!args.withScheduledTasks) {
+    return { ok: true, message: 'Scheduled tasks plugin cache not selected' };
+  }
+
+  const cacheDir = getScheduledTasksPluginCacheDir();
+  if (args.dryRun) {
+    return {
+      ok: true,
+      message: `Would prepare opencode-tasks plugin cache in ${cacheDir}`,
+    };
+  }
+
+  try {
+    mkdirSync(cacheDir, { recursive: true });
+    writeFileSync(
+      join(cacheDir, 'package.json'),
+      buildScheduledTasksPluginCacheManifest(),
+    );
+  } catch (err) {
+    return {
+      ok: false,
+      message: `Failed to write scheduled tasks plugin cache manifest: ${err}`,
+    };
+  }
+
+  try {
+    const proc = crossSpawn(['bun', 'install', '--ignore-scripts'], {
+      cwd: cacheDir,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    });
+    await proc.exited;
+
+    if (proc.exitCode !== 0) {
+      const [stdout, stderr] = await Promise.all([
+        proc.stdout(),
+        proc.stderr(),
+      ]);
+      const output = stderr.trim() || stdout.trim();
+      return {
+        ok: false,
+        message:
+          output ||
+          `bun install --ignore-scripts exited with code ${proc.exitCode}`,
+      };
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      message: `Failed to prepare scheduled tasks plugin cache: ${err}`,
+    };
+  }
+
+  const verificationError = verifyScheduledTasksPluginCache(cacheDir);
+  if (verificationError) return verificationError;
+
+  return {
+    ok: true,
+    message: 'Prepared opencode-tasks plugin cache with @opencode-ai/plugin',
+  };
 }
 
 export function getOptionalTuiPluginSpecs(args: BootstrapArgs): string[] {
@@ -617,6 +946,13 @@ async function installOptionalPlugins(
     parsedTuiConfig = tuiConfig;
   }
 
+  const scheduledTasksCacheResult = args.withScheduledTasks
+    ? await ensureScheduledTasksPluginCache(args)
+    : null;
+  if (scheduledTasksCacheResult && !scheduledTasksCacheResult.ok) {
+    return scheduledTasksCacheResult;
+  }
+
   if (pluginSpecs.length > 0) {
     writeConfig(configPath, addPluginsToConfig(config ?? {}, pluginSpecs));
   }
@@ -630,6 +966,9 @@ async function installOptionalPlugins(
   const messages = [`OpenCode: ${pluginSpecs.join(', ')}`];
   if (tuiPluginSpecs.length > 0) {
     messages.push(`TUI: ${tuiPluginSpecs.join(', ')}`);
+  }
+  if (scheduledTasksCacheResult) {
+    messages.push(scheduledTasksCacheResult.message);
   }
 
   return {
@@ -901,7 +1240,7 @@ async function step(
 export async function bootstrap(args: BootstrapArgs): Promise<number> {
   printHeader();
 
-  const total = 12;
+  const total = 13;
   let index = 1;
 
   if (
@@ -955,6 +1294,12 @@ export async function bootstrap(args: BootstrapArgs): Promise<number> {
   if (
     !(await step(index++, total, 'Install scheduled tasks daemon', () =>
       installScheduledTasksDaemon(args),
+    ))
+  )
+    return 1;
+  if (
+    !(await step(index++, total, 'Install scheduled task templates', async () =>
+      installScheduledTaskTemplates(args),
     ))
   )
     return 1;
