@@ -3,7 +3,12 @@
 Observed target: Gitea `1.26.1` at `https://git.subcult.tv/`.
 
 Use this as an implementation map. Re-check swagger on the live instance before
-large automation runs.
+large automation runs. On this instance, `tea api /swagger.v1.json` can 404
+because `tea api` prefixes `/api/v1`; use direct fetch instead:
+
+```bash
+curl -sS -A opencode-audit https://git.subcult.tv/swagger.v1.json
+```
 
 ## Core repo settings
 
@@ -26,8 +31,60 @@ Useful endpoints:
 - `GET /api/v1/repos/{owner}/{repo}`
 - `PATCH /api/v1/repos/{owner}/{repo}`
 - `GET /api/v1/repos/{owner}/{repo}/branches`
+- `GET /api/v1/repos/{owner}/{repo}/branches/{branch}`
+- `POST /api/v1/repos/{owner}/{repo}/branches`
 - `GET /api/v1/repos/{owner}/{repo}/branch_protections`
 - `POST /api/v1/repos/{owner}/{repo}/branch_protections`
+
+Branch lists are paginated and can be truncated. Verify default branches with the
+direct branch endpoint before declaring a repo blocked.
+
+### Soft branch protection payload
+
+Use `rule_name`, not deprecated `branch_name`. This payload blocks force-pushes
+while preserving normal direct pushes for users with write access:
+
+```json
+{
+  "rule_name": "main",
+  "enable_push": true,
+  "enable_push_whitelist": false,
+  "enable_force_push": false,
+  "required_approvals": 0,
+  "enable_status_check": false,
+  "block_on_rejected_reviews": false,
+  "block_on_official_review_requests": false,
+  "block_on_outdated_branch": false,
+  "dismiss_stale_approvals": false,
+  "require_signed_commits": false,
+  "block_admin_merge_override": false
+}
+```
+
+Do not enable required approvals or status checks broadly. Add them only after a
+repo-specific workflow has passed and maintainers can still push/merge.
+
+Before creating a soft rule, inspect existing rules. Treat a stricter exact rule
+or applicable wildcard rule as compliant. Never replace or patch away existing
+required reviews, required checks, whitelists, admin override settings, or push
+restrictions without repo-specific approval.
+
+### Non-destructive default-branch migration
+
+For `master` → `main` after approval:
+
+```json
+POST /repos/{owner}/{repo}/branches
+{"new_branch_name":"main","old_ref_name":"master"}
+
+PATCH /repos/{owner}/{repo}
+{"default_branch":"main"}
+```
+
+Keep `master` intact and verify both refs point at the same commit. Do not delete
+or lock the old branch in the same batch.
+If `main` already exists and differs from `master`, stop for repo-specific
+approval instead of changing the default branch.
 
 ## Labels
 
@@ -78,6 +135,16 @@ Do not auto-merge PRs unless explicitly requested for a repo.
 
 Wiki may be empty even when `has_wiki=true`.
 
+Wiki create/edit may appear to fail if the CLI response is empty or non-JSON.
+When the API call is ambiguous, verify with:
+
+```text
+GET /repos/{owner}/{repo}/wiki/page/Repository%20Maintenance
+```
+
+The first real run saw this on one repo: create returned a parse error, but the
+page existed and had the expected content.
+
 ## Releases
 
 - `GET /repos/{owner}/{repo}/releases`
@@ -123,6 +190,9 @@ Package endpoints are owner-scoped rather than repo-scoped:
 - `/packages/{owner}/...`
 
 Use package cleanup/publishing automation only with explicit package policy.
+Enabling packages can expose generated package-index repos such as
+`_cargo-index`. Re-run repository inventory after package/settings batches and
+catch up labels/issues/protection/wiki for late-discovered repos.
 
 ## Projects
 

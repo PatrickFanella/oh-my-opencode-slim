@@ -7,6 +7,7 @@
 - Visibility: `{{visibility}}`
 - Classification: `{{classification}}`
 - Snapshot path: `{{snapshot_path}}`
+- Mutation level: `{{mutation_level}}`
 
 ## Code freshness
 
@@ -25,6 +26,8 @@
 - Actions: `{{actions_enabled}}`
 - Packages: `{{packages_enabled}}`
 - Branch protection: `{{branch_protection_status}}`
+- Soft default-branch protection: `{{soft_default_branch_protection}}`
+- Existing protection preserved: `{{existing_protection_preserved}}`
 
 ## Metadata
 
@@ -51,15 +54,33 @@
 - Issues needing approval to close: `{{issues_approval_needed}}`
 - Project action: `{{project_action}}`
 
+## Safe metadata status
+
+- Standard labels: `{{standard_labels_status}}`
+- Roadmap issue: `{{roadmap_issue_status}}`
+
 ## Actions
 
 - Workflows found: `{{workflows_found}}`
 - Runner compatibility: `{{runner_compatibility}}`
 - Workflow changes: `{{workflow_changes}}`
 
+## Governance status
+
+- Repository Maintenance wiki page: `{{maintenance_wiki_status}}`
+- Default branch migration candidate: `{{default_branch_migration_candidate}}`
+- Main vs master status: `{{main_vs_master_status}}`
+- Default branch migration status: `{{default_branch_migration_status}}`
+- Actions enablement precheck: `{{actions_enablement_precheck}}`
+- Strict rules / required checks: `{{strict_rules_status}}`
+
 ## Changes applied
 
 - `{{change_1}}`
+
+## Guardrails observed
+
+- `{{guardrail_1}}`
 
 ## Blockers
 
