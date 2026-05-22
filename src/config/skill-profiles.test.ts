@@ -13,6 +13,11 @@ describe('skill profiles', () => {
   test('default profiles include global skills and agent-specific skills', () => {
     const orchestratorSkills = getDefaultSkillProfileForAgent('orchestrator');
     expect(orchestratorSkills).toContain('almaz');
+    expect(orchestratorSkills).toContain('gitea-repo-overhaul');
+    expect(orchestratorSkills).toContain('homelab');
+    expect(orchestratorSkills).toContain('nuc');
+    expect(orchestratorSkills).toContain('super-productivity-maintenance');
+    expect(orchestratorSkills).toContain('super-productivity-planning');
     expect(orchestratorSkills).toContain('summarization');
     expect(orchestratorSkills).toContain('systematic-debugging');
     expect(orchestratorSkills).toContain('review-quality');
@@ -20,10 +25,12 @@ describe('skill profiles', () => {
     expect(orchestratorSkills).toContain('customize-opencode');
     expect(orchestratorSkills).toContain('team-composition-patterns');
 
-    expect(getDefaultSkillProfileForAgent('designer')).toContain('nuc');
     expect(getDefaultSkillProfileForAgent('designer')).toContain(
       'agent-browser',
     );
+    expect(getDefaultSkillProfileForAgent('designer')).not.toContain('almaz');
+    expect(getDefaultSkillProfileForAgent('designer')).not.toContain('homelab');
+    expect(getDefaultSkillProfileForAgent('designer')).not.toContain('nuc');
     expect(getDefaultSkillProfileForAgent('designer')).toContain(
       'wcag-audit-patterns',
     );
@@ -33,6 +40,12 @@ describe('skill profiles', () => {
     expect(getDefaultSkillProfileForAgent('oracle')).toContain(
       'security-threat-model',
     );
+    expect(getDefaultSkillProfileForAgent('oracle')).toContain('almaz');
+    expect(getDefaultSkillProfileForAgent('oracle')).toContain(
+      'gitea-repo-overhaul',
+    );
+    expect(getDefaultSkillProfileForAgent('oracle')).toContain('homelab');
+    expect(getDefaultSkillProfileForAgent('oracle')).toContain('nuc');
   });
 
   test('explicit agent skills override profile resolution', () => {

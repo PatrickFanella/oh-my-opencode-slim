@@ -4,7 +4,6 @@ import { getAgentOverride } from './utils';
 
 export const DEFAULT_GLOBAL_SKILLS = [
   'agent-browser',
-  'almaz',
   'cartography',
   'caveman',
   'clonedeps',
@@ -12,7 +11,6 @@ export const DEFAULT_GLOBAL_SKILLS = [
   'deep-research',
   'github-pro',
   'humanizer',
-  'nuc',
   'obsidian-cli',
   'omarchy',
   'prompt-craft',

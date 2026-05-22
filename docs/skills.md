@@ -46,9 +46,13 @@ as the in-repo catalog grows.
 | [`simplify`](#simplify) | Behavior-preserving code simplification | `oracle` |
 | [`codemap`](#codemap) | Repository codemap generation | `orchestrator` |
 | [`clonedeps`](#clonedeps) | Local dependency source cloning | `orchestrator` |
-| [`almaz`](#almaz-and-nuc) | Almaz homelab operations and documentation | all agents |
-| [`nuc`](#almaz-and-nuc) | NUC homelab operations and documentation | all agents |
+| [`almaz`](#almaz-homelab-and-nuc) | Almaz homelab operations and documentation | `orchestrator`, `oracle` |
+| [`homelab`](#almaz-homelab-and-nuc) | Cross-host NUC/Almaz coordination | `orchestrator`, `oracle` |
+| [`nuc`](#almaz-homelab-and-nuc) | NUC homelab operations and documentation | `orchestrator`, `oracle` |
 | [`scheduled-tasks`](#scheduled-tasks) | OpenCode task scheduling guidance | all agents |
+| `gitea-repo-overhaul` | Gitea/Forgejo repo audit and governance playbook | `orchestrator`, `oracle` |
+| `super-productivity-maintenance` | Super Productivity maintenance router | `orchestrator` |
+| `super-productivity-planning` | Super Productivity task hygiene and planning | `orchestrator` |
 
 In addition to those OMOC defaults, this repo now bundles the migrated skills
 catalog under category paths like:
@@ -148,19 +152,20 @@ See **[Clonedeps](clonedeps.md)** for the full workflow and file layout.
 
 ---
 
-## almaz and nuc
+## almaz, homelab, and nuc
 
-**Host-specific homelab operations and documentation workflows.**
+**Host-specific and cross-host homelab operations workflows.**
 
-`almaz` and `nuc` are bundled under `src/skills/homelab/` so OMOC installs and
-manages them with the rest of the curated repo-owned skills. They are part of
-the default global profile because homelab questions can arrive through any
-foreground agent.
+`almaz`, `homelab`, and `nuc` are bundled under `src/skills/homelab/` so OMOC
+installs and manages them with the rest of the curated repo-owned skills. They
+are assigned to `orchestrator` and `oracle` by default because homelab operations
+need coordination and safety review rather than broad write-capable availability.
 
-Both skills include safety contracts, topology references, audit scripts, health
-snapshot helpers, and reusable report/change-plan templates for the paired
-Almaz/NUC service split. Live state remains authoritative; the skills prefer
-read-only discovery and require explicit approval before operational changes.
+The host-specific `almaz` and `nuc` skills cover single-host work. The `homelab`
+skill is the cross-host router for NUC/Almaz health, ntfy alerts, routing,
+backups, service ownership, placement, and incidents. Live state remains
+authoritative; the skills prefer read-only discovery and require explicit
+approval before operational changes.
 
 ---
 
