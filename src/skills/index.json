@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 181,
+    "total_skills": 182,
     "categories": {
       "agent-ecosystem": 8,
       "analytics-observability": 3,
@@ -16,7 +16,7 @@
       "games-interactive": 2,
       "git-github": 3,
       "growth-marketing": 16,
-      "homelab": 3,
+      "homelab": 4,
       "language-go-rust": 2,
       "language-js-ts": 1,
       "language-python": 5,
@@ -474,6 +474,11 @@
     {
       "name": "nuc",
       "path": "skills/homelab/nuc/SKILL.md",
+      "category": "homelab"
+    },
+    {
+      "name": "llama-line-client",
+      "path": "skills/homelab/llama-line-client/SKILL.md",
       "category": "homelab"
     },
     {
