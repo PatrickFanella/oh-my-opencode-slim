@@ -19,6 +19,7 @@ import {
   detectCurrentConfig,
   disableDefaultAgents,
   enableLspByDefault,
+  materializeDefaultBoardAgentDefinitions,
   parseConfig,
   parseConfigFile,
   stripJsonComments,
@@ -340,6 +341,56 @@ describe('config-io', () => {
     const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
     expect(saved.mcp.github.enabled).toBeUndefined();
     expect(saved.mcp.playwright.enabled).toBeUndefined();
+  });
+
+  test('materializeDefaultBoardAgentDefinitions writes missing files and preserves existing ones', () => {
+    const boardAgentDir = join(
+      tmpDir,
+      'opencode',
+      'oh-my-opencode-slim',
+      'agents',
+    );
+    const existingPath = join(boardAgentDir, 'backend-architect.json');
+    paths.ensureConfigDir();
+    mkdirSync(boardAgentDir, { recursive: true });
+    writeFileSync(existingPath, JSON.stringify({ preserved: true }));
+
+    const result = materializeDefaultBoardAgentDefinitions();
+
+    expect(result.success).toBe(true);
+    expect(result.targetDir).toBe(boardAgentDir);
+    expect(result.preserved).toContain('backend-architect');
+    expect(result.written).toContain('go-advisor');
+    expect(JSON.parse(readFileSync(existingPath, 'utf-8'))).toEqual({
+      preserved: true,
+    });
+    expect(
+      JSON.parse(readFileSync(join(boardAgentDir, 'go-advisor.json'), 'utf-8')),
+    ).toMatchObject({ name: 'go-advisor', displayName: 'go-runner' });
+  });
+
+  test('materializeDefaultBoardAgentDefinitions uses OPENCODE_CONFIG_DIR when set', () => {
+    const customConfigDir = join(tmpDir, 'custom-opencode');
+    process.env.OPENCODE_CONFIG_DIR = customConfigDir;
+
+    const result = materializeDefaultBoardAgentDefinitions({ dryRun: true });
+
+    expect(result.targetDir).toBe(
+      join(customConfigDir, 'oh-my-opencode-slim', 'agents'),
+    );
+    expect(result.written).toHaveLength(0);
+    expect(result.skipped).toHaveLength(22);
+    expect(existsSync(result.targetDir)).toBe(false);
+  });
+
+  test('materializeDefaultBoardAgentDefinitions uses XDG config home when OPENCODE_CONFIG_DIR is unset', () => {
+    delete process.env.OPENCODE_CONFIG_DIR;
+
+    const result = materializeDefaultBoardAgentDefinitions({ dryRun: true });
+
+    expect(result.targetDir).toBe(
+      join(tmpDir, 'opencode', 'oh-my-opencode-slim', 'agents'),
+    );
   });
 
   test('addBuiltinMcpsToOpenCodeConfig upgrades broken generated github docker command', () => {

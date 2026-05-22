@@ -6,6 +6,7 @@ import type {
 import type { JSX } from '@opentui/solid';
 import { createElement, insert, setProp } from '@opentui/solid';
 import { createAgents } from './agents';
+import { DEFAULT_BOARD_AGENT_GROUPS } from './agents/default-board-agents';
 import {
   ALL_AGENT_NAMES,
   DEFAULT_DISABLED_AGENTS,
@@ -69,54 +70,7 @@ const CORE_AGENT_GLYPHS: Record<string, string> = {
   council: '◇',
 };
 
-const BOARD_GROUPS = [
-  {
-    title: 'BUILD',
-    glyph: '◆',
-    names: [
-      'backend-architect',
-      'go-advisor',
-      'python-advisor',
-      'rust-advisor',
-      'typescript-advisor',
-      'qa-test-advisor',
-    ],
-  },
-  {
-    title: 'OPS',
-    glyph: '◍',
-    names: [
-      'cloud-devops-advisor',
-      'database-advisor',
-      'observability-advisor',
-      'ops-sre-advisor',
-      'security-advisor',
-    ],
-  },
-  {
-    title: 'GROWTH',
-    glyph: '✹',
-    names: [
-      'content-strategist',
-      'copy-chief',
-      'cro-strategist',
-      'launch-strategist',
-      'seo-strategist',
-      'social-media-strategist',
-    ],
-  },
-  {
-    title: 'MYTH',
-    glyph: '✶',
-    names: [
-      'docs-advisor',
-      'media-producer',
-      'story-editor',
-      'subcult-creative-director',
-      'worldbuilder',
-    ],
-  },
-] as const;
+const BOARD_GROUPS = DEFAULT_BOARD_AGENT_GROUPS;
 
 type SidebarTheme = {
   accent: unknown;

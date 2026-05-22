@@ -9,6 +9,7 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
+import { DEFAULT_BOARD_AGENT_DEFINITIONS } from '../agents/default-board-agents';
 import { createHostBuiltinMcps } from '../mcp';
 import { crossSpawn } from '../utils/compat';
 import {
@@ -380,6 +381,68 @@ export function writeConfig(configPath: string, config: OpenCodeConfig): void {
   // Atomic write pattern: write to tmp, then rename
   writeFileSync(tmpPath, content);
   renameSync(tmpPath, configPath);
+}
+
+export interface MaterializeDefaultBoardAgentDefinitionsResult {
+  success: boolean;
+  targetDir: string;
+  written: string[];
+  skipped: string[];
+  preserved: string[];
+  error?: string;
+}
+
+export function materializeDefaultBoardAgentDefinitions(
+  options: { dryRun?: boolean } = {},
+): MaterializeDefaultBoardAgentDefinitionsResult {
+  const dryRun = options.dryRun ?? false;
+  const targetDir = join(getConfigDir(), 'oh-my-opencode-slim', 'agents');
+  const result: MaterializeDefaultBoardAgentDefinitionsResult = {
+    success: true,
+    targetDir,
+    written: [],
+    skipped: [],
+    preserved: [],
+  };
+
+  try {
+    if (!dryRun) {
+      mkdirSync(targetDir, { recursive: true });
+    }
+  } catch (err) {
+    return {
+      ...result,
+      success: false,
+      error: `Failed to create board agent directory: ${err}`,
+    };
+  }
+
+  for (const definition of DEFAULT_BOARD_AGENT_DEFINITIONS) {
+    const filePath = join(targetDir, `${definition.name}.json`);
+
+    if (existsSync(filePath)) {
+      result.preserved.push(definition.name);
+      continue;
+    }
+
+    if (dryRun) {
+      result.skipped.push(definition.name);
+      continue;
+    }
+
+    try {
+      writeFileSync(filePath, `${JSON.stringify(definition, null, 2)}\n`);
+      result.written.push(definition.name);
+    } catch (err) {
+      return {
+        ...result,
+        success: false,
+        error: `Failed to write board agent definition ${filePath}: ${err}`,
+      };
+    }
+  }
+
+  return result;
 }
 
 export async function addPluginToOpenCodeConfig(): Promise<ConfigMergeResult> {

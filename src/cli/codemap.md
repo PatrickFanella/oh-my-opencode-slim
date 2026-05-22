@@ -14,6 +14,8 @@ Current responsibilities:
 - OpenCode configuration mutation (atomic)
 - lite config generation for provider/agent presets
 - host MCP definition installation for OpenCode-native auth handling
+- default BUILD/OPS/GROWTH/MYTH custom board agent materialization into
+  `oh-my-opencode-slim/agents/`
 - code-managed bundled skill availability toggles
 - clone-based bootstrap defaults for host permissions, compaction, legacy
   external skill path cleanup, scheduled-task install/templates, and DCP/quota
@@ -58,7 +60,7 @@ The CLI is intentionally non-interactive-only now; it prints usage and steps to 
 ### Module decomposition
 
 - `paths.ts`: config directory and file discovery (`opencode.json`/`.jsonc`, lite config path).
-- `config-io.ts`: JSON/JSONC parsing, normalize write behavior, atomic writes (`.tmp` + backups directory), plugin registration, default-agent disabling.
+- `config-io.ts`: JSON/JSONC parsing, normalize write behavior, atomic writes (`.tmp` + backups directory), plugin registration, default-agent disabling, default board-agent materialization.
 - `providers.ts`: provider model mapping + `generateLiteConfig()`.
 - `system.ts`: OpenCode binary/version/path checks.
 - `skills.ts`: skill permission metadata shared by agent config generation.
@@ -82,7 +84,8 @@ CLI install command
       2) add plugin entry to main OpenCode config
       3) add built-in MCP definitions to host OpenCode config
       4) disable legacy default agents
-      5) write/preview generated lite config
+      5) materialize default board custom agents
+      6) write/preview generated lite config
 ```
 
 `generateLiteConfig(installConfig)` behavior:

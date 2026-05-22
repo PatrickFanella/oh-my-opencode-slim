@@ -115,8 +115,11 @@ The default installer writes a schema-only OMOC config and lets code-owned
 defaults choose the active agent models. Passing `--preset=<name>` writes only
 that generated preset. It writes built-in
 MCP definitions to `opencode.json(c)` so OpenCode's native MCP auth flow owns
-remote authentication. It does **not** copy the bundled skill catalog or depend
-on `~/.agents/skills`; the plugin materializes only the curated union of
+remote authentication. It also materializes the BUILD, OPS, GROWTH, and MYTH
+custom board agent JSON files into
+`~/.config/opencode/oh-my-opencode-slim/agents/` without overwriting existing
+files. It does **not** copy the bundled skill catalog or depend on
+`~/.agents/skills`; the plugin materializes only the curated union of
 code-owned skills referenced by enabled agents into a managed skill directory,
 then applies per-agent skill permissions as the second gate.
 

@@ -12,6 +12,7 @@ import {
   getOpenCodeVersion,
   isOpenCodeInstalled,
   isTmuxInstalled,
+  materializeDefaultBoardAgentDefinitions,
   warmOpenCodePluginCache,
   writeLiteConfig,
 } from './config-manager';
@@ -145,13 +146,45 @@ function handleStepResult(
   return true;
 }
 
+function handleBoardAgentMaterializationResult(
+  result: ReturnType<typeof materializeDefaultBoardAgentDefinitions>,
+  dryRun: boolean,
+): boolean {
+  if (!result.success) {
+    printError(`Failed: ${result.error}`);
+    return false;
+  }
+
+  if (dryRun) {
+    printInfo(
+      `Dry run mode - would materialize ${result.skipped.length} board agent files in ${result.targetDir}`,
+    );
+    if (result.preserved.length > 0) {
+      printInfo(
+        `Dry run mode - would preserve ${result.preserved.length} existing board agent files`,
+      );
+    }
+    return true;
+  }
+
+  if (result.written.length > 0) {
+    printSuccess(
+      `Default board agents materialized (${result.written.length} new) ${SYMBOLS.arrow} ${DIM}${result.targetDir}${RESET}`,
+    );
+  } else {
+    printInfo(`Default board agents already present at ${result.targetDir}`);
+  }
+
+  return true;
+}
+
 async function runInstall(config: InstallConfig): Promise<number> {
   const detected = detectCurrentConfig();
   const isUpdate = detected.isInstalled;
 
   printHeader(isUpdate);
 
-  const totalSteps = 8;
+  const totalSteps = 9;
 
   let step = 1;
 
@@ -202,6 +235,19 @@ async function runInstall(config: InstallConfig): Promise<number> {
   } else {
     const agentResult = disableDefaultAgents();
     if (!handleStepResult(agentResult, 'Default agents disabled')) return 1;
+  }
+
+  printStep(step++, totalSteps, 'Materializing default board agents...');
+  const boardAgentsResult = materializeDefaultBoardAgentDefinitions({
+    dryRun: config.dryRun ?? false,
+  });
+  if (
+    !handleBoardAgentMaterializationResult(
+      boardAgentsResult,
+      config.dryRun ?? false,
+    )
+  ) {
+    return 1;
   }
 
   printStep(step++, totalSteps, 'Enabling OpenCode LSP integration...');

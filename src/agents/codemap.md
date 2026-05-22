@@ -12,6 +12,8 @@ Responsibilities:
   name.
 - Normalize/validate custom agent names and custom-orchestrator-facing aliases.
 - Compose permissions, MCP allow-lists, and visibility metadata for OpenCode.
+- Bundle the default BUILD/OPS/GROWTH/MYTH board agent definitions used by the
+  installer and the TUI sidebar grouping.
 
 ## Core architecture
 
@@ -101,6 +103,8 @@ src/index.ts
 
 ## File structure
 
+- `default-board-agents.ts` (bundled board groups plus installer-facing custom
+  agent definitions)
 - `index.ts` (agent registry, overrides, classification, custom agents)
 - `orchestrator.ts` (base prompts, prompt resolution, model-array type)
 - `council.ts`, `councillor.ts` (council tool orchestration + formatting)
