@@ -17,7 +17,13 @@ import {
 } from './control-center-web';
 import { doctor, parseDoctorArgs } from './doctor';
 import { install } from './install';
-import { getGeneratedPresetNames, isGeneratedPresetName } from './providers';
+import {
+  BOARD_AGENT_MODEL_TIERS,
+  getBoardProviderNames,
+  getGeneratedPresetNames,
+  isBoardProviderName,
+  isGeneratedPresetName,
+} from './providers';
 import {
   expandShortcutArgs,
   formatShortcutHelpSection,
@@ -46,6 +52,15 @@ function parseArgs(args: string[]): InstallArgs {
         process.exit(1);
       }
       result.preset = preset;
+    } else if (arg.startsWith('--board-provider=')) {
+      const provider = arg.split('=')[1];
+      if (!isBoardProviderName(provider)) {
+        console.error(
+          `Unsupported board provider: ${provider}. Available: ${getBoardProviderNames().join(', ')}`,
+        );
+        process.exit(1);
+      }
+      result.boardProvider = provider;
     } else if (arg === '--dry-run') {
       result.dryRun = true;
     } else if (arg === '--reset') {
@@ -69,11 +84,13 @@ Usage:
   bunx oh-my-opencode-slim control-center [OPTIONS]
   bunx oh-my-opencode-slim control-center-web [OPTIONS]
   bunx oh-my-opencode-slim agents <list|validate|create> [OPTIONS]
+  bunx oh-my-opencode-slim switch-agents [provider] [--dry-run]
   bunx oh-my-opencode-slim doctor [OPTIONS]
 
 Options:
   --skills=yes|no        Enable code-managed bundled skills (default: yes)
   --preset=<name>        Active generated config preset (default: openai)
+  --board-provider=<p>   Board agent model provider (github-copilot|openai|anthropic|gemini)
   --no-tui               Non-interactive mode
   --dry-run              Simulate install without writing files
   --reset                Force overwrite of existing configuration
@@ -155,6 +172,93 @@ Examples:
 `);
 }
 
+// ── switch-agents command ─────────────────────────────────────────────────────
+import { materializeDefaultBoardAgentDefinitions } from './config-io';
+
+async function switchAgents(args: string[]): Promise<number> {
+  const GREEN = '\x1b[32m';
+  const BLUE = '\x1b[34m';
+  const RESET = '\x1b[0m';
+  const DIM = '\x1b[2m';
+
+  const provider = args.find((a) => !a.startsWith('-'));
+  const dryRun = args.includes('--dry-run');
+
+  if (!provider) {
+    // Show current state
+    const { join } = await import('node:path');
+    const { existsSync, readFileSync } = await import('node:fs');
+    const { homedir } = await import('node:os');
+    const agentsDir = join(
+      homedir(),
+      '.config',
+      'opencode',
+      'oh-my-opencode-slim',
+      'agents',
+    );
+    const sampleFile = join(agentsDir, 'python-advisor.json');
+    let currentProvider = 'unknown';
+    if (existsSync(sampleFile)) {
+      try {
+        const def = JSON.parse(readFileSync(sampleFile, 'utf8'));
+        currentProvider = (def.model as string)?.split('/')[0] ?? 'unknown';
+      } catch {}
+    }
+
+    console.log(`Current board agent provider: ${BLUE}${currentProvider}${RESET}`);
+    console.log('');
+    console.log('Available providers:');
+    for (const [name, tiers] of Object.entries(BOARD_AGENT_MODEL_TIERS)) {
+      console.log(
+        `  ${name.padEnd(18)} coding: ${tiers.coding.padEnd(38)} heavy: ${tiers.heavy.padEnd(38)} light: ${tiers.light}`,
+      );
+    }
+    console.log('');
+    console.log(`Usage: bunx oh-my-opencode-slim switch-agents <provider> [--dry-run]`);
+    return 0;
+  }
+
+  if (!isBoardProviderName(provider)) {
+    console.error(
+      `Unknown provider: ${provider}. Available: ${getBoardProviderNames().join(', ')}`,
+    );
+    return 1;
+  }
+
+  const tiers = BOARD_AGENT_MODEL_TIERS[provider];
+  console.log(`Switching board agents → provider: ${BLUE}${provider}${RESET}`);
+  console.log(`  coding → ${tiers.coding}`);
+  console.log(`  heavy  → ${tiers.heavy}`);
+  console.log(`  light  → ${tiers.light}`);
+  console.log('');
+
+  const result = materializeDefaultBoardAgentDefinitions({
+    boardProvider: provider,
+    reset: true,
+    dryRun,
+  });
+
+  if (!result.success) {
+    console.error(`Error: ${result.error}`);
+    return 1;
+  }
+
+  for (const name of result.written) {
+    console.log(`  ${GREEN}✓${RESET} ${name.padEnd(32)} ${DIM}→ written${RESET}`);
+  }
+  for (const name of result.skipped) {
+    console.log(`  ${DIM}~ ${name.padEnd(32)} → skipped (dry run)${RESET}`);
+  }
+
+  console.log('');
+  if (dryRun) {
+    console.log('Dry run complete. No files written.');
+  } else {
+    console.log('Done. Restart opencode for changes to take effect.');
+  }
+  return 0;
+}
+
 async function main(): Promise<void> {
   const rawArgs = process.argv.slice(2);
   const expanded = rawArgs[0]
@@ -209,6 +313,9 @@ async function main(): Promise<void> {
   } else if (expanded.command === 'doctor') {
     const doctorArgs = parseDoctorArgs(expanded.args);
     const exitCode = await doctor(doctorArgs);
+    process.exit(exitCode);
+  } else if (expanded.command === 'switch-agents') {
+    const exitCode = await switchAgents(expanded.args);
     process.exit(exitCode);
   } else if (expanded.command === '-h' || expanded.command === '--help') {
     printHelp();

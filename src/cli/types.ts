@@ -4,6 +4,7 @@ export interface InstallArgs {
   tui: boolean;
   skills?: BooleanArg;
   preset?: string;
+  boardProvider?: string;
   dryRun?: boolean;
   reset?: boolean;
 }
@@ -19,6 +20,7 @@ export interface InstallConfig {
   hasTmux: boolean;
   installSkills: boolean;
   preset?: string;
+  boardProvider?: string;
   promptForStar?: boolean;
   dryRun?: boolean;
   reset: boolean;

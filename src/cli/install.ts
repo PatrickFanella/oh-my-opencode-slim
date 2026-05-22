@@ -240,6 +240,7 @@ async function runInstall(config: InstallConfig): Promise<number> {
   printStep(step++, totalSteps, 'Materializing default board agents...');
   const boardAgentsResult = materializeDefaultBoardAgentDefinitions({
     dryRun: config.dryRun ?? false,
+    boardProvider: config.boardProvider,
   });
   if (
     !handleBoardAgentMaterializationResult(
@@ -346,6 +347,7 @@ export function createInstallConfig(
     hasTmux,
     installSkills: args.skills === 'yes',
     preset: args.preset,
+    boardProvider: args.boardProvider,
     promptForStar: args.tui,
     dryRun: args.dryRun,
     reset: args.reset ?? false,

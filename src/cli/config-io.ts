@@ -9,7 +9,7 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { DEFAULT_BOARD_AGENT_DEFINITIONS } from '../agents/default-board-agents';
+import { getBoardAgentDefinitions } from '../agents/default-board-agents';
 import { createHostBuiltinMcps } from '../mcp';
 import { crossSpawn } from '../utils/compat';
 import {
@@ -393,9 +393,10 @@ export interface MaterializeDefaultBoardAgentDefinitionsResult {
 }
 
 export function materializeDefaultBoardAgentDefinitions(
-  options: { dryRun?: boolean } = {},
+  options: { dryRun?: boolean; boardProvider?: string; reset?: boolean } = {},
 ): MaterializeDefaultBoardAgentDefinitionsResult {
   const dryRun = options.dryRun ?? false;
+  const reset = options.reset ?? false;
   const targetDir = join(getConfigDir(), 'oh-my-opencode-slim', 'agents');
   const result: MaterializeDefaultBoardAgentDefinitionsResult = {
     success: true,
@@ -417,10 +418,12 @@ export function materializeDefaultBoardAgentDefinitions(
     };
   }
 
-  for (const definition of DEFAULT_BOARD_AGENT_DEFINITIONS) {
+  const definitions = getBoardAgentDefinitions(options.boardProvider);
+
+  for (const definition of definitions) {
     const filePath = join(targetDir, `${definition.name}.json`);
 
-    if (existsSync(filePath)) {
+    if (existsSync(filePath) && !reset) {
       result.preserved.push(definition.name);
       continue;
     }

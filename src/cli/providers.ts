@@ -7,6 +7,51 @@ const SCHEMA_URL =
 
 export const GENERATED_PRESETS = ['openai', 'opencode-go'] as const;
 
+// ── Board agent model tiers ───────────────────────────────────────────────────
+// coding = language/tech agents that write & review code
+// heavy  = complex reasoning, architecture, ops, creative
+// light  = content, marketing, simple advisory
+export type BoardAgentTier = 'coding' | 'heavy' | 'light';
+
+export interface BoardAgentTierModels {
+  coding: string;
+  heavy: string;
+  light: string;
+}
+
+export type BoardProviderName = keyof typeof BOARD_AGENT_MODEL_TIERS;
+
+export const BOARD_AGENT_MODEL_TIERS: Record<string, BoardAgentTierModels> = {
+  'github-copilot': {
+    coding: 'github-copilot/gpt-5.5',
+    heavy: 'github-copilot/gpt-5.4',
+    light: 'github-copilot/gpt-5.4-mini',
+  },
+  openai: {
+    coding: 'openai/gpt-5.5',
+    heavy: 'openai/gpt-5.4',
+    light: 'openai/gpt-5.4-mini',
+  },
+  anthropic: {
+    coding: 'anthropic/claude-sonnet-4-6',
+    heavy: 'anthropic/claude-sonnet-4-5',
+    light: 'anthropic/claude-haiku-4-5',
+  },
+  gemini: {
+    coding: 'google/gemini-2.5-pro',
+    heavy: 'google/gemini-2.5-pro',
+    light: 'google/gemini-2.5-flash',
+  },
+} as const;
+
+export function isBoardProviderName(value: string): value is BoardProviderName {
+  return Object.hasOwn(BOARD_AGENT_MODEL_TIERS, value);
+}
+
+export function getBoardProviderNames(): string[] {
+  return Object.keys(BOARD_AGENT_MODEL_TIERS);
+}
+
 // Model mappings by provider/preset.
 export const MODEL_MAPPINGS = {
   openai: {

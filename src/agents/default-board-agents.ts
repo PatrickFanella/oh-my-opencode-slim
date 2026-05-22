@@ -1,7 +1,64 @@
+import {
+  BOARD_AGENT_MODEL_TIERS,
+  type BoardAgentTier,
+  type BoardAgentTierModels,
+} from '../cli/providers';
 import type { CustomAgentDefinition } from './custom-definitions';
 
 const CUSTOM_AGENT_SCHEMA_URL =
   'https://unpkg.com/oh-my-opencode-slim@latest/custom-agent.schema.json';
+
+// ── Tier assignments ──────────────────────────────────────────────────────────
+// coding = language/tech agents that write & review code
+// heavy  = complex reasoning, architecture, ops, creative
+// light  = content, marketing, simple advisory
+export const BOARD_AGENT_TIERS: Record<string, BoardAgentTier> = {
+  // coding
+  'backend-architect': 'coding',
+  'database-advisor': 'coding',
+  'go-advisor': 'coding',
+  'python-advisor': 'coding',
+  'qa-test-advisor': 'coding',
+  'rust-advisor': 'coding',
+  'security-advisor': 'coding',
+  'typescript-advisor': 'coding',
+  // heavy
+  'cloud-devops-advisor': 'heavy',
+  'copy-chief': 'heavy',
+  'observability-advisor': 'heavy',
+  'ops-sre-advisor': 'heavy',
+  'story-editor': 'heavy',
+  'subcult-creative-director': 'heavy',
+  worldbuilder: 'heavy',
+  // light
+  'content-strategist': 'light',
+  'cro-strategist': 'light',
+  'docs-advisor': 'light',
+  'launch-strategist': 'light',
+  'media-producer': 'light',
+  'seo-strategist': 'light',
+  'social-media-strategist': 'light',
+} as const;
+
+export function getBoardAgentModel(
+  agentName: string,
+  tiers: BoardAgentTierModels,
+): string {
+  const tier = BOARD_AGENT_TIERS[agentName] ?? 'heavy';
+  return tiers[tier];
+}
+
+export function getBoardAgentDefinitions(
+  boardProvider?: string,
+): readonly CustomAgentDefinition[] {
+  if (!boardProvider) return DEFAULT_BOARD_AGENT_DEFINITIONS;
+  const tiers = BOARD_AGENT_MODEL_TIERS[boardProvider];
+  if (!tiers) return DEFAULT_BOARD_AGENT_DEFINITIONS;
+  return DEFAULT_BOARD_AGENT_DEFINITIONS.map((def) => ({
+    ...def,
+    model: getBoardAgentModel(def.name, tiers),
+  }));
+}
 
 export interface DefaultBoardAgentGroup {
   title: 'BUILD' | 'OPS' | 'GROWTH' | 'MYTH';
