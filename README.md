@@ -126,6 +126,13 @@ then applies per-agent skill permissions as the second gate.
 To generate OpenCode Go instead, run
 `bunx oh-my-opencode-slim@latest install --preset=opencode-go`.
 
+To switch every board agent later, including built-in specialists such as
+Explorer, Oracle, Librarian, Designer, Fixer, Observer, Council, and
+Orchestrator, run `bunx oh-my-opencode-slim@latest switch-agents <provider>`.
+This refreshes custom board JSON files and writes an active `board-<provider>`
+preset to `~/.config/opencode/oh-my-opencode-slim.json`. Restart OpenCode after
+switching.
+
 Then:
 
 1. **Log in to the providers you want to use if you haven't already**:

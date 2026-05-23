@@ -173,7 +173,7 @@ Examples:
 }
 
 // ── switch-agents command ─────────────────────────────────────────────────────
-import { materializeDefaultBoardAgentDefinitions } from './config-io';
+import { switchProviderConfig } from './config-io';
 
 async function switchAgents(args: string[]): Promise<number> {
   const GREEN = '\x1b[32m';
@@ -205,7 +205,9 @@ async function switchAgents(args: string[]): Promise<number> {
       } catch {}
     }
 
-    console.log(`Current board agent provider: ${BLUE}${currentProvider}${RESET}`);
+    console.log(
+      `Current board agent provider: ${BLUE}${currentProvider}${RESET}`,
+    );
     console.log('');
     console.log('Available providers:');
     for (const [name, tiers] of Object.entries(BOARD_AGENT_MODEL_TIERS)) {
@@ -214,7 +216,9 @@ async function switchAgents(args: string[]): Promise<number> {
       );
     }
     console.log('');
-    console.log(`Usage: bunx oh-my-opencode-slim switch-agents <provider> [--dry-run]`);
+    console.log(
+      `Usage: bunx oh-my-opencode-slim switch-agents <provider> [--dry-run]`,
+    );
     return 0;
   }
 
@@ -232,23 +236,26 @@ async function switchAgents(args: string[]): Promise<number> {
   console.log(`  light  → ${tiers.light}`);
   console.log('');
 
-  const result = materializeDefaultBoardAgentDefinitions({
-    boardProvider: provider,
-    reset: true,
-    dryRun,
-  });
+  const result = switchProviderConfig(provider, { dryRun });
 
   if (!result.success) {
     console.error(`Error: ${result.error}`);
     return 1;
   }
 
-  for (const name of result.written) {
-    console.log(`  ${GREEN}✓${RESET} ${name.padEnd(32)} ${DIM}→ written${RESET}`);
+  for (const name of result.boardAgents.written) {
+    console.log(
+      `  ${GREEN}✓${RESET} ${name.padEnd(32)} ${DIM}→ written${RESET}`,
+    );
   }
-  for (const name of result.skipped) {
+  for (const name of result.boardAgents.skipped) {
     console.log(`  ${DIM}~ ${name.padEnd(32)} → skipped (dry run)${RESET}`);
   }
+
+  const configStatus = dryRun ? 'would update' : 'updated';
+  console.log(
+    `  ${GREEN}✓${RESET} built-in specialists ${DIM}→ ${configStatus} preset ${result.presetName} in ${result.configPath}${RESET}`,
+  );
 
   console.log('');
   if (dryRun) {

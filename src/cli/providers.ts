@@ -2,7 +2,7 @@ import { DEFAULT_AGENT_MCPS } from '../config/agent-mcps';
 import { ALL_AGENT_NAMES } from '../config/constants';
 import type { InstallConfig } from './types';
 
-const SCHEMA_URL =
+export const SCHEMA_URL =
   'https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json';
 
 export const GENERATED_PRESETS = ['openai', 'opencode-go'] as const;
@@ -50,6 +50,56 @@ export function isBoardProviderName(value: string): value is BoardProviderName {
 
 export function getBoardProviderNames(): string[] {
   return Object.keys(BOARD_AGENT_MODEL_TIERS);
+}
+
+const CORE_AGENT_PROVIDER_TIERS = {
+  orchestrator: 'coding',
+  oracle: 'coding',
+  council: 'coding',
+  librarian: 'light',
+  explorer: 'light',
+  designer: 'light',
+  fixer: 'light',
+  observer: 'light',
+} satisfies Record<string, BoardAgentTier>;
+
+type CoreAgentName = keyof typeof CORE_AGENT_PROVIDER_TIERS;
+
+const CORE_AGENT_VARIANTS: Partial<Record<CoreAgentName, string>> = {
+  oracle: 'high',
+  council: 'high',
+  librarian: 'low',
+  explorer: 'low',
+  designer: 'medium',
+  fixer: 'low',
+};
+
+export function buildBoardProviderPreset(
+  provider: BoardProviderName,
+): Record<string, { model: string; variant?: string; mcps: string[] }> {
+  const tiers = BOARD_AGENT_MODEL_TIERS[provider];
+  if (!tiers) {
+    throw new Error(
+      `Unknown provider: ${provider}. Available: ${getBoardProviderNames().join(', ')}`,
+    );
+  }
+
+  return Object.fromEntries(
+    Object.entries(CORE_AGENT_PROVIDER_TIERS).map(([agentName, tier]) => {
+      const coreAgentName = agentName as CoreAgentName;
+      const variant = CORE_AGENT_VARIANTS[coreAgentName];
+      return [
+        agentName,
+        {
+          model: tiers[tier],
+          ...(variant ? { variant } : {}),
+          mcps:
+            DEFAULT_AGENT_MCPS[agentName as keyof typeof DEFAULT_AGENT_MCPS] ??
+            [],
+        },
+      ];
+    }),
+  );
 }
 
 // Model mappings by provider/preset.

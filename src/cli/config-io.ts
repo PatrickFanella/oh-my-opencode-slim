@@ -22,7 +22,12 @@ import {
   getExistingTuiConfigPath,
   getLiteConfig,
 } from './paths';
-import { generateLiteConfig } from './providers';
+import {
+  buildBoardProviderPreset,
+  generateLiteConfig,
+  isBoardProviderName,
+  SCHEMA_URL,
+} from './providers';
 import type {
   ConfigMergeResult,
   DetectedConfig,
@@ -392,12 +397,26 @@ export interface MaterializeDefaultBoardAgentDefinitionsResult {
   error?: string;
 }
 
+export interface SwitchProviderResult {
+  success: boolean;
+  boardAgents: MaterializeDefaultBoardAgentDefinitionsResult;
+  configPath: string;
+  presetName?: string;
+  provider?: string;
+  configUpdated: boolean;
+  error?: string;
+}
+
+function getBoardAgentsDir(): string {
+  return join(getConfigDir(), 'oh-my-opencode-slim', 'agents');
+}
+
 export function materializeDefaultBoardAgentDefinitions(
   options: { dryRun?: boolean; boardProvider?: string; reset?: boolean } = {},
 ): MaterializeDefaultBoardAgentDefinitionsResult {
   const dryRun = options.dryRun ?? false;
   const reset = options.reset ?? false;
-  const targetDir = join(getConfigDir(), 'oh-my-opencode-slim', 'agents');
+  const targetDir = getBoardAgentsDir();
   const result: MaterializeDefaultBoardAgentDefinitionsResult = {
     success: true,
     targetDir,
@@ -446,6 +465,96 @@ export function materializeDefaultBoardAgentDefinitions(
   }
 
   return result;
+}
+
+export function switchProviderConfig(
+  provider: string,
+  options: { dryRun?: boolean } = {},
+): SwitchProviderResult {
+  const dryRun = options.dryRun ?? false;
+  const configPath = getExistingLiteConfigPath();
+
+  if (!isBoardProviderName(provider)) {
+    const boardAgents: MaterializeDefaultBoardAgentDefinitionsResult = {
+      success: false,
+      targetDir: getBoardAgentsDir(),
+      written: [],
+      skipped: [],
+      preserved: [],
+      error: `Unknown provider: ${provider}`,
+    };
+    return {
+      success: false,
+      boardAgents,
+      configPath,
+      provider,
+      configUpdated: false,
+      error: boardAgents.error,
+    };
+  }
+
+  const boardAgents = materializeDefaultBoardAgentDefinitions({
+    boardProvider: provider,
+    reset: true,
+    dryRun,
+  });
+  const result: SwitchProviderResult = {
+    success: boardAgents.success,
+    boardAgents,
+    configPath,
+    provider,
+    configUpdated: false,
+    error: boardAgents.error,
+  };
+
+  if (!boardAgents.success) {
+    return result;
+  }
+
+  const presetName = `board-${provider}`;
+  result.presetName = presetName;
+
+  try {
+    if (!dryRun) {
+      ensureConfigDir();
+    }
+    const { config: parsedConfig, error } = parseConfig(configPath);
+    if (error) {
+      return {
+        ...result,
+        success: false,
+        error: `Failed to parse config: ${error}`,
+      };
+    }
+
+    const config = parsedConfig ?? {};
+    const presets =
+      config.presets &&
+      typeof config.presets === 'object' &&
+      !Array.isArray(config.presets)
+        ? (config.presets as Record<string, unknown>)
+        : {};
+
+    config.$schema =
+      typeof config.$schema === 'string' ? config.$schema : SCHEMA_URL;
+    config.preset = presetName;
+    config.presets = {
+      ...presets,
+      [presetName]: buildBoardProviderPreset(provider),
+    };
+
+    if (!dryRun) {
+      writeConfig(configPath, config);
+    }
+    result.configUpdated = true;
+    return result;
+  } catch (err) {
+    return {
+      ...result,
+      success: false,
+      error: `Failed to update provider preset: ${err}`,
+    };
+  }
 }
 
 export async function addPluginToOpenCodeConfig(): Promise<ConfigMergeResult> {

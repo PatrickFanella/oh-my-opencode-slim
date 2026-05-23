@@ -1,6 +1,12 @@
 # llama-line Client Patterns
 
-## Python — Streaming Inference with SSE Parsing
+All inference responses from llama-line use `Content-Type: text/event-stream`. The stream
+always begins with zero or more broker status events, followed by the ollama response:
+
+- **Non-streaming** (`stream:false`): broker heartbeats → one `data: <full JSON>\n\n`
+- **Streaming** (`stream:true`): broker heartbeats → ollama SSE chunks → `data: [DONE]\n\n`
+
+## Python — Non-Streaming with SSE Preamble Stripping
 
 ```python
 import json
@@ -9,7 +15,36 @@ import requests
 BROKER = "http://localhost:11434"
 API_KEY = "your-key-here"
 
-def call_llama_line(model: str, prompt: str):
+def call_llama_line(model: str, prompt: str) -> dict:
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {"model": model, "prompt": prompt, "stream": False}
+
+    with requests.post(f"{BROKER}/api/generate", json=payload, headers=headers, stream=True) as resp:
+        resp.raise_for_status()
+        for raw_line in resp.iter_lines(decode_unicode=True):
+            if not raw_line:
+                continue
+            if not raw_line.startswith("data: "):
+                continue
+            payload_str = raw_line[6:]
+            data = json.loads(payload_str)
+            status = data.get("status")
+            if status == "queued":
+                print(f"[queue] pos={data.get('position')} wait={data.get('wait_seconds')}s")
+                continue
+            if status == "ollama_unavailable":
+                raise RuntimeError(f"broker error: {data.get('message', status)}")
+            # No status field → this is the actual ollama response
+            return data
+```
+
+## Python — Streaming with SSE Preamble Stripping
+
+```python
+def call_llama_line_stream(model: str, prompt: str):
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
@@ -18,45 +53,25 @@ def call_llama_line(model: str, prompt: str):
 
     with requests.post(f"{BROKER}/api/generate", json=payload, headers=headers, stream=True) as resp:
         resp.raise_for_status()
-        sse_done = False
-        for line in resp.iter_lines(decode_unicode=True):
-            if not sse_done:
-                if line.startswith("data: "):
-                    update = json.loads(line[6:])
-                    print(f"[queue] position={update['position']} wait={update['wait_seconds']}s status={update['status']}")
+        broker_done = False
+        for raw_line in resp.iter_lines(decode_unicode=True):
+            if not raw_line or raw_line == "data: [DONE]":
+                continue
+            if not raw_line.startswith("data: "):
+                continue
+            data = json.loads(raw_line[6:])
+            if not broker_done:
+                status = data.get("status")
+                if status == "queued":
+                    print(f"[queue] pos={data.get('position')} wait={data.get('wait_seconds')}s")
                     continue
-                else:
-                    sse_done = True  # first non-SSE line: ollama stream begins
-            if line:
-                chunk = json.loads(line)
-                print(chunk.get("response", ""), end="", flush=True)
-                if chunk.get("done"):
-                    break
-```
-
-## Python — Non-Streaming (stream=False)
-
-```python
-def call_llama_line_sync(model: str, prompt: str) -> str:
-    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
-    payload = {"model": model, "prompt": prompt, "stream": False}
-
-    with requests.post(f"{BROKER}/api/generate", json=payload, headers=headers, stream=True) as resp:
-        resp.raise_for_status()
-        buffer = b""
-        sse_done = False
-        for chunk in resp.iter_content(chunk_size=None):
-            buffer += chunk
-            while b"\n" in buffer:
-                line, buffer = buffer.split(b"\n", 1)
-                line = line.decode().strip()
-                if not sse_done:
-                    if line.startswith("data: "):
-                        continue  # discard SSE status
-                    else:
-                        sse_done = True
-                if line:
-                    return json.loads(line)["response"]
+                if status == "ollama_unavailable":
+                    raise RuntimeError(f"broker error: {data.get('message', status)}")
+                broker_done = True
+            # Ollama streaming chunk
+            print(data.get("response", ""), end="", flush=True)
+            if data.get("done"):
+                break
 ```
 
 ## Go — SSE Loop with bufio.Scanner
@@ -77,9 +92,11 @@ const broker = "http://localhost:11434"
 const apiKey = "your-key-here"
 
 type StatusUpdate struct {
+    RequestID   string `json:"request_id"`
     Position    int    `json:"position"`
     WaitSeconds int    `json:"wait_seconds"`
     Status      string `json:"status"`
+    Message     string `json:"message"`
 }
 
 func callLlamaLine(model, prompt string) error {
@@ -99,23 +116,32 @@ func callLlamaLine(model, prompt string) error {
     defer resp.Body.Close()
 
     scanner := bufio.NewScanner(resp.Body)
-    sseDone := false
+    brokerDone := false
     for scanner.Scan() {
         line := scanner.Text()
-        if !sseDone {
-            if strings.HasPrefix(line, "data: ") {
-                var u StatusUpdate
-                json.Unmarshal([]byte(line[6:]), &u)
-                fmt.Printf("[queue] pos=%d wait=%ds status=%s\n", u.Position, u.WaitSeconds, u.Status)
-                continue
-            }
-            sseDone = true
-        }
-        if line == "" {
+        if line == "" || line == "data: [DONE]" {
             continue
         }
+        if !strings.HasPrefix(line, "data: ") {
+            continue
+        }
+        payload := line[6:]
+        if !brokerDone {
+            var u StatusUpdate
+            if err := json.Unmarshal([]byte(payload), &u); err == nil && u.Status != "" {
+                if u.Status == "queued" {
+                    fmt.Printf("[queue] pos=%d wait=%ds id=%s\n", u.Position, u.WaitSeconds, u.RequestID)
+                    continue
+                }
+                if u.Status == "ollama_unavailable" {
+                    return fmt.Errorf("broker error: %s", u.Message)
+                }
+            }
+            brokerDone = true
+        }
+        // Ollama chunk (streaming) or full response (non-streaming)
         var chunk map[string]any
-        json.Unmarshal([]byte(line), &chunk)
+        json.Unmarshal([]byte(payload), &chunk)
         fmt.Print(chunk["response"])
         if done, _ := chunk["done"].(bool); done {
             break
@@ -131,19 +157,19 @@ func callLlamaLine(model, prompt string) error {
 const BROKER = 'http://localhost:11434';
 const API_KEY = 'your-key-here';
 
-async function callLlamaLine(model, prompt) {
+async function callLlamaLine(model, prompt, stream = true) {
   const resp = await fetch(`${BROKER}/api/generate`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ model, prompt, stream: true }),
+    body: JSON.stringify({ model, prompt, stream }),
   });
 
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
-  let sseDone = false;
+  let brokerDone = false;
   let buf = '';
 
   while (true) {
@@ -154,27 +180,32 @@ async function callLlamaLine(model, prompt) {
     buf = lines.pop(); // keep incomplete line
 
     for (const line of lines) {
-      if (!sseDone) {
-        if (line.startsWith('data: ')) {
-          const update = JSON.parse(line.slice(6));
-          console.log('[queue]', update);
+      if (!line || line === 'data: [DONE]') continue;
+      if (!line.startsWith('data: ')) continue;
+      const data = JSON.parse(line.slice(6));
+      if (!brokerDone) {
+        if (data.status === 'queued') {
+          console.log('[queue]', data);
           continue;
         }
-        sseDone = true;
+        if (data.status === 'ollama_unavailable') {
+          throw new Error(`broker error: ${data.message}`);
+        }
+        brokerDone = true;
       }
-      if (!line.trim()) continue;
-      const chunk = JSON.parse(line);
-      process.stdout.write(chunk.response ?? '');
-      if (chunk.done) return;
+      // Ollama chunk or full response
+      process.stdout.write(data.response ?? '');
+      if (data.done) return;
     }
   }
 }
 ```
 
-## OpenAI-Compatible API (v1 endpoints)
+## OpenAI SDK Integration (Python)
 
-llama-line also queues `/v1/chat/completions`, `/v1/completions`, `/v1/embeddings`. Use any
-OpenAI-compatible client by pointing it at the broker and adding the API key:
+The OpenAI Python client handles the SSE preamble transparently for **streaming** requests
+because it reads `data:` lines natively. For **non-streaming**, the broker wraps the response
+in a `data:` line — the SDK handles this correctly too since it parses the SSE stream.
 
 ```python
 from openai import OpenAI
@@ -184,16 +215,30 @@ client = OpenAI(
     api_key="your-key-here",  # llama-line key, not OpenAI
 )
 
-# SSE preamble is transparent to the OpenAI client library — it handles it correctly
+# Non-streaming — SDK strips SSE preamble automatically
 response = client.chat.completions.create(
     model="qwen3.5:latest",
     messages=[{"role": "user", "content": "Hello"}],
 )
 print(response.choices[0].message.content)
+
+# Streaming — broker heartbeats are discarded; ollama chunks stream through
+for chunk in client.chat.completions.create(
+    model="qwen3.5:latest",
+    messages=[{"role": "user", "content": "Hello"}],
+    stream=True,
+):
+    print(chunk.choices[0].delta.content or "", end="", flush=True)
 ```
 
-> **Note:** The OpenAI Python client handles the SSE preamble transparently because it reads
-> `data:` lines as part of the SSE protocol. No special handling needed.
+## OpenAI SDK Integration (Go)
+
+For Go, use a custom `http.RoundTripper` to strip broker heartbeats before the SDK sees the body.
+See `augr/internal/llm/llamabroker` for a production-ready implementation:
+
+- `StripSSEPreamble` — strips broker events, unwraps the final `data:` line for non-streaming
+- `StripBrokerHeartbeats` — strips broker events, passes remaining SSE chunks through for streaming
+- Detect streaming by peeking `"stream":true` in the request body via `req.GetBody()`
 
 ## Backpressure — Check Before Sending
 
@@ -220,6 +265,7 @@ def safe_call(model, prompt):
             f"{BROKER}/api/generate",
             json={"model": model, "prompt": prompt, "stream": False},
             headers={"Authorization": f"Bearer {API_KEY}"},
+            stream=True,
         )
         if resp.status_code == 503:
             err = resp.json()
@@ -229,10 +275,15 @@ def safe_call(model, prompt):
         if resp.status_code == 401:
             raise Exception("Invalid API key")
         resp.raise_for_status()
-        # strip SSE preamble for non-streaming
-        body = resp.text
-        lines = [l for l in body.splitlines() if l and not l.startswith("data: ")]
-        return json.loads(lines[0])["response"]
+        # Strip broker SSE preamble; final response is in a data: line
+        for raw_line in resp.iter_lines(decode_unicode=True):
+            if not raw_line or not raw_line.startswith("data: "):
+                continue
+            data = json.loads(raw_line[6:])
+            if data.get("status") == "ollama_unavailable":
+                raise Exception(f"Broker error: {data.get('message')}")
+            if "status" not in data:
+                return data["response"]
     except requests.RequestException as e:
         raise Exception(f"Broker unreachable: {e}")
 ```

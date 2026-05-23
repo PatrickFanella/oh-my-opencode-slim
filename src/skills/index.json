@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 182,
+    "total_skills": 184,
     "categories": {
       "agent-ecosystem": 8,
       "analytics-observability": 3,
@@ -10,7 +10,7 @@
       "creative-media": 9,
       "data-database": 5,
       "debugging": 3,
-      "dev-workflows": 12,
+      "dev-workflows": 14,
       "docs-documents": 7,
       "frontend-ui": 2,
       "games-interactive": 2,
@@ -272,6 +272,16 @@
       "category": "dev-workflows"
     },
     {
+      "name": "grill-me",
+      "path": "skills/dev-workflows/grill-me/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "grill-with-docs",
+      "path": "skills/dev-workflows/grill-with-docs/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
       "name": "observe-and-tune",
       "path": "skills/dev-workflows/observe-and-tune/SKILL.md",
       "category": "dev-workflows"
@@ -472,13 +482,13 @@
       "category": "homelab"
     },
     {
-      "name": "nuc",
-      "path": "skills/homelab/nuc/SKILL.md",
+      "name": "llama-line-client",
+      "path": "skills/homelab/llama-line-client/SKILL.md",
       "category": "homelab"
     },
     {
-      "name": "llama-line-client",
-      "path": "skills/homelab/llama-line-client/SKILL.md",
+      "name": "nuc",
+      "path": "skills/homelab/nuc/SKILL.md",
       "category": "homelab"
     },
     {

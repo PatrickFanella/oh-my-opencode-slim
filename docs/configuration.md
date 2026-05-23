@@ -315,6 +315,24 @@ Toolkit flags are opt-in and default to `false`:
 | `interview.port` | integer | `0` | Interview server port (0–65535). `0` = OS-assigned random port (per-session mode). Any value > 0 enables [dashboard mode](interview.md#dashboard-mode) |
 | `interview.dashboard` | boolean | `false` | Enable [dashboard mode](interview.md#dashboard-mode) on the default port (43211). Setting `port` > 0 also enables dashboard mode. If both are set, `port` takes precedence |
 
+## Provider Switching
+
+Use `bunx oh-my-opencode-slim@latest switch-agents <provider>` to move the
+whole board to one provider. Supported providers are `github-copilot`, `openai`,
+`anthropic`, and `gemini`.
+
+The command updates two config surfaces:
+
+- Custom BUILD, OPS, GROWTH, and MYTH JSON agents under
+  `~/.config/opencode/oh-my-opencode-slim/agents/`
+- The active OMOC config preset under
+  `~/.config/opencode/oh-my-opencode-slim.json`
+
+The generated preset is named `board-<provider>` and covers built-in
+specialists such as Explorer, Oracle, Librarian, Designer, Fixer, Observer,
+Council, and Orchestrator. Restart OpenCode after switching because plugin
+config is loaded at startup.
+
 ### Agent definition files
 
 OMOC has a central bundled agent registry under `src/agents/definitions/`.

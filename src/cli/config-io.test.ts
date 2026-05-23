@@ -23,6 +23,7 @@ import {
   parseConfig,
   parseConfigFile,
   stripJsonComments,
+  switchProviderConfig,
   writeConfig,
   writeLiteConfig,
 } from './config-io';
@@ -391,6 +392,76 @@ describe('config-io', () => {
     expect(result.targetDir).toBe(
       join(tmpDir, 'opencode', 'oh-my-opencode-slim', 'agents'),
     );
+  });
+
+  test('switchProviderConfig updates board agents and active built-in preset', () => {
+    paths.ensureConfigDir();
+    const liteConfigPath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
+    writeFileSync(
+      liteConfigPath,
+      JSON.stringify({
+        $schema: 'old-schema',
+        preset: 'openai',
+        presets: {
+          openai: {
+            explorer: { model: 'openai/gpt-5.4-mini' },
+          },
+        },
+      }),
+    );
+
+    const result = switchProviderConfig('github-copilot');
+
+    expect(result.success).toBe(true);
+    expect(result.presetName).toBe('board-github-copilot');
+    expect(result.boardAgents.written).toContain('python-advisor');
+
+    const saved = JSON.parse(readFileSync(liteConfigPath, 'utf-8'));
+    expect(saved.preset).toBe('board-github-copilot');
+    expect(saved.presets.openai.explorer.model).toBe('openai/gpt-5.4-mini');
+    expect(saved.presets['board-github-copilot'].explorer.model).toBe(
+      'github-copilot/gpt-5.4-mini',
+    );
+    expect(saved.presets['board-github-copilot'].oracle.model).toBe(
+      'github-copilot/gpt-5.5',
+    );
+    expect(saved.presets['board-github-copilot'].oracle.variant).toBe('high');
+  });
+
+  test('switchProviderConfig dry-run does not write config or board agents', () => {
+    const result = switchProviderConfig('anthropic', { dryRun: true });
+
+    expect(result.success).toBe(true);
+    expect(result.configUpdated).toBe(true);
+    expect(result.boardAgents.skipped).toHaveLength(22);
+    expect(
+      existsSync(join(tmpDir, 'opencode', 'oh-my-opencode-slim.json')),
+    ).toBe(false);
+    expect(
+      existsSync(
+        join(
+          tmpDir,
+          'opencode',
+          'oh-my-opencode-slim',
+          'agents',
+          'python-advisor.json',
+        ),
+      ),
+    ).toBe(false);
+  });
+
+  test('switchProviderConfig rejects unknown provider before writing files', () => {
+    const result = switchProviderConfig('unknown-provider');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Unknown provider: unknown-provider');
+    expect(result.boardAgents.written).toHaveLength(0);
+    expect(
+      existsSync(join(tmpDir, 'opencode', 'oh-my-opencode-slim.json')),
+    ).toBe(false);
+    expect(
+      existsSync(join(tmpDir, 'opencode', 'oh-my-opencode-slim', 'agents')),
+    ).toBe(false);
   });
 
   test('addBuiltinMcpsToOpenCodeConfig upgrades broken generated github docker command', () => {
