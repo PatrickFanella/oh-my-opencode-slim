@@ -1,6 +1,6 @@
 ---
 name: super-productivity-planning
-description: Super Productivity task planning, hygiene, inbox triage, and time-block scheduling workflow. Use when the user asks to clean up tasks, empty or triage the Inbox, normalize titles/descriptions/subtasks/estimates/tags, reschedule overdue/today/unscheduled work, create a realistic daily plan with breaks/routines/buffers, or verify that active work is fully scheduled.
+description: Super Productivity task planning, hygiene, inbox triage, and time-block scheduling workflow. Use when the user asks to clean up tasks, empty or triage the Inbox, normalize titles/descriptions/subtasks/estimates/tags, reschedule overdue/today/weekend/unscheduled work, spread Monday-heavy schedules, create realistic daily plans with breaks/routines/buffers, or verify that active work is fully scheduled.
 ---
 
 # Super Productivity Planning
@@ -49,6 +49,22 @@ normalization, tag simplification, and time-block scheduling.
 7. **Verify invariants.** Re-query the data after mutation. Do not rely on the
    intended batch payload as proof.
 
+## Current Overhaul Baseline
+
+- Use title form `[Category] Task: detail`. Do not put `Daily`, `Weekly`,
+  `Monthly`, or `Quarterly` in titles when recurrence already records frequency.
+- Schedule core framework projects and explicitly `Active` project work. Leave
+  other project/backlog tasks unscheduled unless the user asks for that project.
+- General work blocks are valid. Specific chosen tasks may be scheduled on top
+  of those blocks.
+- Spread weekly, monthly, first-Monday, and quarterly work across the week.
+  Monday should stay light unless early-week timing is genuinely required.
+- Maintain weekend anchors for reset, chores/errands, low-pressure creative
+  capture, relationships, weekly review, and shutdown. Keep weekends lighter
+  than weekdays.
+- Every active task should have a useful note with done state, scope, or next
+  action. Add process subtasks for broad publishing/content tasks.
+
 ## Scheduling Defaults
 
 - Keep daily planned task capacity near 6 focused hours unless the user asks
@@ -59,6 +75,8 @@ normalization, tag simplification, and time-block scheduling.
 - Preserve slack. A “full day” should still have recovery and misc work space.
 - Schedule every active task if the user asks for complete hygiene, even if the
   fallback horizon extends beyond the next two weeks.
+- Treat estimates liberally: include setup, context switching, editing,
+  verification, and posting/logging time. If exact timing is uncertain, round up.
 
 ## Verification Contract
 

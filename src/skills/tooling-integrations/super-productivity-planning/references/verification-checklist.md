@@ -22,6 +22,10 @@ Use this checklist before declaring a planning pass complete.
 - [ ] Top-level tasks have a clear schedule horizon.
 - [ ] All active tasks including subtasks have a clear schedule horizon when the
       user requested full coverage.
+- [ ] Non-framework project tasks are unscheduled unless tagged `Active` or
+      explicitly selected for scheduling.
+- [ ] Monday is not overloaded by default weekly/monthly/quarterly buckets.
+- [ ] Weekend schedule anchors exist when the user requested a weekend schedule.
 
 ## Task Hygiene
 
@@ -30,6 +34,9 @@ Use this checklist before declaring a planning pass complete.
 - [ ] Estimates are present and plausible for active scheduled work.
 - [ ] Parent task estimates were not accidentally inflated by subtask totals.
 - [ ] Tags are compact enough to be useful and not just historical clutter.
+- [ ] Titles follow `[Category] Task: detail` unless preserving source wording is
+      more important.
+- [ ] Broad publishing/content tasks have process subtasks.
 
 ## Daily Plan Quality
 

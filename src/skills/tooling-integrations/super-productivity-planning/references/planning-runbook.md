@@ -14,6 +14,7 @@ Capture these before writing data:
 - planning horizon and whether it may extend past two weeks;
 - whether all active tasks, including subtasks, must be scheduled;
 - permission for creating projects/tags or changing recurring templates.
+- whether weekend schedules should be created as real recurring tasks.
 
 Use todos for any multi-step overhaul. Include final verification as a todo
 from the start.
@@ -42,6 +43,8 @@ Apply rules consistently before batching mutations:
 
 - **Titles:** Make active task titles specific, imperative, and typo-clean.
   Preserve the user’s wording when it carries meaning.
+  Prefer `[Category] Task: detail`; omit frequency words when recurrence already
+  carries them.
 - **Descriptions/notes:** Add notes when a title alone does not define the next
   action, scope, acceptance criteria, or context.
 - **Subtasks:** Add subtasks for broad singleton tasks. Avoid creating subtasks
@@ -49,10 +52,16 @@ Apply rules consistently before batching mutations:
 - **Estimates:** Use 15–30 minutes for checklist subtasks, 45–90 minutes for
   bounded work, and split anything larger than 2 hours unless it is intentionally
   a large focus block.
+  Estimate liberally: include setup, context switching, review, posting/logging,
+  and cleanup.
 - **Deadlines vs plans:** Preserve true due dates. Move stale planned work to new
   planned dates instead of treating every old planned date as a hard deadline.
 - **Recurring work:** Do not rewrite recurring templates without explicit user
   confirmation.
+- **Active-only project scheduling:** Keep tasks outside the user’s framework or
+  operating projects unscheduled unless they are tagged `Active` or the user asks
+  to schedule that specific project. Specific tasks may still be scheduled on top
+  of general work blocks.
 
 ## 4. Tag Taxonomy
 
@@ -104,11 +113,19 @@ Build the requested day first, then spread remaining work:
 4. Keep focused task capacity near 6 hours/day by default, with remaining time
    reserved for routines, admin, transition cost, interruptions, and recovery.
 5. Spread the rest across future workdays with similar capacity limits.
-6. If the user requires every active task to be scheduled, continue past the
+6. Spread Monday-heavy weekly/monthly/quarterly work across Tue–Fri and, for
+   reflective/admin/relationship work, weekends when appropriate. Avoid using
+   “first Monday” as a default bucket.
+7. If the user requires every active task to be scheduled, continue past the
    initial horizon until no active task or subtask is unscheduled.
 
 When subtasks must be scheduled, prefer the parent’s planned date/tags unless
 there is a clear reason to distribute subtasks across multiple days.
+
+Weekend baseline when requested: Saturday reset/body plan, home reset/errands,
+low-pressure creative capture; Sunday relationships, notes/weekly prep, and
+shutdown. Keep weekend schedules lighter than weekdays and avoid turning them
+into overflow Mondays.
 
 ## 7. MCP Execution Notes
 
