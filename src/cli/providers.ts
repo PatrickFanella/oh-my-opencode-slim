@@ -1,5 +1,6 @@
 import { DEFAULT_AGENT_MCPS } from '../config/agent-mcps';
 import { ALL_AGENT_NAMES } from '../config/constants';
+import providerAssignmentGuide from './provider-assignment-guide.json';
 import type { InstallConfig } from './types';
 
 export const SCHEMA_URL =
@@ -19,30 +20,13 @@ export interface BoardAgentTierModels {
   light: string;
 }
 
-export type BoardProviderName = keyof typeof BOARD_AGENT_MODEL_TIERS;
+export const BOARD_AGENT_MODEL_TIERS =
+  providerAssignmentGuide.boardAgentModelTiers as Record<
+    string,
+    BoardAgentTierModels
+  >;
 
-export const BOARD_AGENT_MODEL_TIERS: Record<string, BoardAgentTierModels> = {
-  'github-copilot': {
-    coding: 'github-copilot/gpt-5.5',
-    heavy: 'github-copilot/gpt-5.4',
-    light: 'github-copilot/gpt-5.4-mini',
-  },
-  openai: {
-    coding: 'openai/gpt-5.5',
-    heavy: 'openai/gpt-5.4',
-    light: 'openai/gpt-5.4-mini',
-  },
-  anthropic: {
-    coding: 'anthropic/claude-sonnet-4-6',
-    heavy: 'anthropic/claude-sonnet-4-5',
-    light: 'anthropic/claude-haiku-4-5',
-  },
-  gemini: {
-    coding: 'google/gemini-2.5-pro',
-    heavy: 'google/gemini-2.5-pro',
-    light: 'google/gemini-2.5-flash',
-  },
-} as const;
+export type BoardProviderName = keyof typeof BOARD_AGENT_MODEL_TIERS;
 
 export function isBoardProviderName(value: string): value is BoardProviderName {
   return Object.hasOwn(BOARD_AGENT_MODEL_TIERS, value);
@@ -52,27 +36,20 @@ export function getBoardProviderNames(): string[] {
   return Object.keys(BOARD_AGENT_MODEL_TIERS);
 }
 
-const CORE_AGENT_PROVIDER_TIERS = {
-  orchestrator: 'coding',
-  oracle: 'coding',
-  council: 'coding',
-  librarian: 'light',
-  explorer: 'light',
-  designer: 'light',
-  fixer: 'light',
-  observer: 'light',
-} satisfies Record<string, BoardAgentTier>;
+const CORE_AGENT_PROVIDER_TIERS =
+  providerAssignmentGuide.coreAgentProviderTiers as Record<
+    string,
+    BoardAgentTier
+  >;
 
 type CoreAgentName = keyof typeof CORE_AGENT_PROVIDER_TIERS;
 
-const CORE_AGENT_VARIANTS: Partial<Record<CoreAgentName, string>> = {
-  oracle: 'high',
-  council: 'high',
-  librarian: 'low',
-  explorer: 'low',
-  designer: 'medium',
-  fixer: 'low',
-};
+const CORE_AGENT_VARIANTS =
+  providerAssignmentGuide.coreAgentVariants as Partial<
+    Record<CoreAgentName, string>
+  >;
+
+export const AVAILABLE_MODEL_IDS = providerAssignmentGuide.availableModels;
 
 export function buildBoardProviderPreset(
   provider: BoardProviderName,

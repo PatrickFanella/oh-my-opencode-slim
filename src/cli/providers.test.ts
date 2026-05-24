@@ -1,7 +1,12 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from 'bun:test';
-import { generateLiteConfig, MODEL_MAPPINGS } from './providers';
+import {
+  AVAILABLE_MODEL_IDS,
+  buildBoardProviderPreset,
+  generateLiteConfig,
+  MODEL_MAPPINGS,
+} from './providers';
 
 describe('providers', () => {
   test('MODEL_MAPPINGS includes supported providers', () => {
@@ -13,6 +18,46 @@ describe('providers', () => {
       'opencode-go',
       'zai-plan',
     ]);
+  });
+
+  test('AVAILABLE_MODEL_IDS contains known models without duplicates', () => {
+    expect(new Set(AVAILABLE_MODEL_IDS).size).toBe(AVAILABLE_MODEL_IDS.length);
+    expect(AVAILABLE_MODEL_IDS).toEqual(
+      expect.arrayContaining([
+        'openai/gpt-5.5',
+        'openai/gpt-5.4',
+        'github-copilot/gpt-5.4-mini',
+        'anthropic/claude-sonnet-4-6',
+        'google/gemini-2.5-flash',
+        'opencode-go/deepseek-v4-flash',
+      ]),
+    );
+  });
+
+  test('buildBoardProviderPreset maps openai core agents correctly', () => {
+    const preset = buildBoardProviderPreset('openai');
+
+    expect(preset.orchestrator.model).toBe('openai/gpt-5.5');
+    expect(preset.oracle.model).toBe('openai/gpt-5.5');
+    expect(preset.oracle.variant).toBe('high');
+    expect(preset.librarian.model).toBe('openai/gpt-5.4-mini');
+    expect(preset.librarian.variant).toBe('low');
+    expect(preset.designer.model).toBe('openai/gpt-5.4-mini');
+    expect(preset.designer.variant).toBe('medium');
+  });
+
+  test('buildBoardProviderPreset maps anthropic core agents correctly', () => {
+    const preset = buildBoardProviderPreset('anthropic');
+
+    expect(preset.orchestrator.model).toBe('anthropic/claude-sonnet-4-6');
+    expect(preset.oracle.model).toBe('anthropic/claude-sonnet-4-6');
+    expect(preset.oracle.variant).toBe('high');
+    expect(preset.council.model).toBe('anthropic/claude-sonnet-4-6');
+    expect(preset.council.variant).toBe('high');
+    expect(preset.librarian.model).toBe('anthropic/claude-haiku-4-5');
+    expect(preset.librarian.variant).toBe('low');
+    expect(preset.designer.model).toBe('anthropic/claude-haiku-4-5');
+    expect(preset.designer.variant).toBe('medium');
   });
 
   test('generateLiteConfig defaults to openai and includes only the active preset', () => {

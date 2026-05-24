@@ -1,3 +1,4 @@
+import providerAssignmentGuide from '../cli/provider-assignment-guide.json';
 import {
   BOARD_AGENT_MODEL_TIERS,
   type BoardAgentTier,
@@ -12,33 +13,8 @@ const CUSTOM_AGENT_SCHEMA_URL =
 // coding = language/tech agents that write & review code
 // heavy  = complex reasoning, architecture, ops, creative
 // light  = content, marketing, simple advisory
-export const BOARD_AGENT_TIERS: Record<string, BoardAgentTier> = {
-  // coding
-  'backend-architect': 'coding',
-  'database-advisor': 'coding',
-  'go-advisor': 'coding',
-  'python-advisor': 'coding',
-  'qa-test-advisor': 'coding',
-  'rust-advisor': 'coding',
-  'security-advisor': 'coding',
-  'typescript-advisor': 'coding',
-  // heavy
-  'cloud-devops-advisor': 'heavy',
-  'copy-chief': 'heavy',
-  'observability-advisor': 'heavy',
-  'ops-sre-advisor': 'heavy',
-  'story-editor': 'heavy',
-  'subcult-creative-director': 'heavy',
-  worldbuilder: 'heavy',
-  // light
-  'content-strategist': 'light',
-  'cro-strategist': 'light',
-  'docs-advisor': 'light',
-  'launch-strategist': 'light',
-  'media-producer': 'light',
-  'seo-strategist': 'light',
-  'social-media-strategist': 'light',
-} as const;
+export const BOARD_AGENT_TIERS =
+  providerAssignmentGuide.boardAgentTiers as Record<string, BoardAgentTier>;
 
 export function getBoardAgentModel(
   agentName: string,

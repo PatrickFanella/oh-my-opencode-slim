@@ -1,0 +1,90 @@
+{
+  "boardAgentModelTiers": {
+    "github-copilot": {
+      "coding": "github-copilot/gpt-5.5",
+      "heavy": "github-copilot/gpt-5.4",
+      "light": "github-copilot/gpt-5.4-mini"
+    },
+    "openai": {
+      "coding": "openai/gpt-5.5",
+      "heavy": "openai/gpt-5.4",
+      "light": "openai/gpt-5.4-mini"
+    },
+    "anthropic": {
+      "coding": "anthropic/claude-sonnet-4-6",
+      "heavy": "anthropic/claude-sonnet-4-5",
+      "light": "anthropic/claude-haiku-4-5"
+    },
+    "gemini": {
+      "coding": "google/gemini-2.5-pro",
+      "heavy": "google/gemini-2.5-pro",
+      "light": "google/gemini-2.5-flash"
+    }
+  },
+  "coreAgentProviderTiers": {
+    "orchestrator": "coding",
+    "oracle": "coding",
+    "council": "coding",
+    "librarian": "light",
+    "explorer": "light",
+    "designer": "light",
+    "fixer": "light",
+    "observer": "light"
+  },
+  "coreAgentVariants": {
+    "oracle": "high",
+    "council": "high",
+    "librarian": "low",
+    "explorer": "low",
+    "designer": "medium",
+    "fixer": "low"
+  },
+  "boardAgentTiers": {
+    "backend-architect": "coding",
+    "database-advisor": "coding",
+    "go-advisor": "coding",
+    "python-advisor": "coding",
+    "qa-test-advisor": "coding",
+    "rust-advisor": "coding",
+    "security-advisor": "coding",
+    "typescript-advisor": "coding",
+    "cloud-devops-advisor": "heavy",
+    "copy-chief": "heavy",
+    "observability-advisor": "heavy",
+    "ops-sre-advisor": "heavy",
+    "story-editor": "heavy",
+    "subcult-creative-director": "heavy",
+    "worldbuilder": "heavy",
+    "content-strategist": "light",
+    "cro-strategist": "light",
+    "docs-advisor": "light",
+    "launch-strategist": "light",
+    "media-producer": "light",
+    "seo-strategist": "light",
+    "social-media-strategist": "light"
+  },
+  "availableModels": [
+    "openai/gpt-5.5",
+    "openai/gpt-5.4",
+    "openai/gpt-5.4-mini",
+    "github-copilot/gpt-5.5",
+    "github-copilot/gpt-5.4",
+    "github-copilot/gpt-5.4-mini",
+    "anthropic/claude-sonnet-4-6",
+    "anthropic/claude-sonnet-4-5",
+    "anthropic/claude-haiku-4-5",
+    "google/gemini-2.5-pro",
+    "google/gemini-2.5-flash",
+    "kimi-for-coding/k2p5",
+    "github-copilot/claude-opus-4.6",
+    "github-copilot/grok-code-fast-1",
+    "github-copilot/gemini-3.1-pro-preview",
+    "github-copilot/claude-sonnet-4.6",
+    "zai-coding-plan/glm-5",
+    "opencode-go/glm-5.1",
+    "opencode-go/deepseek-v4-pro",
+    "opencode-go/minimax-m2.7",
+    "opencode-go/kimi-k2.6",
+    "opencode-go/deepseek-v4-flash"
+  ]
+}
