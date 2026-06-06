@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 184,
+    "total_skills": 190,
     "categories": {
       "agent-ecosystem": 8,
       "analytics-observability": 3,
@@ -10,12 +10,12 @@
       "creative-media": 9,
       "data-database": 5,
       "debugging": 3,
-      "dev-workflows": 14,
-      "docs-documents": 7,
+      "dev-workflows": 17,
+      "docs-documents": 8,
       "frontend-ui": 2,
       "games-interactive": 2,
       "git-github": 3,
-      "growth-marketing": 16,
+      "growth-marketing": 17,
       "homelab": 4,
       "language-go-rust": 2,
       "language-js-ts": 1,
@@ -25,7 +25,7 @@
       "quality-review": 6,
       "security": 12,
       "testing": 6,
-      "tooling-integrations": 16,
+      "tooling-integrations": 17,
       "worldbuilding-fiction": 14,
       "writing-craft": 24
     }
@@ -252,6 +252,11 @@
       "category": "debugging"
     },
     {
+      "name": "ars-malefica-maintenance",
+      "path": "skills/dev-workflows/ars-malefica-maintenance/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
       "name": "cartography",
       "path": "skills/dev-workflows/cartography/SKILL.md",
       "category": "dev-workflows"
@@ -259,6 +264,16 @@
     {
       "name": "changelog-automation",
       "path": "skills/dev-workflows/changelog-automation/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "clonedeps",
+      "path": "skills/dev-workflows/clonedeps/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "codemap",
+      "path": "skills/dev-workflows/codemap/SKILL.md",
       "category": "dev-workflows"
     },
     {
@@ -329,6 +344,11 @@
     {
       "name": "hads",
       "path": "skills/docs-documents/hads/SKILL.md",
+      "category": "docs-documents"
+    },
+    {
+      "name": "openai-docs",
+      "path": "skills/docs-documents/openai-docs/SKILL.md",
       "category": "docs-documents"
     },
     {
@@ -454,6 +474,11 @@
     {
       "name": "paid-ads",
       "path": "skills/growth-marketing/paid-ads/SKILL.md",
+      "category": "growth-marketing"
+    },
+    {
+      "name": "patreon-manager",
+      "path": "skills/growth-marketing/patreon-manager/SKILL.md",
       "category": "growth-marketing"
     },
     {
@@ -684,6 +709,11 @@
     {
       "name": "agent-browser",
       "path": "skills/tooling-integrations/agent-browser/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "ars-malefica-workflows",
+      "path": "skills/tooling-integrations/ars-malefica-workflows/SKILL.md",
       "category": "tooling-integrations"
     },
     {
