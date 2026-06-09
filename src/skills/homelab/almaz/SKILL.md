@@ -22,7 +22,7 @@ Use this skill to operate, audit, and update the `almaz` homelab host without re
 
 1. **Docs or inventory question**: read `/home/onnwee/docs/almaz/README.md`, then the narrow doc in `services/`, `infrastructure/`, `runbooks/`, `reports/`, `proposals/`, or `reviews/`. Use `references/topology.md` for current mental model.
 2. **Documentation refresh/audit**: run `scripts/almaz_doc_audit.py /home/onnwee/docs/almaz`, collect live evidence, edit active docs, then rerun audit and targeted stale greps. Read `references/workflows.md` first.
-3. **Health/post-upgrade check**: run `/usr/local/sbin/almaz-health-check.sh` or `scripts/almaz_health_snapshot.py` for read-only evidence. For Docker, NVIDIA, Caddy, storage, and backup posture, verify live state before relying on historical docs.
+3. **Health/post-upgrade check**: run `/usr/local/sbin/almaz-health-check.sh` or `scripts/almaz_health_snapshot.py` for read-only evidence. For Docker, NVIDIA, Caddy, storage, and backup posture, verify live state before relying on historical docs. For kernel/NVIDIA work, explicitly check for the 2026-06-06 regression: `7.0.0-22-generic` caused GTX 1080 `Xid 79` GPU-off-bus failures and was purged; `7.0.0-15-generic` is the known-good pinned kernel.
 4. **Backup work**: read `runbooks/backups.md` and `references/workflows.md`. `almaz-router-restic-backup.timer` is primary router backup; Borgmatic exists but is secondary/untrusted until stale lock and old DB entries are cleaned up.
 5. **SnapRAID/storage work**: read `infrastructure/storage-audit-2026-05-18.md`; collect status/diff/SMART evidence. Ask before running `snapraid touch`, `sync`, `scrub`, or any destructive filesystem command.
 6. **Service add/change/migration**: start with `assets/templates/service-change-plan.md`; read `references/service-map.md` and `infrastructure/host-duties.md`; ask for approval before live changes.
@@ -57,10 +57,10 @@ Read only what is needed:
 
 - Run `python3 scripts/almaz_doc_audit.py /home/onnwee/docs/almaz` after doc edits.
 - For live posture claims, record command/source and timestamp in the doc or final answer.
-- Confirm OS/kernel before saying upgrade state is current: expected baseline is Ubuntu 26.04 LTS `resolute`, kernel `7.0.0-15-generic` as of 2026-05-18.
+- Confirm OS/kernel before saying upgrade state is current: expected baseline is Ubuntu 26.04 LTS `resolute`, kernel `7.0.0-15-generic`. As of 2026-06-06, `7.0.0-22-generic` is known bad on almaz with NVIDIA `580.159.03`/GTX 1080 (`NVRM Xid 79, GPU has fallen off the bus`), was purged, and should not be reinstalled without an explicit test plan.
 - Confirm Docker health before saying services are healthy: no unhealthy/restarting containers and critical containers running.
 - Confirm `/mnt/arkhiv`, `/mnt/spektr`, `/mnt/rezerv`, `/mnt/kamera1-3`, and `/mnt/impuls` before making storage claims.
-- Confirm `nvidia-smi` and `nvidia-container-toolkit` before making GPU/container runtime claims.
+- Confirm `nvidia-smi`, held kernel/NVIDIA packages, and `nvidia-container-toolkit` before making GPU/container runtime claims.
 - Confirm `almaz-router-restic-backup.timer` and latest report before saying router backups are active.
 - If any script reports a possible issue, inspect the cited file/command before editing.
 

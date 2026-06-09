@@ -45,6 +45,7 @@ Minimum consistency checks:
 - Caddy docs do not describe stale `languagetool` as an active bug.
 - Cloudflared docs mention `edda.subcult.tv` direct route to nuc if still configured.
 - terminal/desktop docs do not describe KDE/SDDM/WezTerm as current.
+- kernel/NVIDIA docs mention that `7.0.0-22-generic` is known bad on almaz after the 2026-06-06 GTX 1080 `Xid 79` incident; expected kernel is pinned/held `7.0.0-15-generic` until a newer path is tested.
 
 ## Run health or post-upgrade checks
 
@@ -56,7 +57,8 @@ Minimum consistency checks:
 
 2. Inspect `/home/onnwee/docs/almaz/reports/health-latest.md`.
 3. If failures appear, triage in this order: apt/dpkg, failed units, mounts, Docker unhealthy/restarting containers, NVIDIA, critical containers, SnapRAID status.
-4. Do not claim success until failures are resolved or explicitly documented.
+4. For kernel/NVIDIA checks, verify `uname -r`, `nvidia-smi`, and `apt-mark showhold`. Do not treat `7.0.0-22-generic` as healthy on almaz unless a later incident note explicitly supersedes the 2026-06-06 regression.
+5. Do not claim success until failures are resolved or explicitly documented.
 
 ## Check backups
 
