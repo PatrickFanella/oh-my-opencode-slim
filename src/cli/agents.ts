@@ -24,7 +24,7 @@ export interface AgentsArgs {
 }
 
 const CUSTOM_AGENT_SCHEMA_URL =
-  'https://unpkg.com/oh-my-opencode-slim@latest/custom-agent.schema.json';
+  'https://unpkg.com/blacktower@latest/custom-agent.schema.json';
 
 function splitList(value: string): string[] {
   return value
@@ -80,12 +80,12 @@ export function parseAgentsArgs(args: string[]): AgentsArgs {
 
 function printAgentsHelp(): void {
   console.log(`
-oh-my-opencode-slim agents
+blacktower agents
 
 Usage:
-  bunx oh-my-opencode-slim agents list [--json]
-  bunx oh-my-opencode-slim agents validate [--json]
-  bunx oh-my-opencode-slim agents create <name> --model=<provider/model> [OPTIONS]
+  bunx blacktower agents list [--json]
+  bunx blacktower agents validate [--json]
+  bunx blacktower agents create <name> --model=<provider/model> [OPTIONS]
 
 Create options:
   --prompt=<text>                 Full custom agent prompt

@@ -1,6 +1,6 @@
 # Divoom MiniToo Display Integration
 
-oh-my-opencode-slim can mirror agent activity to a Divoom MiniToo Bluetooth
+blacktower can mirror agent activity to a Divoom MiniToo Bluetooth
 display. The integration is optional and disabled by default.
 
 ## Demo
@@ -32,7 +32,7 @@ yet, the plugin falls back to `intro.gif`.
 This plugin does not talk to the Bluetooth device directly. It shells out to the
 Divoom MiniToo macOS sender/daemon tooling from:
 
-https://github.com/alvinunreal/divoom-minitoo-osx
+divoom-minitoo-osx
 
 Before enabling the plugin integration:
 
@@ -49,8 +49,7 @@ Bluetooth disconnect/reconnect cycles.
 
 ## Start the Divoom daemon
 
-Follow the current instructions in
-[`divoom-minitoo-osx`](https://github.com/alvinunreal/divoom-minitoo-osx). The
+Follow the current Divoom MiniToo daemon instructions. The
 validated flow is:
 
 ```bash
@@ -78,7 +77,7 @@ Before blaming OpenCode, verify the Divoom sender works directly:
   --speed 125 \
   --max-frames 24 \
   --posterize-bits 3 \
-  --out-dir ~/.local/share/opencode/storage/oh-my-opencode-slim/divoom/captures
+  --out-dir ~/.local/share/opencode/storage/blacktower/divoom/captures
 ```
 
 **Note:** The sender must support the `--out-dir` flag. This requires a recent
@@ -88,16 +87,16 @@ processing files).
 If that updates the display, the OpenCode integration should work once enabled.
 
 **Output directory path:** The plugin writes temporary processing files to
-`$XDG_DATA_HOME/opencode/storage/oh-my-opencode-slim/divoom/captures` when
+`$XDG_DATA_HOME/opencode/storage/blacktower/divoom/captures` when
 `XDG_DATA_HOME` is set to a non-empty absolute path. Otherwise it falls back to
-`~/.local/share/opencode/storage/oh-my-opencode-slim/divoom/captures`.
+`~/.local/share/opencode/storage/blacktower/divoom/captures`.
 
-## Enable in oh-my-opencode-slim
+## Enable in blacktower
 
 Open your plugin config:
 
 ```text
-~/.config/opencode/oh-my-opencode-slim.json
+~/.config/opencode/blacktower.json
 ```
 
 Add:
@@ -115,7 +114,7 @@ Then rebuild/restart OpenCode if you are running from a local checkout.
 For one-off runs, you can enable Divoom without changing your config:
 
 ```bash
-OH_MY_OPENCODE_SLIM_DIVOOM=1 opencode
+BLACKTOWER_DIVOOM=1 opencode
 ```
 
 Accepted truthy values are `1`, `true`, `yes`, and `on`. The environment

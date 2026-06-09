@@ -89,7 +89,7 @@ Likely duplicate repo mapping. Pick canonical name, fold in useful content, then
 `parallel-feature-development`, `team-*`, and task-by-task execution from
 `writing-plans` overlap around execution. Old Superpowers names such as
 `executing-plans` and `subagent-driven-development` should stay out of active
-profiles unless their workflows are restored as first-class OMOC skills.
+profiles unless their workflows are restored as first-class Blacktower skills.
 
 ### Tool vs workflow boundary
 

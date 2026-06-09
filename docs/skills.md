@@ -2,27 +2,27 @@
 
 Skills are specialized capabilities you can assign to agents. Unlike MCPs (which are running servers), skills are **prompt-based tool configurations** — instructions injected into an agent's system prompt that describe how to use a particular tool.
 
-OMOC ships its own skill catalog, but it does not expose the whole catalog at
+Blacktower ships its own skill catalog, but it does not expose the whole catalog at
 once. At startup it materializes only the curated union of skills referenced by
-enabled agents. You do not need `~/.agents/skills` for OMOC skills.
+enabled agents. You do not need `~/.agents/skills` for Blacktower skills.
 
 ---
 
 ## Skill Packaging Policy
 
-OMOC treats skills in three categories:
+Blacktower treats skills in three categories:
 
 1. **Bundled code-managed skills** live in `src/skills/`, are shipped with the
    package, and are copied into a managed skill directory only when an enabled
    agent's resolved skill profile references them. Per-agent permissions decide
    which of these curated skills are visible/runnable.
 2. **External skills** can still be installed manually when you intentionally
-   want non-OMOC skill packages.
-3. **Permission-only skills** are not installed by OMOC. OMOC only grants
+   want non-Blacktower skill packages.
+3. **Permission-only skills** are not installed by Blacktower. Blacktower only grants
    agent permission for users who already have them.
 
-For OMOC as the distribution layer, prefer code-owned availability rather than a
-personal global skill folder. Keep DCP/quota-related skills outside OMOC unless
+For Blacktower as the distribution layer, prefer code-owned availability rather than a
+personal global skill folder. Keep DCP/quota-related skills outside Blacktower unless
 a future integration contract explicitly defines that boundary.
 
 Bundled skill discovery is recursive (`src/skills/**/SKILL.md`) and generated
@@ -33,7 +33,7 @@ as the in-repo catalog grows.
 
 ## Available Skills
 
-### Code-managed by OMOC
+### Code-managed by Blacktower
 
 | Skill | Description | Assigned to by default |
 |-------|-------------|----------------------|
@@ -54,7 +54,7 @@ as the in-repo catalog grows.
 | `super-productivity-maintenance` | Super Productivity maintenance router | `orchestrator` |
 | `super-productivity-planning` | Super Productivity task hygiene and planning | `orchestrator` |
 
-In addition to those OMOC defaults, this repo now bundles the migrated skills
+In addition to those Blacktower defaults, this repo now bundles the migrated skills
 catalog under category paths like:
 
 - `src/skills/language-js-ts/<skill>/`
@@ -124,7 +124,7 @@ See **[Codemap Skill](codemap.md)** for full documentation including manual comm
 **Local source mirroring for important project dependencies.**
 
 `clonedeps` helps the Orchestrator clone a small, approved set of dependency
-source repositories into `.slim/clonedeps/repos/` so OpenCode can inspect library
+source repositories into `.blacktower/clonedeps/repos/` so OpenCode can inspect library
 internals while keeping cloned code out of git.
 
 The skill is assigned to `orchestrator`. The orchestrator may ask `@librarian`
@@ -134,7 +134,7 @@ There is intentionally no helper script; dependency discovery and ref validation
 are handled by the orchestrator/librarian workflow so the skill works across
 languages and repository types.
 
-Before planning, the orchestrator checks `.slim/clonedeps.json` and reuses
+Before planning, the orchestrator checks `.blacktower/clonedeps.json` and reuses
 existing clones when possible. After cloning, it adds or updates a concise
 `## Cloned Dependency Source` section in root `AGENTS.md` that lists each
 read-only cloned repo path directly with a one-sentence purpose.
@@ -156,7 +156,7 @@ See **[Clonedeps](clonedeps.md)** for the full workflow and file layout.
 
 **Host-specific and cross-host homelab operations workflows.**
 
-`almaz`, `homelab`, and `nuc` are bundled under `src/skills/homelab/` so OMOC
+`almaz`, `homelab`, and `nuc` are bundled under `src/skills/homelab/` so Blacktower
 installs and manages them with the rest of the curated repo-owned skills. They
 are assigned to `orchestrator` and `oracle` by default because homelab operations
 need coordination and safety review rather than broad write-capable availability.
@@ -174,7 +174,7 @@ approval before operational changes.
 **One-off, recurring, and session-loop task scheduling for OpenCode.**
 
 `scheduled-tasks` is bundled from the `opencode-tasks` plugin's agent skill so
-OMOC can manage it through the same curated skill materialization path as the
+Blacktower can manage it through the same curated skill materialization path as the
 rest of the in-repo catalog. It explains the `opencode-tasks` scheduling tools,
 permission rules for background `opencode run` executions, recurring task file
 format, daemon setup, and `/loop` session commands.
@@ -184,7 +184,7 @@ arrive through any foreground agent. The runtime tools and slash commands still
 come from the external `opencode-tasks` plugin. Bootstrap installs that plugin,
 the system scheduler daemon, and `/loop` commands by default; use
 `--no-scheduled-tasks` to opt out. Bootstrap no longer runs
-`bunx opencode-tasks --install-skill` because OMOC now owns the skill copy.
+`bunx opencode-tasks --install-skill` because Blacktower now owns the skill copy.
 
 Bootstrap also writes disabled recurring-task templates to
 `~/.config/opencode/task-templates/`. They are examples, not active scheduled
@@ -195,7 +195,7 @@ jobs. Review a template, copy it into `~/.config/opencode/tasks/`, and flip
 
 ## Skills Assignment
 
-Control which skills each agent can use in `~/.config/opencode/oh-my-opencode-slim.json` (or `.jsonc`):
+Control which skills each agent can use in `~/.config/opencode/blacktower.json` (or `.jsonc`):
 
 | Syntax | Meaning |
 |--------|---------|
@@ -210,12 +210,12 @@ Control which skills each agent can use in `~/.config/opencode/oh-my-opencode-sl
 - `!item` excludes a specific skill
 - Conflicts (e.g. `["a", "!a"]`) → deny wins (principle of least privilege)
 - Explicit `skills` on an agent wins over `skillProfiles`
-- If no explicit `skills` exists, OMOC uses `skillProfiles.global` plus
+- If no explicit `skills` exists, Blacktower uses `skillProfiles.global` plus
   `skillProfiles.agents.<agent>`; missing sections fall back to built-in focused
   defaults
 
 **Recommended host config:** avoid globally loading every personal skill folder
-unless you intentionally want those external skills available. OMOC already
+unless you intentionally want those external skills available. Blacktower already
 materializes the curated skills needed by enabled agents into a managed path. In
 OpenCode host config, omit broad paths like:
 
@@ -225,7 +225,7 @@ OpenCode host config, omit broad paths like:
 }
 ```
 
-Use OMOC's plugin config for focused agent visibility instead, or omit
+Use Blacktower's plugin config for focused agent visibility instead, or omit
 `skillProfiles` to use the code-owned built-in defaults:
 
 ```jsonc

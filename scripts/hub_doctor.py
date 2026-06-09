@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lightweight doctor for OMOC's bundled skill catalog."""
+"""Lightweight doctor for blacktower's bundled skill catalog."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def main() -> int:
     if args.json:
         print(json.dumps(report, indent=2))
     else:
-        print("OMOC skill catalog doctor")
+        print("blacktower skill catalog doctor")
         print(f"skills: {report['skill_count']}")
         print(f"index.json: {'yes' if report['index_json'] else 'no'}")
         print(f"index.md: {'yes' if report['index_md'] else 'no'}")

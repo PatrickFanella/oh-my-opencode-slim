@@ -1,6 +1,6 @@
 # Custom Agent Cookbook
 
-Create extra OMOC agents with JSON files. They load at OpenCode startup and act
+Create extra Blacktower agents with JSON files. They load at OpenCode startup and act
 like normal subagents.
 
 ## Location
@@ -8,7 +8,7 @@ like normal subagents.
 Put files here:
 
 ```text
-~/.config/opencode/oh-my-opencode-slim/agents/<agent-name>.json
+~/.config/opencode/blacktower/agents/<agent-name>.json
 ```
 
 Restart OpenCode after creating or changing files. Running sessions keep the old
@@ -20,7 +20,7 @@ Each file can reference the generated schema:
 
 ```json
 {
-  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/custom-agent.schema.json",
+  "$schema": "https://unpkg.com/blacktower@latest/custom-agent.schema.json",
   "name": "researcher",
   "model": "openai/gpt-5.4-mini",
   "temperature": 0.2,
@@ -47,7 +47,7 @@ Fields:
 | `options` | no | Provider-specific options |
 | `displayName` | no | Public alias used in Orchestrator prompt |
 
-Main `oh-my-opencode-slim.json` `agents.<name>` entries override JSON files
+Main `blacktower.json` `agents.<name>` entries override JSON files
 with the same name.
 
 ## CLI
@@ -55,19 +55,19 @@ with the same name.
 List agents:
 
 ```bash
-bunx oh-my-opencode-slim agents list
+bunx blacktower agents list
 ```
 
 Validate custom JSON files:
 
 ```bash
-bunx oh-my-opencode-slim agents validate
+bunx blacktower agents validate
 ```
 
 Create a starter agent:
 
 ```bash
-bunx oh-my-opencode-slim agents create researcher \
+bunx blacktower agents create researcher \
   --model=openai/gpt-5.4-mini \
   --skills=web-search,fact-check \
   --mcps=websearch
@@ -83,7 +83,7 @@ Use for positioning, competitor research, SEO gaps, and customer language.
 
 ```json
 {
-  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/custom-agent.schema.json",
+  "$schema": "https://unpkg.com/blacktower@latest/custom-agent.schema.json",
   "name": "market-archaeologist",
   "model": "openai/gpt-5.5",
   "temperature": 0.3,
@@ -107,7 +107,7 @@ Use for unclear failures, flaky tests, incidents, and prevention analysis.
 
 ```json
 {
-  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/custom-agent.schema.json",
+  "$schema": "https://unpkg.com/blacktower@latest/custom-agent.schema.json",
   "name": "failure-anthropologist",
   "model": "openai/gpt-5.5",
   "temperature": 0.1,
@@ -130,7 +130,7 @@ Use for brand-lore UX, landing pages, TUI presentation, and conversion polish.
 
 ```json
 {
-  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/custom-agent.schema.json",
+  "$schema": "https://unpkg.com/blacktower@latest/custom-agent.schema.json",
   "name": "mythic-interface-director",
   "model": "openai/gpt-5.5",
   "temperature": 0.7,
@@ -153,7 +153,7 @@ Use for brand-lore UX, landing pages, TUI presentation, and conversion polish.
 ## Troubleshooting
 
 - Agent missing after edit: restart OpenCode.
-- Invalid JSON/schema: run `bunx oh-my-opencode-slim agents validate`.
+- Invalid JSON/schema: run `bunx blacktower agents validate`.
 - Model error: use provider-prefixed ids such as `openai/gpt-5.4-mini`.
 - Skill unavailable: check the skill exists in your installed skill paths.
 - MCP not attached: run `agents list --json` and confirm the `mcps` array.

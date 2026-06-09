@@ -124,7 +124,7 @@ describe('bootstrap CLI helpers', () => {
     const config = addPluginsToConfig(
       {
         plugin: [
-          'oh-my-opencode-slim',
+          'blacktower',
           '@slkiser/opencode-quota',
           ['tuple-plugin', { enabled: true }],
         ],
@@ -134,22 +134,22 @@ describe('bootstrap CLI helpers', () => {
 
     expect(config.plugin).toEqual([
       '@tarquinen/opencode-dcp@latest',
-      'oh-my-opencode-slim',
+      'blacktower',
       '@slkiser/opencode-quota',
       ['tuple-plugin', { enabled: true }],
     ]);
   });
 
-  test('addPluginsToConfig inserts optional plugins before local OMOC plugin', () => {
-    const config = addPluginsToConfig(
-      { plugin: ['/repo/oh-my-opencode-slim'] },
-      ['@tarquinen/opencode-dcp@latest', '@slkiser/opencode-quota'],
-    );
+  test('addPluginsToConfig inserts optional plugins before local Blacktower plugin', () => {
+    const config = addPluginsToConfig({ plugin: ['/repo/blacktower'] }, [
+      '@tarquinen/opencode-dcp@latest',
+      '@slkiser/opencode-quota',
+    ]);
 
     expect(config.plugin).toEqual([
       '@tarquinen/opencode-dcp@latest',
       '@slkiser/opencode-quota',
-      '/repo/oh-my-opencode-slim',
+      '/repo/blacktower',
     ]);
   });
 
@@ -266,7 +266,7 @@ describe('bootstrap CLI helpers', () => {
     expect(result.ok).toBe(true);
     const backupRoot = join(configDir, 'backups');
     const backupDirs = readdirSync(backupRoot).filter((entry) =>
-      entry.startsWith('omoc-bootstrap-'),
+      entry.startsWith('blacktower-bootstrap-'),
     );
     expect(backupDirs).toHaveLength(1);
     const backupDir = join(backupRoot, backupDirs[0] ?? '');
@@ -287,7 +287,7 @@ describe('bootstrap CLI helpers', () => {
     expect(result.ok).toBe(true);
     expect(existsSync(join(configDir, 'backups'))).toBe(true);
     expect(existsSync(join(configDir, 'commands'))).toBe(true);
-    expect(existsSync(join(configDir, 'oh-my-opencode-slim'))).toBe(true);
+    expect(existsSync(join(configDir, 'blacktower'))).toBe(true);
     expect(existsSync(join(configDir, 'plugins'))).toBe(true);
     expect(existsSync(join(configDir, 'skills'))).toBe(true);
     expect(readFileSync(join(configDir, '.gitignore'), 'utf-8')).toContain(
@@ -387,11 +387,10 @@ printf '{"name":"@opencode-ai/plugin"}\n' > node_modules/@opencode-ai/plugin/pac
     ).toBe(true);
   });
 
-  test('tmuxHelperBlock defines omos with portable port selection', () => {
+  test('tmuxHelperBlock defines OpenCode helpers with portable port selection', () => {
     const block = tmuxHelperBlock();
 
-    expect(block).toContain('__omoc_opencode_with_port()');
-    expect(block).toContain('omos()');
+    expect(block).toContain('__blacktower_opencode_with_port()');
     expect(block).toContain('opencode()');
     expect(block).toContain('oc()');
     expect(block).toContain('occ()');
@@ -399,7 +398,7 @@ printf '{"name":"@opencode-ai/plugin"}\n' > node_modules/@opencode-ai/plugin/pac
     expect(block).toContain(
       'OPENCODE_PORT="$port" command opencode --port "$port" "$@"',
     );
-    expect(block).toContain('__omoc_opencode_with_port --continue "$@"');
+    expect(block).toContain('__blacktower_opencode_with_port --continue "$@"');
     expect(block).toContain('Bypass shell functions and aliases');
     expect(block).toContain('command -v shuf');
     expect(block).toContain('command -v jot');
@@ -412,50 +411,51 @@ printf '{"name":"@opencode-ai/plugin"}\n' > node_modules/@opencode-ai/plugin/pac
     expect(second).toBe('before\n\nmanaged-block\n');
   });
 
-  test('upsertManagedBlock preserves safe legacy helper', () => {
-    const legacy = `prefix\n
-omos() {
+  test('upsertManagedBlock preserves safe existing helper', () => {
+    const existing = `prefix\n
+opencode() {
   local port
   port="4096"
   OPENCODE_PORT="$port" "$OPENCODE_BIN" --port "$port" "$@"
 }
 
-opencode() {
-  omos "$@"
+oc() {
+  opencode "$@"
 }
 
-alias oc="omos"
-alias occ="omos --continue"
+occ() {
+  opencode --continue "$@"
+}
 `;
 
-    expect(upsertManagedBlock(legacy, tmuxHelperBlock())).toBe(legacy);
+    expect(upsertManagedBlock(existing, tmuxHelperBlock())).toBe(existing);
   });
 
-  test('upsertManagedBlock appends after incomplete legacy helper', () => {
-    const legacy = `prefix
+  test('upsertManagedBlock appends after incomplete existing helper', () => {
+    const existing = `prefix
 
-omos() {
+opencode() {
   local port
   port="4096"
   OPENCODE_PORT="$port" "$OPENCODE_BIN" --port "$port" "$@"
 }
 `;
 
-    const result = upsertManagedBlock(legacy, tmuxHelperBlock());
-    expect(result).toContain('__omoc_opencode_with_port()');
+    const result = upsertManagedBlock(existing, tmuxHelperBlock());
+    expect(result).toContain('__blacktower_opencode_with_port()');
     expect(result).toContain('opencode()');
     expect(result).toContain('occ()');
   });
 
-  test('upsertManagedBlock appends after unsafe legacy helper', () => {
-    const legacy = `prefix\n
-omos() {
+  test('upsertManagedBlock appends after unsafe existing helper', () => {
+    const existing = `prefix\n
+opencode() {
   local port
   port="4096"
   OPENCODE_PORT="$port" opencode --port "$port" "$@"
 }\n`;
 
-    expect(upsertManagedBlock(legacy, tmuxHelperBlock())).toContain(
+    expect(upsertManagedBlock(existing, tmuxHelperBlock())).toContain(
       'OPENCODE_PORT="$port" command opencode --port "$port" "$@"',
     );
   });

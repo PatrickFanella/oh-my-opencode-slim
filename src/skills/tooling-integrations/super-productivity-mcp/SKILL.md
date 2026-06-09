@@ -3,7 +3,7 @@ name: super-productivity-mcp
 description: Diagnose and resolve Super Productivity MCP health, development, startup, handshake, catalog, client config, and bridge reliability issues. Use for MCP/runtime failures; use super-productivity-planning for task hygiene, inbox triage, and time-block scheduling.
 license: MIT
 metadata:
-  author: PatrickFanella
+  author: blacktower
   version: "1.0"
   type: diagnostic
   mode: diagnostic+application

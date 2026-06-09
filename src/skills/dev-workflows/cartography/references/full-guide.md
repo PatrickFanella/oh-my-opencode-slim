@@ -83,7 +83,7 @@ Defines agent personalities and manages their configuration lifecycle.
 ## Design
 Each agent is a prompt + permission set. Config system uses:
 - Default prompts (orchestrator.ts, explorer.ts, etc.)
-- User overrides from ~/.config/opencode/oh-my-opencode-lite.json
+- User overrides from ~/.config/opencode/blacktower-lite.json
 - Permission wildcards for skill/MCP access control
 
 ## Flow
@@ -101,7 +101,7 @@ Each agent is a prompt + permission set. Config system uses:
 ### Example Root Atlas
 
 ```markdown
-# Repository Atlas: oh-my-opencode-lite
+# Repository Atlas: blacktower-lite
 
 ## Project Responsibility
 A high-performance, low-latency agent orchestration plugin for OpenCode, focusing on specialized sub-agent delegation and native task orchestration.
@@ -109,7 +109,7 @@ A high-performance, low-latency agent orchestration plugin for OpenCode, focusin
 ## System Entry Points
 - `src/index.ts`: Plugin initialization and OpenCode integration.
 - `package.json`: Dependency manifest and build scripts.
-- `oh-my-opencode-lite.json`: User configuration schema.
+- `blacktower-lite.json`: User configuration schema.
 
 ## Directory Map (Aggregated)
 | Directory | Responsibility Summary | Detailed Map |

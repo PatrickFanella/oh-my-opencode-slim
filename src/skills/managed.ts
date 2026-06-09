@@ -18,7 +18,7 @@ export interface MaterializeCuratedSkillsResult {
 }
 
 export function getManagedSkillsDir(configDir = getConfigDir()): string {
-  return join(configDir, 'oh-my-opencode-slim', 'managed-skills');
+  return join(configDir, 'blacktower', 'managed-skills');
 }
 
 export function getCuratedSkillNamesForAgents(

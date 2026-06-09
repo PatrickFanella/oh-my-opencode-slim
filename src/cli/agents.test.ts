@@ -18,7 +18,7 @@ async function withTempConfig<T>(
   const previousXdg = process.env.XDG_CONFIG_HOME;
   const previousEnable =
     process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST;
-  const root = mkdtempSync(join(tmpdir(), 'omoc-agents-cli-'));
+  const root = mkdtempSync(join(tmpdir(), 'blacktower-agents-cli-'));
   const configDir = join(root, 'opencode');
 
   try {
@@ -82,12 +82,7 @@ describe('agents CLI', () => {
         ]),
       );
 
-      const path = join(
-        configDir,
-        'oh-my-opencode-slim',
-        'agents',
-        'weird-expert.json',
-      );
+      const path = join(configDir, 'blacktower', 'agents', 'weird-expert.json');
       const json = JSON.parse(readFileSync(path, 'utf-8'));
 
       expect(exitCode).toBe(0);
@@ -101,7 +96,7 @@ describe('agents CLI', () => {
 
   test('agents validate returns non-zero for invalid JSON definitions', async () => {
     await withTempConfig(async (configDir) => {
-      const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+      const agentDir = join(configDir, 'blacktower', 'agents');
       mkdirSync(agentDir, { recursive: true });
       writeFileSync(join(agentDir, 'bad.json'), '{ bad');
 
@@ -113,7 +108,7 @@ describe('agents CLI', () => {
 
   test('agents validate rejects missing model', async () => {
     await withTempConfig(async (configDir) => {
-      const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+      const agentDir = join(configDir, 'blacktower', 'agents');
       mkdirSync(agentDir, { recursive: true });
       writeFileSync(
         join(agentDir, 'missing-model.json'),
@@ -128,7 +123,7 @@ describe('agents CLI', () => {
 
   test('agents validate rejects built-in agent names', async () => {
     await withTempConfig(async (configDir) => {
-      const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+      const agentDir = join(configDir, 'blacktower', 'agents');
       mkdirSync(agentDir, { recursive: true });
       writeFileSync(
         join(agentDir, 'oracle.json'),
@@ -143,7 +138,7 @@ describe('agents CLI', () => {
 
   test('agents validate catches runtime orchestratorPrompt errors', async () => {
     await withTempConfig(async (configDir) => {
-      const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+      const agentDir = join(configDir, 'blacktower', 'agents');
       mkdirSync(agentDir, { recursive: true });
       writeFileSync(
         join(agentDir, 'janitor.json'),

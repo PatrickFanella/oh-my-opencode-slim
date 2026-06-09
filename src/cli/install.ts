@@ -7,16 +7,16 @@ import {
   detectCurrentConfig,
   disableDefaultAgents,
   enableLspByDefault,
-  generateLiteConfig,
+  generateBlacktowerConfig,
   getOpenCodePath,
   getOpenCodeVersion,
   isOpenCodeInstalled,
   isTmuxInstalled,
   materializeDefaultBoardAgentDefinitions,
   warmOpenCodePluginCache,
-  writeLiteConfig,
+  writeBlacktowerConfig,
 } from './config-manager';
-import { getExistingLiteConfigPath } from './paths';
+import { getExistingBlacktowerConfigPath } from './paths';
 import type { ConfigMergeResult, InstallArgs, InstallConfig } from './types';
 
 // Colors
@@ -38,14 +38,12 @@ const SYMBOLS = {
   star: `${YELLOW}★${RESET}`,
 };
 
-const GITHUB_REPO = 'alvinunreal/oh-my-opencode-slim';
+const GITHUB_REPO = 'blacktower/blacktower';
 const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 
 function printHeader(isUpdate: boolean): void {
   console.log();
-  console.log(
-    `${BOLD}oh-my-opencode-slim ${isUpdate ? 'Update' : 'Install'}${RESET}`,
-  );
+  console.log(`${BOLD}blacktower ${isUpdate ? 'Update' : 'Install'}${RESET}`);
   console.log('='.repeat(30));
   console.log();
 }
@@ -195,7 +193,7 @@ async function runInstall(config: InstallConfig): Promise<number> {
     const { ok } = await checkOpenCodeInstalled();
     if (!ok) return 1;
   }
-  printStep(step++, totalSteps, 'Adding oh-my-opencode-slim plugin...');
+  printStep(step++, totalSteps, 'Adding blacktower plugin...');
   if (config.dryRun) {
     printInfo('Dry run mode - skipping plugin installation');
   } else {
@@ -267,13 +265,13 @@ async function runInstall(config: InstallConfig): Promise<number> {
     if (!handleStepResult(mcpResult, 'MCP definitions installed')) return 1;
   }
 
-  printStep(step++, totalSteps, 'Writing oh-my-opencode-slim configuration...');
+  printStep(step++, totalSteps, 'Writing blacktower configuration...');
   if (config.dryRun) {
-    const liteConfig = generateLiteConfig(config);
+    const blacktowerConfig = generateBlacktowerConfig(config);
     printInfo('Dry run mode - configuration that would be written:');
-    console.log(`\n${JSON.stringify(liteConfig, null, 2)}\n`);
+    console.log(`\n${JSON.stringify(blacktowerConfig, null, 2)}\n`);
   } else {
-    const configPath = getExistingLiteConfigPath();
+    const configPath = getExistingBlacktowerConfigPath();
     const configExists = existsSync(configPath);
 
     if (configExists && !config.reset) {
@@ -282,13 +280,13 @@ async function runInstall(config: InstallConfig): Promise<number> {
           'Use --reset to overwrite.',
       );
     } else {
-      const liteResult = writeLiteConfig(
+      const blacktowerResult = writeBlacktowerConfig(
         config,
         configExists ? configPath : undefined,
       );
       if (
         !handleStepResult(
-          liteResult,
+          blacktowerResult,
           configExists ? 'Config reset' : 'Config written',
         )
       )
@@ -304,7 +302,7 @@ async function runInstall(config: InstallConfig): Promise<number> {
   console.log(`${BOLD}Next steps:${RESET}`);
   console.log();
 
-  const configPath = getExistingLiteConfigPath();
+  const configPath = getExistingBlacktowerConfigPath();
 
   console.log('  1. Log in to the provider(s) you want to use:');
   console.log(`     ${BLUE}$ opencode auth login${RESET}`);
@@ -324,12 +322,12 @@ async function runInstall(config: InstallConfig): Promise<number> {
 
   const modelsInfo = config.preset
     ? `Generated ${config.preset} preset and made it active.`
-    : 'Wrote schema-only OMOC config; code-owned defaults are active.';
+    : 'Wrote schema-only Blacktower config; code-owned defaults are active.';
   console.log(`${modelsInfo}`);
   const altProviders = 'For the full configuration reference, see:';
   console.log(altProviders);
   const docsUrl =
-    'https://github.com/alvinunreal/oh-my-opencode-slim/' +
+    'https://github.com/blacktower/blacktower/' +
     'blob/master/docs/configuration.md';
   console.log(`  ${BLUE}${docsUrl}${RESET}`);
   console.log();

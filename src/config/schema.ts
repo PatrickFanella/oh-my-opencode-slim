@@ -398,7 +398,7 @@ export const PluginConfigSchema = z
       .boolean()
       .optional()
       .describe(
-        'Disable automatic installation of plugin updates when false. Defaults to true.',
+        'Enable automatic installation of plugin updates when true. Defaults to false.',
       ),
     manualPlan: ManualPlanSchema.optional(),
     packages: z

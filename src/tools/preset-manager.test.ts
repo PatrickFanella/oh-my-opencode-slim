@@ -38,7 +38,9 @@ let tempDir: string;
 
 beforeEach(() => {
   previousXdgDataHome = process.env.XDG_DATA_HOME;
-  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omos-preset-manager-'));
+  tempDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'blacktower-preset-manager-'),
+  );
   process.env.XDG_DATA_HOME = tempDir;
   setActiveRuntimePreset(null);
 });

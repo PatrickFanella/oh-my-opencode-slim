@@ -16,28 +16,28 @@ export const CLI_SHORTCUTS = [
     target: 'bootstrap',
     defaults: ['--with-dcp', '--with-quota', '--with-rtk'],
     description: 'Full bootstrap',
-    example: 'bunx oh-my-opencode-slim setup',
+    example: 'bunx blacktower setup',
   },
   {
     name: 'preview',
     target: 'bootstrap',
     defaults: ['--with-dcp', '--with-quota', '--with-rtk', '--dry-run'],
     description: 'Bootstrap preview',
-    example: 'bunx oh-my-opencode-slim preview',
+    example: 'bunx blacktower preview',
   },
   {
     name: 'update',
     target: 'install',
     defaults: ['--no-tui', '--skills=yes'],
     description: 'Update existing install',
-    example: 'bunx oh-my-opencode-slim update',
+    example: 'bunx blacktower update',
   },
   {
     name: 'repair',
     target: 'bootstrap',
     defaults: ['--with-dcp', '--with-quota', '--with-rtk', '--reset'],
     description: 'Recreate config directory',
-    example: 'bunx oh-my-opencode-slim repair',
+    example: 'bunx blacktower repair',
   },
 ] as const satisfies readonly ShortcutDefinition[];
 

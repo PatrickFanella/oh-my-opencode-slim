@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the bundled skill catalog index for OMOC."""
+"""Generate the bundled skill catalog index for blacktower."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from collections import Counter
 from pathlib import Path
 
 
-OMOC_DIRECT_SKILLS = {"clonedeps", "codemap", "simplify"}
+BLACKTOWER_DIRECT_SKILLS = {"clonedeps", "codemap", "simplify"}
 
 
 def split_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -55,7 +55,7 @@ def iter_skill_dirs(skills_root: Path):
         rel_parts = skill_dir.relative_to(skills_root).parts
         if any(part.startswith(".") for part in rel_parts):
             continue
-        if len(rel_parts) == 1 and rel_parts[0] in OMOC_DIRECT_SKILLS:
+        if len(rel_parts) == 1 and rel_parts[0] in BLACKTOWER_DIRECT_SKILLS:
             continue
         yield skill_dir
 

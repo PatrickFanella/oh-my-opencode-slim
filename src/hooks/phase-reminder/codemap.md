@@ -11,9 +11,9 @@ Keep orchestrator guidance aligned over long turns by prepending a phase reminde
 - Message filtering is role/agent-aware:
   - locates the latest `'user'` role in `output.messages`,
   - only mutates if no explicit agent or `agent === 'orchestrator'`,
-  - no-op for internal control messages containing `SLIM_INTERNAL_INITIATOR_MARKER`.
+  - no-op for internal control messages containing `BLACKTOWER_INTERNAL_INITIATOR_MARKER`.
 - Mutation target is the first `text` part in that message; replacement is an in-place prefix.
-- Uses `SLIM_INTERNAL_INITIATOR_MARKER` from `../../utils` to avoid feedback loops.
+- Uses `BLACKTOWER_INTERNAL_INITIATOR_MARKER` from `../../utils` to avoid feedback loops.
 
 ## Flow
 

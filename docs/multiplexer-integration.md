@@ -15,7 +15,7 @@ Use tmux or Zellij to watch subagents work in live panes while OpenCode keeps ru
 
 ## Overview
 
-When OpenCode launches child agent sessions, oh-my-opencode-slim can open panes for those sessions automatically.
+When OpenCode launches child agent sessions, blacktower can open panes for those sessions automatically.
 
 - **Real-time visibility** into agent activity
 - **Automatic pane management** while tasks run
@@ -33,7 +33,7 @@ If you open multiple OpenCode sessions, use a random high port for each launch i
 **Bash helper:**
 
 ```bash
-__omoc_opencode_with_port() {
+__blacktower_opencode_with_port() {
   local port
   if command -v shuf >/dev/null 2>&1; then
     port="$(shuf -i 49152-65535 -n 1)"
@@ -46,10 +46,9 @@ __omoc_opencode_with_port() {
   OPENCODE_PORT="$port" command opencode --port "$port" "$@"
 }
 
-omos() { __omoc_opencode_with_port "$@"; }
-opencode() { __omoc_opencode_with_port "$@"; }
-oc() { __omoc_opencode_with_port "$@"; }
-occ() { __omoc_opencode_with_port --continue "$@"; }
+opencode() { __blacktower_opencode_with_port "$@"; }
+oc() { __blacktower_opencode_with_port "$@"; }
+occ() { __blacktower_opencode_with_port --continue "$@"; }
 ```
 
 ---
@@ -58,10 +57,10 @@ occ() { __omoc_opencode_with_port --continue "$@"; }
 
 ### 1. Configure the multiplexer if needed
 
-OMOC defaults to tmux with `main-vertical` layout and `main_pane_size: 60`, so
+Blacktower defaults to tmux with `main-vertical` layout and `main_pane_size: 60`, so
 you can omit multiplexer config entirely for the standard tmux setup.
 
-Edit `~/.config/opencode/oh-my-opencode-slim.json` (or `.jsonc`) only when you
+Edit `~/.config/opencode/blacktower.json` (or `.jsonc`) only when you
 want to change or disable those defaults:
 
 **Auto-detect tmux/Zellij:**

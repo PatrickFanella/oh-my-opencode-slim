@@ -45,8 +45,8 @@ const RTK_INIT_COMMAND = 'rtk init -g --opencode --auto-patch';
 const SCHEDULED_TASKS_INSTALL_DAEMON_COMMAND = 'bunx opencode-tasks --install';
 const SCHEDULED_TASKS_INSTALL_COMMANDS_COMMAND =
   'bunx opencode-tasks --install-commands';
-const HELPER_START = '# >>> oh-my-opencode-slim tmux helper >>>';
-const HELPER_END = '# <<< oh-my-opencode-slim tmux helper <<<';
+const HELPER_START = '# >>> blacktower tmux helper >>>';
+const HELPER_END = '# <<< blacktower tmux helper <<<';
 const DCP_SCHEMA_URL =
   'https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json';
 const OPENCODE_PLUGIN_PACKAGE_VERSION = '1.15.3';
@@ -89,7 +89,7 @@ const DCP_DEFAULTS = {
   $schema: DCP_SCHEMA_URL,
   enabled: true,
   debug: false,
-  autoUpdate: true,
+  autoUpdate: false,
   commands: {
     enabled: true,
     protectedTools: [],
@@ -222,10 +222,8 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
 
 function printHeader(): void {
   console.log();
-  console.log(`${BOLD}OMOC Bootstrap${RESET}`);
-  console.log(
-    `${DIM}Fully automated OpenCode + oh-my-opencode-slim setup${RESET}`,
-  );
+  console.log(`${BOLD}Blacktower Bootstrap${RESET}`);
+  console.log(`${DIM}Fully automated OpenCode + blacktower setup${RESET}`);
   console.log();
 }
 
@@ -341,7 +339,11 @@ export async function backupOpenCodeConfig(
   dryRun = false,
 ): Promise<StepResult> {
   const configDir = getConfigDir();
-  const backupDir = join(configDir, 'backups', `omoc-bootstrap-${timestamp()}`);
+  const backupDir = join(
+    configDir,
+    'backups',
+    `blacktower-bootstrap-${timestamp()}`,
+  );
 
   if (!existsSync(configDir)) {
     return { ok: true, message: 'No existing OpenCode config directory found' };
@@ -749,8 +751,8 @@ function getPluginSpec(entry: unknown): string | undefined {
   return undefined;
 }
 
-function isOmocPluginSpec(pluginSpec: string): boolean {
-  return pluginSpec.includes('oh-my-opencode-slim');
+function isBlacktowerPluginSpec(pluginSpec: string): boolean {
+  return pluginSpec.includes('blacktower');
 }
 
 export function addPluginsToConfig(
@@ -765,13 +767,13 @@ export function addPluginsToConfig(
     return true;
   });
 
-  const firstOmocIndex = plugins.findIndex((entry) => {
+  const firstBlacktowerIndex = plugins.findIndex((entry) => {
     const pluginSpec = getPluginSpec(entry);
-    return pluginSpec ? isOmocPluginSpec(pluginSpec) : false;
+    return pluginSpec ? isBlacktowerPluginSpec(pluginSpec) : false;
   });
 
-  if (firstOmocIndex === -1) plugins.push(...missingPlugins);
-  else plugins.splice(firstOmocIndex, 0, ...missingPlugins);
+  if (firstBlacktowerIndex === -1) plugins.push(...missingPlugins);
+  else plugins.splice(firstBlacktowerIndex, 0, ...missingPlugins);
 
   return { ...config, plugin: plugins };
 }
@@ -999,7 +1001,7 @@ export function ensureDesiredOpenCodeDirectory(dryRun = false): StepResult {
   const targets = [
     join(configDir, 'backups'),
     join(configDir, 'commands'),
-    join(configDir, 'oh-my-opencode-slim'),
+    join(configDir, 'blacktower'),
     join(configDir, 'plugins'),
     join(configDir, 'skills'),
   ];
@@ -1085,7 +1087,7 @@ export function tmuxHelperBlock(): string {
   return `${HELPER_START}
 unalias opencode oc occ 2>/dev/null || true
 
-__omoc_opencode_with_port() {
+__blacktower_opencode_with_port() {
   local port
   if command -v shuf >/dev/null 2>&1; then
     port="$(shuf -i 49152-65535 -n 1)"
@@ -1098,27 +1100,23 @@ __omoc_opencode_with_port() {
   OPENCODE_PORT="$port" command opencode --port "$port" "$@"
 }
 
-omos() {
-  __omoc_opencode_with_port "$@"
-}
-
 opencode() {
-  __omoc_opencode_with_port "$@"
+  __blacktower_opencode_with_port "$@"
 }
 
 oc() {
-  __omoc_opencode_with_port "$@"
+  __blacktower_opencode_with_port "$@"
 }
 
 occ() {
-  __omoc_opencode_with_port --continue "$@"
+  __blacktower_opencode_with_port --continue "$@"
 }
 ${HELPER_END}`;
 }
 
-function hasSafeLegacyHelper(content: string): boolean {
+function hasSafeExistingHelper(content: string): boolean {
   if (
-    !content.includes('omos()') ||
+    !content.includes('opencode()') ||
     !content.includes('OPENCODE_PORT="$port"')
   ) {
     return false;
@@ -1134,9 +1132,8 @@ function hasSafeLegacyHelper(content: string): boolean {
 
   return (
     content.includes('opencode()') &&
-    (content.includes('alias oc="omos"') || content.includes('oc()')) &&
-    (content.includes('alias occ="omos --continue"') ||
-      content.includes('occ()'))
+    content.includes('oc()') &&
+    content.includes('occ()')
   );
 }
 
@@ -1151,7 +1148,7 @@ export function upsertManagedBlock(content: string, block: string): string {
       .trimStart()}`;
   }
 
-  if (hasSafeLegacyHelper(content)) {
+  if (hasSafeExistingHelper(content)) {
     return content;
   }
 
@@ -1180,7 +1177,7 @@ async function installShellHelper(args: BootstrapArgs): Promise<StepResult> {
   if (args.dryRun) {
     return {
       ok: true,
-      message: `Would install omos helper in ${targets.join(', ')}`,
+      message: `Would install OpenCode shell helper in ${targets.join(', ')}`,
     };
   }
 
@@ -1191,12 +1188,13 @@ async function installShellHelper(args: BootstrapArgs): Promise<StepResult> {
 
   return {
     ok: true,
-    message: `Installed omos helper in ${targets.join(', ')}`,
+    message: `Installed OpenCode shell helper in ${targets.join(', ')}`,
   };
 }
 
-async function runOmocInstall(args: BootstrapArgs): Promise<StepResult> {
-  if (args.dryRun) return { ok: true, message: 'Would run OMOC installer' };
+async function runBlacktowerInstall(args: BootstrapArgs): Promise<StepResult> {
+  if (args.dryRun)
+    return { ok: true, message: 'Would run Blacktower installer' };
 
   const installArgs: InstallArgs = {
     tui: false,
@@ -1207,8 +1205,11 @@ async function runOmocInstall(args: BootstrapArgs): Promise<StepResult> {
 
   const exitCode = await install(installArgs);
   return exitCode === 0
-    ? { ok: true, message: 'OMOC installer completed' }
-    : { ok: false, message: `OMOC installer exited with code ${exitCode}` };
+    ? { ok: true, message: 'Blacktower installer completed' }
+    : {
+        ok: false,
+        message: `Blacktower installer exited with code ${exitCode}`,
+      };
 }
 
 function printSummary(): void {
@@ -1219,7 +1220,7 @@ function printSummary(): void {
   console.log(`  ${BLUE}opencode auth login${RESET}`);
   console.log(`  ${BLUE}opencode models --refresh${RESET}`);
   console.log(
-    `  ${BLUE}omos${RESET} ${DIM}# tmux-friendly OpenCode launcher${RESET}`,
+    `  ${BLUE}opencode${RESET} ${DIM}# tmux-friendly OpenCode launcher${RESET}`,
   );
   console.log();
 }
@@ -1280,8 +1281,8 @@ export async function bootstrap(args: BootstrapArgs): Promise<number> {
   )
     return 1;
   if (
-    !(await step(index++, total, 'Install oh-my-opencode-slim', () =>
-      runOmocInstall(args),
+    !(await step(index++, total, 'Install blacktower', () =>
+      runBlacktowerInstall(args),
     ))
   )
     return 1;

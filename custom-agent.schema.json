@@ -82,6 +82,6 @@
   },
   "required": ["name", "model"],
   "additionalProperties": false,
-  "title": "oh-my-opencode-slim custom agent definition",
-  "description": "Schema for JSON custom agents loaded from oh-my-opencode-slim/agents/*.json"
+  "title": "blacktower custom agent definition",
+  "description": "Schema for JSON custom agents loaded from blacktower/agents/*.json"
 }

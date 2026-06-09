@@ -14,7 +14,10 @@ import {
 let tmpDir = '';
 
 beforeEach(() => {
-  tmpDir = join('/tmp', `omoc-control-center-${Date.now()}-${Math.random()}`);
+  tmpDir = join(
+    '/tmp',
+    `blacktower-control-center-${Date.now()}-${Math.random()}`,
+  );
   mkdirSync(tmpDir, { recursive: true });
 });
 

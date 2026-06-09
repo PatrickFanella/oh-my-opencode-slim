@@ -76,16 +76,16 @@ function parseArgs(args: string[]): InstallArgs {
 
 function printHelp(): void {
   console.log(`
-oh-my-opencode-slim installer
+blacktower installer
 
 Usage:
-  bunx oh-my-opencode-slim install [OPTIONS]
-  bunx oh-my-opencode-slim bootstrap [OPTIONS]
-  bunx oh-my-opencode-slim control-center [OPTIONS]
-  bunx oh-my-opencode-slim control-center-web [OPTIONS]
-  bunx oh-my-opencode-slim agents <list|validate|create> [OPTIONS]
-  bunx oh-my-opencode-slim switch-agents [provider] [--dry-run]
-  bunx oh-my-opencode-slim doctor [OPTIONS]
+  bunx blacktower install [OPTIONS]
+  bunx blacktower bootstrap [OPTIONS]
+  bunx blacktower control-center [OPTIONS]
+  bunx blacktower control-center-web [OPTIONS]
+  bunx blacktower agents <list|validate|create> [OPTIONS]
+  bunx blacktower switch-agents [provider] [--dry-run]
+  bunx blacktower doctor [OPTIONS]
 
 Options:
   --skills=yes|no        Enable code-managed bundled skills (default: yes)
@@ -107,7 +107,7 @@ Bootstrap options:
   --yes, -y              Non-interactive bootstrap confirmation flag
   --skip-opencode        Skip OpenCode install/update
   --skip-build           Skip bun install and bun run build
-  --skip-shell-helper    Skip omos tmux helper install
+  --skip-shell-helper    Skip tmux-friendly OpenCode shell helper install
   --skip-rtk-init        Install rtk but skip rtk init
   --skip-scheduled-tasks-daemon
                          Add plugin but skip launchd/systemd daemon install
@@ -155,20 +155,20 @@ selected DCP/quota sidecar config.
 For the full config reference, see docs/configuration.md.
 
 Examples:
-  bunx oh-my-opencode-slim install
-  bunx oh-my-opencode-slim install --no-tui --skills=yes
-  bunx oh-my-opencode-slim install --preset=opencode-go
-  bunx oh-my-opencode-slim install --reset
-  bunx oh-my-opencode-slim bootstrap --with-dcp --with-quota --with-rtk
-  bunx oh-my-opencode-slim setup
-  bunx oh-my-opencode-slim preview
-  bunx oh-my-opencode-slim update
-  bunx oh-my-opencode-slim repair
-  bunx oh-my-opencode-slim control-center
-  bunx oh-my-opencode-slim control-center --no-tui
-  bunx oh-my-opencode-slim control-center-web --open
-  bunx oh-my-opencode-slim agents list
-  bunx oh-my-opencode-slim doctor
+  bunx blacktower install
+  bunx blacktower install --no-tui --skills=yes
+  bunx blacktower install --preset=opencode-go
+  bunx blacktower install --reset
+  bunx blacktower bootstrap --with-dcp --with-quota --with-rtk
+  bunx blacktower setup
+  bunx blacktower preview
+  bunx blacktower update
+  bunx blacktower repair
+  bunx blacktower control-center
+  bunx blacktower control-center --no-tui
+  bunx blacktower control-center-web --open
+  bunx blacktower agents list
+  bunx blacktower doctor
 `);
 }
 
@@ -193,7 +193,7 @@ async function switchAgents(args: string[]): Promise<number> {
       homedir(),
       '.config',
       'opencode',
-      'oh-my-opencode-slim',
+      'blacktower',
       'agents',
     );
     const sampleFile = join(agentsDir, 'python-advisor.json');
@@ -216,9 +216,7 @@ async function switchAgents(args: string[]): Promise<number> {
       );
     }
     console.log('');
-    console.log(
-      `Usage: bunx oh-my-opencode-slim switch-agents <provider> [--dry-run]`,
-    );
+    console.log(`Usage: bunx blacktower switch-agents <provider> [--dry-run]`);
     return 0;
   }
 

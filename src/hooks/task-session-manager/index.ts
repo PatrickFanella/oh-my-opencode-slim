@@ -2,11 +2,11 @@ import path from 'node:path';
 import type { PluginInput } from '@opencode-ai/plugin';
 import type { AgentName } from '../../config';
 import {
+  BLACKTOWER_INTERNAL_INITIATOR_MARKER,
   type ContextFile,
   deriveTaskSessionLabel,
   parseTaskIdFromTaskOutput,
   SessionManager,
-  SLIM_INTERNAL_INITIATOR_MARKER,
 } from '../../utils';
 
 interface TaskArgs {
@@ -377,7 +377,8 @@ export function createTaskSessionManagerHook(
           (part) => part.type === 'text' && typeof part.text === 'string',
         );
         if (!textPart) return;
-        if (textPart.text?.includes(SLIM_INTERNAL_INITIATOR_MARKER)) return;
+        if (textPart.text?.includes(BLACKTOWER_INTERNAL_INITIATOR_MARKER))
+          return;
         if (textPart.text?.includes(RESUMABLE_SESSIONS_START)) return;
 
         textPart.text = [

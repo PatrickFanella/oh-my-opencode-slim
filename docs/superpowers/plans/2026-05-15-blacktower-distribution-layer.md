@@ -1,16 +1,16 @@
-# OMOC Distribution Layer Implementation Plan
+# Blacktower Distribution Layer Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make oh-my-opencode-slim viable as the primary OpenCode distribution layer while keeping DCP and quota concerns separate.
+**Goal:** Make blacktower viable as the primary OpenCode distribution layer while keeping DCP and quota concerns separate.
 
-**Architecture:** OpenCode remains the host runtime for auth, providers, schema validation, and core session execution. OMOC becomes the config-driven composition layer for agents, MCP defaults, tools, hooks, presets, bundled skills, install docs, and migration guidance. DCP and quota stay outside OMOC except for explicit integration boundaries documented as non-goals.
+**Architecture:** OpenCode remains the host runtime for auth, providers, schema validation, and core session execution. Blacktower becomes the config-driven composition layer for agents, MCP defaults, tools, hooks, presets, bundled skills, install docs, and migration guidance. DCP and quota stay outside Blacktower except for explicit integration boundaries documented as non-goals.
 
 **Tech Stack:** TypeScript, Bun, Zod, OpenCode plugin API, OpenCode JSON/JSONC config, Biome.
 
 **pipeline-type:** full
 **persistence-mode:** hybrid
-**change-name:** omoc-distribution-layer
+**change-name:** blacktower-distribution-layer
 
 ---
 
@@ -18,7 +18,7 @@
 
 User decisions from requirements interview:
 
-- Use OMOC as the main OpenCode plugin/distribution layer.
+- Use Blacktower as the main OpenCode plugin/distribution layer.
 - Keep DCP and quota separate.
 - Prefer config over new environment variables for behavior settings.
 - Accept manual migration and curated bundling rather than magic import from `.agents`.
@@ -32,7 +32,7 @@ User decisions from requirements interview:
 | Logic depth | Medium | Mostly config/install/docs wiring, but installer and runtime config must stay coherent. |
 | Contract sensitivity | High | Touches OpenCode plugin/config contract and startup behavior. |
 | Context span | High | Spans config schema, CLI installer, skill registry, docs, and runtime boundaries. |
-| Discovery need | Medium | Current OMOC surface is known; user-specific `.agents` inventory is not. |
+| Discovery need | Medium | Current Blacktower surface is known; user-specific `.agents` inventory is not. |
 | Failure cost | Medium | Bad config can break startup, but changes are reversible. |
 | Concern coupling | High | Agents, skills, MCPs, OpenCode host config, DCP/quota boundaries, and docs interact. |
 
@@ -41,9 +41,9 @@ Route: **full written plan + review gate**.
 ## Non-Goals
 
 - Do not replace OpenCode itself.
-- Do not move auth/provider registry/model refresh into OMOC.
-- Do not merge DCP into OMOC.
-- Do not merge quota management into OMOC.
+- Do not move auth/provider registry/model refresh into Blacktower.
+- Do not merge DCP into Blacktower.
+- Do not merge quota management into Blacktower.
 - Do not add new behavior env vars for this migration unless a future requirement explicitly demands it.
 - Do not auto-import arbitrary `.agents` content in the first pass.
 
@@ -54,20 +54,20 @@ Potential files to modify during implementation:
 - Modify: `src/config/schema.ts`
   - Add any explicit distribution-mode config only if needed after inventory. Prefer existing `packages`, `packageDefinitions`, `agents`, `presets`, `disabled_mcps`, and skill permissions before adding fields.
 - Modify: `src/cli/custom-skills.ts`
-  - Add curated OMOC-bundled skills copied from `src/skills/` into OpenCode config skills dir.
+  - Add curated Blacktower-bundled skills copied from `src/skills/` into OpenCode config skills dir.
 - Modify: `src/cli/skills.ts`
   - Keep external recommended skills minimal; do not grow this into an uncontrolled `.agents` mirror.
 - Modify: `src/cli/install.ts`
-  - Ensure install output explains OMOC-as-distribution usage and skill install boundaries.
+  - Ensure install output explains Blacktower-as-distribution usage and skill install boundaries.
 - Modify: `docs/configuration.md`
-  - Document minimal OpenCode config, OMOC config ownership, DCP/quota boundaries, and no-new-env stance.
+  - Document minimal OpenCode config, Blacktower config ownership, DCP/quota boundaries, and no-new-env stance.
 - Modify: `docs/skills.md`
   - Document bundled vs recommended vs permission-only skill categories and migration criteria.
 - Modify: `docs/installation.md`
-  - Add “single OMOC plugin” setup path and rollback steps.
+  - Add “single Blacktower plugin” setup path and rollback steps.
 - Modify: `docs/mcps.md`
-  - Document OMOC MCP defaults and where non-OMOC MCPs should live.
-- Create: `docs/omoc-distribution-layer.md`
+  - Document Blacktower MCP defaults and where non-Blacktower MCPs should live.
+- Create: `docs/blacktower-distribution-layer.md`
   - User-facing architecture and migration guide.
 - Test: `src/config/schema.test.ts` or nearest existing config tests
   - Validate any new config shape or package composition behavior.
@@ -90,7 +90,7 @@ Potential files to modify during implementation:
 - Read: `docs/mcps.md`
 - Read: `docs/installation.md`
 
-- [ ] **Step 1: Confirm no DCP namespace exists in OMOC**
+- [ ] **Step 1: Confirm no DCP namespace exists in Blacktower**
 
 Run:
 
@@ -108,17 +108,17 @@ Expected:
 Run:
 
 ```bash
-rg -n "process\.env|OH_MY_OPENCODE_SLIM|OPENCODE_" src/config src/cli docs/configuration.md
+rg -n "process\.env|BLACKTOWER|OPENCODE_" src/config src/cli docs/configuration.md
 ```
 
 Expected:
 
 - Env vars mostly locate config/state/log dirs.
-- `OH_MY_OPENCODE_SLIM_PRESET` is the only behavior-style override found in prior discovery.
+- `BLACKTOWER_PRESET` is the only behavior-style override found in prior discovery.
 
 - [ ] **Step 3: Write findings into implementation notes**
 
-Add a short “Boundary Findings” section to `docs/omoc-distribution-layer.md` in Task 4. Do not modify code in this task.
+Add a short “Boundary Findings” section to `docs/blacktower-distribution-layer.md` in Task 4. Do not modify code in this task.
 
 - [ ] **Step 4: Commit inventory doc changes only if Task 4 file already exists**
 
@@ -138,13 +138,13 @@ Add this policy to `docs/skills.md`:
 ```markdown
 ## Skill Packaging Policy
 
-OMOC treats skills in three categories:
+Blacktower treats skills in three categories:
 
-1. **Bundled custom skills** live in `src/skills/` and are copied into the OpenCode config directory by the installer. Use this for skills that are core to OMOC workflows and maintained with this repo.
+1. **Bundled custom skills** live in `src/skills/` and are copied into the OpenCode config directory by the installer. Use this for skills that are core to Blacktower workflows and maintained with this repo.
 2. **Recommended external skills** are installed through the skills CLI during setup. Use this only for skills with an upstream owner or external runtime dependency.
-3. **Permission-only skills** are not installed by OMOC. OMOC only grants agent permission for users who already have them.
+3. **Permission-only skills** are not installed by Blacktower. Blacktower only grants agent permission for users who already have them.
 
-For the OMOC distribution-layer path, prefer bundled custom skills for core orchestration workflows and keep DCP/quota-related skills outside OMOC unless a future design explicitly defines an integration boundary.
+For the Blacktower distribution-layer path, prefer bundled custom skills for core orchestration workflows and keep DCP/quota-related skills outside Blacktower unless a future design explicitly defines an integration boundary.
 ```
 
 - [ ] **Step 2: Run docs check**
@@ -177,20 +177,20 @@ git commit -m "docs: define skill packaging policy"
 Add a section to `docs/configuration.md` near “Config Files”:
 
 ```markdown
-## OMOC as Distribution Layer
+## Blacktower as Distribution Layer
 
 For a single-plugin setup, keep OpenCode core config small:
 
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["oh-my-opencode-slim"]
+  "plugin": ["blacktower"]
 }
 ```
 
-OpenCode should continue owning auth, provider registration, model refresh, and host runtime behavior. OMOC owns its own plugin config in `~/.config/opencode/oh-my-opencode-slim.jsonc`: agents, presets, MCP assignments, multiplexer/session behavior, council, and bundled skill permissions.
+OpenCode should continue owning auth, provider registration, model refresh, and host runtime behavior. Blacktower owns its own plugin config in `~/.config/opencode/blacktower.jsonc`: agents, presets, MCP assignments, multiplexer/session behavior, council, and bundled skill permissions.
 
-DCP and quota systems are intentionally separate. Do not add them to OMOC config unless a future integration plan defines a narrow contract.
+DCP and quota systems are intentionally separate. Do not add them to Blacktower config unless a future integration plan defines a narrow contract.
 ```
 
 - [ ] **Step 2: Add install path to installation docs**
@@ -200,15 +200,15 @@ Add a short “Single-plugin setup” section to `docs/installation.md`:
 ```markdown
 ## Single-plugin setup
 
-If you use OpenCode as your only harness, OMOC can act as your main distribution layer:
+If you use OpenCode as your only harness, Blacktower can act as your main distribution layer:
 
-1. Install OMOC normally.
+1. Install Blacktower normally.
 2. Keep `~/.config/opencode/opencode.json` focused on plugin registration and OpenCode host settings.
-3. Put OMOC behavior in `~/.config/opencode/oh-my-opencode-slim.jsonc`.
-4. Keep DCP and quota tooling separate from OMOC.
+3. Put Blacktower behavior in `~/.config/opencode/blacktower.jsonc`.
+4. Keep DCP and quota tooling separate from Blacktower.
 5. Migrate only the skills and MCPs you actually use.
 
-Rollback is simple: remove `oh-my-opencode-slim` from OpenCode's `plugin` array and restart OpenCode.
+Rollback is simple: remove `blacktower` from OpenCode's `plugin` array and restart OpenCode.
 ```
 
 - [ ] **Step 3: Validate docs formatting**
@@ -225,23 +225,23 @@ Expected: PASS.
 
 ```bash
 git add docs/configuration.md docs/installation.md
-git commit -m "docs: describe OMOC distribution setup"
+git commit -m "docs: describe Blacktower distribution setup"
 ```
 
 ### Task 4: Create Migration Guide
 
 **Files:**
-- Create: `docs/omoc-distribution-layer.md`
+- Create: `docs/blacktower-distribution-layer.md`
 - Modify: `README.md`
 
 - [ ] **Step 1: Create guide**
 
-Create `docs/omoc-distribution-layer.md` with:
+Create `docs/blacktower-distribution-layer.md` with:
 
 ```markdown
-# OMOC as an OpenCode Distribution Layer
+# Blacktower as an OpenCode Distribution Layer
 
-OMOC can be used as the main OpenCode plugin/distribution layer for users who do not need multiple harnesses.
+Blacktower can be used as the main OpenCode plugin/distribution layer for users who do not need multiple harnesses.
 
 ## Ownership Model
 
@@ -253,7 +253,7 @@ OpenCode owns:
 - Host config schema
 - Core runtime/session execution
 
-OMOC owns:
+Blacktower owns:
 
 - Specialist agents and orchestrator routing
 - Agent model presets
@@ -268,25 +268,25 @@ External systems stay external:
 
 - DCP
 - Quota management
-- User-specific private skills that are not curated into OMOC
+- User-specific private skills that are not curated into Blacktower
 
 ## Migration Path
 
-1. Start with a minimal OpenCode config containing only OMOC plugin registration and host-level settings.
-2. Move OMOC behavior into `~/.config/opencode/oh-my-opencode-slim.jsonc`.
+1. Start with a minimal OpenCode config containing only Blacktower plugin registration and host-level settings.
+2. Move Blacktower behavior into `~/.config/opencode/blacktower.jsonc`.
 3. Inventory skills used in real workflows.
-4. Bundle only core OMOC workflow skills into `src/skills/`.
+4. Bundle only core Blacktower workflow skills into `src/skills/`.
 5. Keep externally maintained skills as recommended installs or permission-only skills.
-6. Keep DCP and quota outside OMOC.
+6. Keep DCP and quota outside Blacktower.
 7. Run `bun run check:ci`, `bun run typecheck`, and `bun test` before publishing changes.
 
 ## Decision Rules
 
-Bundle a skill when it is core to OMOC's agent workflow and maintained with this repo.
+Bundle a skill when it is core to Blacktower's agent workflow and maintained with this repo.
 
 Keep a skill external when it depends on another runtime, has its own upstream release process, or belongs to DCP/quota concerns.
 
-Use permission-only registration when OMOC should allow an already-installed skill but should not install or vendor it.
+Use permission-only registration when Blacktower should allow an already-installed skill but should not install or vendor it.
 ```
 
 - [ ] **Step 2: Link guide from README docs table**
@@ -294,7 +294,7 @@ Use permission-only registration when OMOC should allow an already-installed ski
 Add one row under “Features & Workflows” or “Config & Reference”:
 
 ```markdown
-| **[OMOC Distribution Layer](docs/omoc-distribution-layer.md)** | Use OMOC as the main OpenCode plugin layer while keeping OpenCode host duties and external systems separate |
+| **[Blacktower Distribution Layer](docs/blacktower-distribution-layer.md)** | Use Blacktower as the main OpenCode plugin layer while keeping OpenCode host duties and external systems separate |
 ```
 
 - [ ] **Step 3: Validate docs**
@@ -310,8 +310,8 @@ Expected: PASS.
 - [ ] **Step 4: Commit guide**
 
 ```bash
-git add docs/omoc-distribution-layer.md README.md
-git commit -m "docs: add OMOC distribution guide"
+git add docs/blacktower-distribution-layer.md README.md
+git commit -m "docs: add Blacktower distribution guide"
 ```
 
 ### Task 5: Add Curated Skill Migration Mechanism Only If Needed
@@ -327,7 +327,7 @@ Use this rubric:
 
 ```text
 Bundle if all are true:
-- Skill supports OMOC orchestration directly.
+- Skill supports Blacktower orchestration directly.
 - Skill has no DCP/quota ownership.
 - Skill has no external runtime install beyond normal OpenCode skill loading.
 - User uses it frequently enough to justify package maintenance.
@@ -380,7 +380,7 @@ Expected: PASS.
 
 ```bash
 git add src/cli/custom-skills.ts src/skills
-git commit -m "feat: bundle curated OMOC skill"
+git commit -m "feat: bundle curated Blacktower skill"
 ```
 
 Skip this task entirely if no skill should be bundled in the first pass.
@@ -418,7 +418,7 @@ Expected:
 Verify:
 
 - OpenCode remains host runtime.
-- OMOC owns only plugin-layer behavior.
+- Blacktower owns only plugin-layer behavior.
 - DCP and quota are explicitly documented as separate.
 - No new env var is introduced for behavior config.
 - Minimal OpenCode config example is valid.
@@ -437,10 +437,10 @@ Verify:
 
 If the migration path breaks startup:
 
-1. Remove `oh-my-opencode-slim` from `~/.config/opencode/opencode.json` plugin array.
+1. Remove `blacktower` from `~/.config/opencode/opencode.json` plugin array.
 2. Restart OpenCode.
 3. Restore previous skill path scanning or external `.agents` usage.
-4. Re-enable OMOC after fixing config/docs/installer changes.
+4. Re-enable Blacktower after fixing config/docs/installer changes.
 
 If a bundled skill causes problems:
 
@@ -450,6 +450,6 @@ If a bundled skill causes problems:
 
 ## Self-Review
 
-- Spec coverage: The plan covers OMOC as distribution layer, DCP/quota separation, config-first behavior, manual migration, docs, validation, and review gate.
+- Spec coverage: The plan covers Blacktower as distribution layer, DCP/quota separation, config-first behavior, manual migration, docs, validation, and review gate.
 - Placeholder scan: No `TBD`, `TODO`, “implement later”, or vague test-only directives remain.
 - Type consistency: New code snippets refer to existing `CUSTOM_SKILLS` shape from `src/cli/custom-skills.ts`.

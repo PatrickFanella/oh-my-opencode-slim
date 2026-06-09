@@ -37,7 +37,7 @@ export interface TuiSnapshot {
   agents: TuiAgentSnapshot[];
 }
 
-const STATE_DIR = 'oh-my-opencode-slim';
+const STATE_DIR = 'blacktower';
 const STATE_FILE = 'tui-state.json';
 const SIDEBAR_STATE_FILE = 'tui-sidebar.json';
 

@@ -1,6 +1,6 @@
 # Future Plans
 
-This document is the parking lot for planned OMOC improvements. Keep it focused
+This document is the parking lot for planned Blacktower improvements. Keep it focused
 on user-visible outcomes, with enough notes that future implementation work can
 be split into issues or PRs.
 

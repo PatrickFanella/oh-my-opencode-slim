@@ -146,7 +146,7 @@ function checkConfigFile(
 function checkPreset(
   mergedConfig: PluginConfig,
 ): PresetCheckResult | undefined {
-  const envPreset = process.env.OH_MY_OPENCODE_SLIM_PRESET;
+  const envPreset = process.env.BLACKTOWER_PRESET;
   const presetName = envPreset || mergedConfig.preset;
 
   if (presetName === undefined) {
@@ -247,7 +247,7 @@ export function formatJsonDoctorResult(result: DoctorResult): string {
 
 export async function doctor(args: DoctorArgs): Promise<number> {
   if (args.help) {
-    console.log(`Usage: oh-my-opencode-slim doctor [OPTIONS]
+    console.log(`Usage: blacktower doctor [OPTIONS]
 
 Options:
   --json              Print diagnostics as JSON

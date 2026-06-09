@@ -7,7 +7,7 @@ import {
 import type { CustomAgentDefinition } from './custom-definitions';
 
 const CUSTOM_AGENT_SCHEMA_URL =
-  'https://unpkg.com/oh-my-opencode-slim@latest/custom-agent.schema.json';
+  'https://unpkg.com/blacktower@latest/custom-agent.schema.json';
 
 // ── Tier assignments ──────────────────────────────────────────────────────────
 // coding = language/tech agents that write & review code

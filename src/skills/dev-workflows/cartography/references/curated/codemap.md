@@ -47,7 +47,7 @@ node ~/.config/opencode/skills/codemap/scripts/codemap.mjs init \
   --exclude "**/*.test.ts" --exclude "dist/**" --exclude "node_modules/**"
 ```
 
-- `.slim/codemap.json` - File and folder hashes for change detection
+- `.blacktower/codemap.json` - File and folder hashes for change detection
 - Empty `codemap.md` files in all relevant subdirectories
 
 4. **Delegate codemap writing to Fixer agents** - Spawn one fixer per folder to read code and create or update its specific `codemap.md` file.
@@ -61,7 +61,7 @@ Defines agent personalities and manages their configuration lifecycle.
 ## Design
 Each agent is a prompt + permission set. Config system uses:
 - Default prompts (orchestrator.ts, explorer.ts, etc.)
-- User overrides from ~/.config/opencode/oh-my-opencode-slim.json
+- User overrides from ~/.config/opencode/blacktower.json
 - Permission wildcards for skill/MCP access control
 
 ## Flow
@@ -91,7 +91,7 @@ node codemap.mjs update --root /repo
 
 ## Outputs
 
-### .slim/codemap.json
+### .blacktower/codemap.json
 
 ```json
 ```
@@ -106,7 +106,7 @@ Empty templates created in each folder for fixers to fill with:
 
 ## Installation
 
-Bundled with the package, but not installed automatically by the default slim
+Bundled with the package, but not installed automatically by the default blacktower
 installer. Copy or install this skill explicitly when codemap generation should
 be available in OpenCode.
 
@@ -121,7 +121,7 @@ _Source topic: codemap_
 
 - Provide a command-style skill package that standardizes repository mapping workflows for unfamiliar codebases.
 - Define the task contract used by Orchestrator/fixer agents via `SKILL.md` and operational guidance via `README.md`.
-- Generate and evolve change-aware codemap state artifacts (`.slim/codemap.json`) and scaffold placeholders (`codemap.md`).
+- Generate and evolve change-aware codemap state artifacts (`.blacktower/codemap.json`) and scaffold placeholders (`codemap.md`).
 
 ## Design
 
@@ -131,7 +131,7 @@ _Source topic: codemap_
   - `cmdInit`, `cmdChanges`, `cmdUpdate`
   - `selectFiles`, `computeFileHash`, `computeFolderHash`, `createEmptyCodemap`
   - `loadState`, `saveState`, `migrateLegacyState`
-- Persistence model: JSON state at `.slim/codemap.json` with `metadata`, `file_hashes`, and `folder_hashes`.
+- Persistence model: JSON state at `.blacktower/codemap.json` with `metadata`, `file_hashes`, and `folder_hashes`.
 - Testing layer: `scripts/codemap.test.ts` validates pattern matching, hash determinism, and migration behavior.
 - The script intentionally avoids network and mutates only filesystem-local state and codemap templates.
 
@@ -141,7 +141,7 @@ _Source topic: codemap_
 - `cmdInit()` computes include/exclude candidate sets using `selectFiles()` and writes:
 - `cmdChanges()` reloads state (`loadState()` + `migrateLegacyState()`), recomputes current hashes, emits added/removed/modified diffs and affected folder list, and exits non-zero if state is absent.
 - `cmdUpdate()` recomputes full state from existing metadata and persists it, used after targeted fixers finish updates.
-- `codemap` skill invocation path in SKILL workflow is explicit: Step 1 checks `.slim/codemap.json` or `.slim/cartography.json`, then Step 2/3 selects init or incremental path.
+- `codemap` skill invocation path in SKILL workflow is explicit: Step 1 checks `.blacktower/codemap.json` or `.blacktower/cartography.json`, then Step 2/3 selects init or incremental path.
 
 ## Integration
 

@@ -111,19 +111,19 @@ describe('selectFiles', () => {
 describe('loadState', () => {
   test('migrates legacy cartography state', () => {
     const root = createTempDir();
-    const slimDir = path.join(root, '.slim');
-    mkdirSync(slimDir);
+    const blacktowerDir = path.join(root, '.blacktower');
+    mkdirSync(blacktowerDir);
 
     const legacyState = { metadata: { version: '1.0.0' } };
     writeFileSync(
-      path.join(slimDir, 'cartography.json'),
+      path.join(blacktowerDir, 'cartography.json'),
       JSON.stringify(legacyState),
     );
 
     expect(loadState(root)).toEqual(legacyState);
-    expect(existsSync(path.join(slimDir, 'cartography.json'))).toBe(false);
+    expect(existsSync(path.join(blacktowerDir, 'cartography.json'))).toBe(false);
     expect(
-      JSON.parse(readFileSync(path.join(slimDir, 'codemap.json'), 'utf8')),
+      JSON.parse(readFileSync(path.join(blacktowerDir, 'codemap.json'), 'utf8')),
     ).toEqual(legacyState);
   });
 });

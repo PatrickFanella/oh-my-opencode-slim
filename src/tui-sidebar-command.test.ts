@@ -14,7 +14,7 @@ describe('tui sidebar commands', () => {
 
   beforeEach(() => {
     originalEnv = { ...process.env };
-    dataHome = fs.mkdtempSync(path.join(os.tmpdir(), 'omos-sidebar-'));
+    dataHome = fs.mkdtempSync(path.join(os.tmpdir(), 'blacktower-sidebar-'));
     process.env.XDG_DATA_HOME = dataHome;
   });
 

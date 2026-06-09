@@ -15,13 +15,13 @@ runtime, SDK, framework, plugin API, or other core dependency actually behaves.
 
 When you ask for cloned dependency source, the Orchestrator:
 
-1. Checks `.slim/clonedeps.json` first and reuses existing clones when possible.
+1. Checks `.blacktower/clonedeps.json` first and reuses existing clones when possible.
 2. Asks `@librarian` for source-repo recommendations only if more context is
    needed.
 3. Presents a small clone plan for approval.
 4. Clones each approved source repository once into
-   `.slim/clonedeps/repos/<safe-repo-name>/`.
-5. Writes `.slim/clonedeps.json` as trackable project metadata.
+   `.blacktower/clonedeps/repos/<safe-repo-name>/`.
+5. Writes `.blacktower/clonedeps.json` as trackable project metadata.
 6. Updates ignore files so git ignores clone contents while OpenCode can read
    them.
 7. Updates root `AGENTS.md` with a concise list of cloned repos and why each one
@@ -53,24 +53,24 @@ git operations, unless you explicitly ask it to clone immediately.
 
 ## Files It Creates
 
-### `.slim/clonedeps/repos/`
+### `.blacktower/clonedeps/repos/`
 
 Ignored local clones live here, one folder per source repository:
 
 ```text
-.slim/clonedeps/repos/<safe-repo-name>/
+.blacktower/clonedeps/repos/<safe-repo-name>/
 ```
 
 The safe folder name is derived from the repository owner/name, not the package
 name. For example, `https://github.com/opencode-ai/opencode.git` becomes
-`.slim/clonedeps/repos/opencode-ai__opencode/`.
+`.blacktower/clonedeps/repos/opencode-ai__opencode/`.
 
 If multiple packages come from the same monorepo, they share one cloned repo path
 and use different `packagePath` values in the manifest.
 
 These repositories are read-only reference source. Do not edit them.
 
-### `.slim/clonedeps.json`
+### `.blacktower/clonedeps.json`
 
 This is the structured manifest. It is intentionally small and committable:
 
@@ -84,7 +84,7 @@ This is the structured manifest. It is intentionally small and committable:
       "resolvedVersion": "1.3.17",
       "repoUrl": "https://github.com/opencode-ai/opencode.git",
       "ref": "v1.3.17",
-      "path": ".slim/clonedeps/repos/opencode-ai__opencode",
+      "path": ".blacktower/clonedeps/repos/opencode-ai__opencode",
       "packagePath": "packages/plugin",
       "reason": "Plugin API source used by the project"
     },
@@ -93,7 +93,7 @@ This is the structured manifest. It is intentionally small and committable:
       "resolvedVersion": "1.3.17",
       "repoUrl": "https://github.com/opencode-ai/opencode.git",
       "ref": "v1.3.17",
-      "path": ".slim/clonedeps/repos/opencode-ai__opencode",
+      "path": ".blacktower/clonedeps/repos/opencode-ai__opencode",
       "packagePath": "packages/sdk/js",
       "reason": "Core SDK source used to inspect runtime behavior"
     }
@@ -115,9 +115,9 @@ Example:
 ## Cloned Dependency Source
 
 Read-only dependency source repositories are available under
-`.slim/clonedeps/repos/` for inspection. Do not edit these clones.
+`.blacktower/clonedeps/repos/` for inspection. Do not edit these clones.
 
-- `.slim/clonedeps/repos/opencode-ai__opencode/` — `opencode-ai/opencode` at
+- `.blacktower/clonedeps/repos/opencode-ai__opencode/` — `opencode-ai/opencode` at
   `v1.3.17`; inspect `packages/sdk/js` for OpenCode SDK internals.
 ```
 
@@ -130,7 +130,7 @@ Read-only dependency source repositories are available under
 - Use HTTPS repository URLs by default.
 - Prefer pinned tags or commit SHAs.
 - Do not run install, build, test, or lifecycle scripts from cloned repos.
-- Git ignores `.slim/clonedeps/repos/`, but not `.slim/clonedeps.json`.
+- Git ignores `.blacktower/clonedeps/repos/`, but not `.blacktower/clonedeps.json`.
 - Ignore-file edits are limited to managed clonedeps marker blocks.
 
 ---

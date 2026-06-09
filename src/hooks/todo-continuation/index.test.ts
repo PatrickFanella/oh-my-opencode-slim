@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { SLIM_INTERNAL_INITIATOR_MARKER } from '../../utils';
+import { BLACKTOWER_INTERNAL_INITIATOR_MARKER } from '../../utils';
 import { createTodoContinuationHook } from './index';
 import {
   TODO_FINAL_ACTIVE_REMINDER,
@@ -40,25 +40,25 @@ describe('createTodoContinuationHook', () => {
 
   // Notification prompts (noReply:true, no marker) fire immediately when
   // scheduling a continuation. These helpers check only for actual
-  // continuation prompts (with SLIM_INTERNAL_INITIATOR_MARKER).
+  // continuation prompts (with BLACKTOWER_INTERNAL_INITIATOR_MARKER).
   function hasContinuation(m: ReturnType<typeof mock>): boolean {
     return m.mock.calls.some((c: any[]) =>
       (c[0]?.body?.parts as any[])?.some((p: any) =>
-        p.text?.includes(SLIM_INTERNAL_INITIATOR_MARKER),
+        p.text?.includes(BLACKTOWER_INTERNAL_INITIATOR_MARKER),
       ),
     );
   }
   function contCount(m: ReturnType<typeof mock>): number {
     return m.mock.calls.filter((c: any[]) =>
       (c[0]?.body?.parts as any[])?.some((p: any) =>
-        p.text?.includes(SLIM_INTERNAL_INITIATOR_MARKER),
+        p.text?.includes(BLACKTOWER_INTERNAL_INITIATOR_MARKER),
       ),
     ).length;
   }
   function contCall(m: ReturnType<typeof mock>): any[] {
     const call = m.mock.calls.find((c: any[]) =>
       (c[0]?.body?.parts as any[])?.some((p: any) =>
-        p.text?.includes(SLIM_INTERNAL_INITIATOR_MARKER),
+        p.text?.includes(BLACKTOWER_INTERNAL_INITIATOR_MARKER),
       ),
     );
     if (!call) {
@@ -696,7 +696,7 @@ describe('createTodoContinuationHook', () => {
         '[Auto-continue: enabled - there are incomplete todos remaining.',
       );
       expect(promptCall[0].body.parts[0].text).toContain(
-        SLIM_INTERNAL_INITIATOR_MARKER,
+        BLACKTOWER_INTERNAL_INITIATOR_MARKER,
       );
     });
 
@@ -1579,7 +1579,9 @@ describe('createTodoContinuationHook', () => {
       expect(output.parts[0].text).toContain(
         '[Auto-continue: enabled - there are incomplete todos remaining.',
       );
-      expect(output.parts[0].text).toContain(SLIM_INTERNAL_INITIATOR_MARKER);
+      expect(output.parts[0].text).toContain(
+        BLACKTOWER_INTERNAL_INITIATOR_MARKER,
+      );
     });
 
     test('/auto-continue enables but no continuation when all todos complete', async () => {

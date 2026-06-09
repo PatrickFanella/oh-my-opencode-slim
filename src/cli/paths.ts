@@ -67,12 +67,12 @@ export function getConfigJsonc(): string {
   return getOpenCodeConfigPaths()[1];
 }
 
-export function getLiteConfig(): string {
-  return join(getConfigDir(), 'oh-my-opencode-slim.json');
+export function getBlacktowerConfig(): string {
+  return join(getConfigDir(), 'blacktower.json');
 }
 
-export function getLiteConfigJsonc(): string {
-  return join(getConfigDir(), 'oh-my-opencode-slim.jsonc');
+export function getBlacktowerConfigJsonc(): string {
+  return join(getConfigDir(), 'blacktower.jsonc');
 }
 
 export function getTuiConfig(): string {
@@ -86,11 +86,11 @@ export function getTuiConfigJsonc(): string {
   return join(getConfigDir(), 'tui.jsonc');
 }
 
-export function getExistingLiteConfigPath(): string {
-  const jsoncPath = getLiteConfigJsonc();
+export function getExistingBlacktowerConfigPath(): string {
+  const jsoncPath = getBlacktowerConfigJsonc();
   if (existsSync(jsoncPath)) return jsoncPath;
 
-  const jsonPath = getLiteConfig();
+  const jsonPath = getBlacktowerConfig();
   if (existsSync(jsonPath)) return jsonPath;
 
   return jsonPath;

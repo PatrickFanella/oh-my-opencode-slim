@@ -35,7 +35,7 @@ export {
   normalizeSidebarCollapseState,
 } from './tui-state';
 
-const PLUGIN_NAME = 'oh-my-opencode-slim';
+const PLUGIN_NAME = 'blacktower';
 const CONFIG_WARNING_COLOR = 'orange';
 const OK = '●';
 const IDLE = '○';
@@ -520,7 +520,7 @@ function renderSidebarHeader(input: {
     },
     [
       box({ paddingLeft: 1, paddingRight: 1 }, [
-        text({ fg: input.theme.text }, ['◈ OMOC']),
+        text({ fg: input.theme.text }, ['◈ Blacktower']),
       ]),
       text({ fg: input.theme.textMuted }, [
         `${input.mode} · ${input.agentCount}`,
@@ -773,7 +773,7 @@ function renderHomeBottom(
         borderColor: configInvalid ? theme.warning : theme.borderActive,
       },
       [
-        text({ fg: theme.accent }, ['◈ OMOC Full Board loaded']),
+        text({ fg: theme.accent }, ['◈ Blacktower Full Board loaded']),
         text({ fg: theme.textMuted }, [
           `${boardCount} agents · preset ${snapshot.preset ?? 'unknown'} · use @api-forge, @data-vault, @signal-planner`,
         ]),
@@ -801,42 +801,42 @@ function registerSidebarCommands(
 
   const commands: TuiCommand[] = [
     {
-      title: 'OMOC Board: Toggle',
-      value: 'omoc.board.toggle',
+      title: 'Blacktower Board: Toggle',
+      value: 'blacktower.board.toggle',
       description: 'Cycle sidebar between compact, minimal, and full.',
-      category: 'OMOC',
+      category: 'Blacktower',
       slash: { name: 'board-toggle' },
       onSelect: toggle,
     },
     {
-      title: 'OMOC Board: Full',
-      value: 'omoc.board.full',
+      title: 'Blacktower Board: Full',
+      value: 'blacktower.board.full',
       description: 'Expand every sidebar section.',
-      category: 'OMOC',
+      category: 'Blacktower',
       slash: { name: 'board-full', aliases: ['board-expand'] },
       onSelect: applyMode('full', 'Board expanded'),
     },
     {
-      title: 'OMOC Board: Compact',
-      value: 'omoc.board.compact',
+      title: 'Blacktower Board: Compact',
+      value: 'blacktower.board.compact',
       description: 'Show core agents and collapse custom board groups.',
-      category: 'OMOC',
+      category: 'Blacktower',
       slash: { name: 'board-compact', aliases: ['board-collapse'] },
       onSelect: applyMode('compact', 'Board compact'),
     },
     {
-      title: 'OMOC Board: Minimal',
-      value: 'omoc.board.minimal',
-      description: 'Show only the OMOC status summary.',
-      category: 'OMOC',
+      title: 'Blacktower Board: Minimal',
+      value: 'blacktower.board.minimal',
+      description: 'Show only the Blacktower status summary.',
+      category: 'Blacktower',
       slash: { name: 'board-minimal' },
       onSelect: applyMode('minimal', 'Board minimal'),
     },
     {
-      title: 'OMOC Board: Off',
-      value: 'omoc.board.off',
-      description: 'Hide the OMOC sidebar content.',
-      category: 'OMOC',
+      title: 'Blacktower Board: Off',
+      value: 'blacktower.board.off',
+      description: 'Hide the Blacktower sidebar content.',
+      category: 'Blacktower',
       slash: { name: 'board-off' },
       onSelect: applyMode('off', 'Board hidden'),
     },

@@ -95,10 +95,10 @@ Read only by default:
 
 ```bash
 # NUC health snapshot
-python3 /home/onnwee/.config/opencode/oh-my-opencode-slim/managed-skills/nuc/scripts/nuc_health_snapshot.py
+python3 /home/onnwee/.config/opencode/blacktower/managed-skills/nuc/scripts/nuc_health_snapshot.py
 
 # Almaz health snapshot
-python3 /home/onnwee/.config/opencode/oh-my-opencode-slim/managed-skills/almaz/scripts/almaz_health_snapshot.py
+python3 /home/onnwee/.config/opencode/blacktower/managed-skills/almaz/scripts/almaz_health_snapshot.py
 
 # NUC ntfy cached messages, no secrets
 python3 - <<'PY'

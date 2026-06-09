@@ -6,14 +6,14 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   ensureConfigDir,
+  getBlacktowerConfig,
+  getBlacktowerConfigJsonc,
   getConfigDir,
   getConfigJson,
   getConfigJsonc,
   getConfigSearchDirs,
+  getExistingBlacktowerConfigPath,
   getExistingConfigPath,
-  getExistingLiteConfigPath,
-  getLiteConfig,
-  getLiteConfigJsonc,
   getOpenCodeConfigPaths,
 } from './paths';
 
@@ -91,22 +91,22 @@ describe('paths', () => {
     expect(getConfigJsonc()).toBe('/tmp/xdg-config/opencode/opencode.jsonc');
   });
 
-  test('getLiteConfig() returns correct path', () => {
+  test('getBlacktowerConfig() returns correct path', () => {
     process.env.XDG_CONFIG_HOME = '/tmp/xdg-config';
-    expect(getLiteConfig()).toBe(
-      '/tmp/xdg-config/opencode/oh-my-opencode-slim.json',
+    expect(getBlacktowerConfig()).toBe(
+      '/tmp/xdg-config/opencode/blacktower.json',
     );
   });
 
-  test('getLiteConfig() respects OPENCODE_CONFIG_DIR', () => {
+  test('getBlacktowerConfig() respects OPENCODE_CONFIG_DIR', () => {
     process.env.OPENCODE_CONFIG_DIR = '/custom/directory';
-    expect(getLiteConfig()).toBe('/custom/directory/oh-my-opencode-slim.json');
+    expect(getBlacktowerConfig()).toBe('/custom/directory/blacktower.json');
   });
 
-  test('getLiteConfigJsonc() respects OPENCODE_CONFIG_DIR', () => {
+  test('getBlacktowerConfigJsonc() respects OPENCODE_CONFIG_DIR', () => {
     process.env.OPENCODE_CONFIG_DIR = '/custom/directory';
-    expect(getLiteConfigJsonc()).toBe(
-      '/custom/directory/oh-my-opencode-slim.jsonc',
+    expect(getBlacktowerConfigJsonc()).toBe(
+      '/custom/directory/blacktower.jsonc',
     );
   });
 
@@ -183,7 +183,7 @@ describe('paths', () => {
     });
   });
 
-  describe('getExistingLiteConfigPath()', () => {
+  describe('getExistingBlacktowerConfigPath()', () => {
     let tmpDir: string;
 
     afterEach(() => {
@@ -199,20 +199,20 @@ describe('paths', () => {
       const configDir = join(tmpDir, 'opencode');
       ensureConfigDir();
 
-      const jsonPath = join(configDir, 'oh-my-opencode-slim.json');
-      const jsoncPath = join(configDir, 'oh-my-opencode-slim.jsonc');
+      const jsonPath = join(configDir, 'blacktower.json');
+      const jsoncPath = join(configDir, 'blacktower.jsonc');
       writeFileSync(jsonPath, '{}');
       writeFileSync(jsoncPath, '{}');
 
-      expect(getExistingLiteConfigPath()).toBe(jsoncPath);
+      expect(getExistingBlacktowerConfigPath()).toBe(jsoncPath);
     });
 
     test('returns default .json path if neither file exists', () => {
       tmpDir = mkdtempSync(join(tmpdir(), 'opencode-test-'));
       process.env.XDG_CONFIG_HOME = tmpDir;
 
-      expect(getExistingLiteConfigPath()).toBe(
-        join(tmpDir, 'opencode', 'oh-my-opencode-slim.json'),
+      expect(getExistingBlacktowerConfigPath()).toBe(
+        join(tmpDir, 'opencode', 'blacktower.json'),
       );
     });
   });

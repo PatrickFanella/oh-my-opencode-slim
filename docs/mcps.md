@@ -1,6 +1,6 @@
 # MCP Servers
 
-Built-in Model Context Protocol (MCP) definitions ship with oh-my-opencode-slim and give agents access to external tools — web search, library documentation, code search, browser automation, product APIs, and local workflow bridges.
+Built-in Model Context Protocol (MCP) definitions ship with blacktower and give agents access to external tools — web search, library documentation, code search, browser automation, product APIs, and local workflow bridges.
 
 ---
 
@@ -45,7 +45,7 @@ use per-agent `mcps` lists to decide which agents can call each server.
 
 ## Configuring MCP Access
 
-Control which MCPs each agent can use via the `mcps` array in your preset config (`~/.config/opencode/oh-my-opencode-slim.json` or `.jsonc`):
+Control which MCPs each agent can use via the `mcps` array in your preset config (`~/.config/opencode/blacktower.json` or `.jsonc`):
 
 | Syntax | Meaning |
 |--------|---------|
@@ -95,7 +95,7 @@ To disable specific MCPs for all agents regardless of preset, add them to `disab
 }
 ```
 
-This marks the host MCP disabled and removes it from OMOC's per-agent MCP
+This marks the host MCP disabled and removes it from Blacktower's per-agent MCP
 permission expansion. It is useful when you want to cut external network calls
 entirely (e.g. air-gapped environments or cost control).
 

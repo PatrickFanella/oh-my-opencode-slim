@@ -72,6 +72,6 @@ hosts todo-state hygiene reminders after relevant tool actions.
   - `event`
   - `tool.execute.after`
 - Uses shared utilities: `log`, `createInternalAgentTextPart`, and
-  `SLIM_INTERNAL_INITIATOR_MARKER`.
+  `BLACKTOWER_INTERNAL_INITIATOR_MARKER`.
 - Session/agent identity is coordinated with `session.message` events and
   maintained in the plugin for serve-mode routing consistency.

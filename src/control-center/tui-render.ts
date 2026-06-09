@@ -85,7 +85,7 @@ export function renderControlCenterText(
   const rows: string[] = [];
 
   rows.push(
-    `OMOC Control Center ${snapshot.health.status.toUpperCase()} ${snapshot.generatedAt}`,
+    `Blacktower Control Center ${snapshot.health.status.toUpperCase()} ${snapshot.generatedAt}`,
   );
   rows.push(
     `Keys: j/k move · Tab stream · / filter · r refresh · f follow · o session command · q quit`,

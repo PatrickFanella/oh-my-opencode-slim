@@ -167,7 +167,7 @@ Ask for explicit user approval before:
 - Internal origin for runner/API from `almaz`: `http://10.0.0.56:3005/`.
 - Gitea version observed during skill creation: `1.26.1`.
 - Actions are enabled and an `almaz-docker-01` runner exists.
-- Default owner set usually includes `PatrickFanella`, `onnwee`, and
+- Default owner set usually includes `blacktower`, `onnwee`, and
   `subculture-collective`.
 
 ## Delegation guidance

@@ -1719,9 +1719,7 @@ describe('renderInterviewPage', () => {
     const html = renderInterviewPage('brand-test', 'brand-test');
 
     expect(html).toContain('<img class="brand-mark"');
-    expect(html).toContain(
-      'https://ohmyopencodeslim.com/android-chrome-512x512.png',
-    );
+    expect(html).toContain('/img/team.png');
   });
 
   test('shows explicit Enter guidance for option questions', () => {

@@ -54,6 +54,6 @@ Empty templates created in each folder for explorers to fill with:
 
 ## Installation
 
-Bundled with the package, but not installed automatically by the default slim
+Bundled with the package, but not installed automatically by the default blacktower
 installer. Copy or install this skill explicitly when cartography/codemap
 generation should be available in OpenCode.

@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Complete reference for all configuration files and options in oh-my-opencode-slim.
+Complete reference for all configuration files and options in blacktower.
 
 ---
 
@@ -9,30 +9,30 @@ Complete reference for all configuration files and options in oh-my-opencode-sli
 | File | Purpose |
 |------|---------|
 | `~/.config/opencode/opencode.json` | OpenCode core settings (plugin registration, providers) |
-| `~/.config/opencode/oh-my-opencode-slim.json` | Plugin settings — agents, multiplexer, MCPs, council |
-| `~/.config/opencode/oh-my-opencode-slim.jsonc` | Same, but with JSONC (comments + trailing commas). Takes precedence over `.json` if both exist |
-| `.opencode/oh-my-opencode-slim.json` | Project-local overrides (optional, checked first) |
+| `~/.config/opencode/blacktower.json` | Plugin settings — agents, multiplexer, MCPs, council |
+| `~/.config/opencode/blacktower.jsonc` | Same, but with JSONC (comments + trailing commas). Takes precedence over `.json` if both exist |
+| `.opencode/blacktower.json` | Project-local overrides (optional, checked first) |
 
 > **💡 JSONC recommended:** Use the `.jsonc` extension to add comments and trailing commas. If both `.jsonc` and `.json` exist, `.jsonc` takes precedence.
 
-If OmO-slim detects an invalid plugin config for the current project, the TUI
+If blacktower detects an invalid plugin config for the current project, the TUI
 full-board sidebar shows a warning. The sidebar is collapsible: it defaults to
 compact mode with CORE visible and custom groups collapsed. The sidebar is a
 render-only slot, so collapse state is controlled through real OpenCode commands:
 `/board-toggle`, `/board-full`, `/board-compact`, `/board-minimal`, and
-`/board-off`. Run `oh-my-opencode-slim doctor` from your project root for full
+`/board-off`. Run `blacktower doctor` from your project root for full
 diagnostics.
 
 ---
 
-## OMOC as Distribution Layer
+## Blacktower as Distribution Layer
 
 For a single-plugin setup, keep OpenCode host config minimal:
 
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["oh-my-opencode-slim"]
+  "plugin": ["blacktower"]
 }
 ```
 
@@ -40,36 +40,36 @@ Ownership split:
 
 - OpenCode host config (`~/.config/opencode/opencode.json`) owns auth,
   provider registration, model refresh, and host runtime behavior.
-- OMOC behavior belongs in
-  `~/.config/opencode/oh-my-opencode-slim.jsonc` (agents, presets, MCP
+- Blacktower behavior belongs in
+  `~/.config/opencode/blacktower.jsonc` (agents, presets, MCP
   assignments, multiplexer/session behavior, council, bundled skill
   permissions).
 
-DCP and quota systems are intentionally separate from OMOC. Keep them outside
-OMOC config; the clone-based bootstrap writes their sidecar defaults when
+DCP and quota systems are intentionally separate from Blacktower. Keep them outside
+Blacktower config; the clone-based bootstrap writes their sidecar defaults when
 `--with-dcp` or `--with-quota` is selected.
 
 For this distribution path, prefer config-first behavior in
-`~/.config/opencode/oh-my-opencode-slim.jsonc`, not new behavior environment
+`~/.config/opencode/blacktower.jsonc`, not new behavior environment
 variables.
 
 ---
 
 ## Prompt Overriding
 
-Customize agent prompts without modifying source code. Create markdown files in `~/.config/opencode/oh-my-opencode-slim/`:
+Customize agent prompts without modifying source code. Create markdown files in `~/.config/opencode/blacktower/`:
 
 | File | Effect |
 |------|--------|
 | `{agent}.md` | Replaces the agent's default prompt entirely |
 | `{agent}_append.md` | Appends custom instructions to the default prompt |
 
-When a `preset` is active, the plugin checks `~/.config/opencode/oh-my-opencode-slim/{preset}/` first, then falls back to the root directory.
+When a `preset` is active, the plugin checks `~/.config/opencode/blacktower/{preset}/` first, then falls back to the root directory.
 
 **Example directory structure:**
 
 ```
-~/.config/opencode/oh-my-opencode-slim/
+~/.config/opencode/blacktower/
   ├── best/
   │   ├── orchestrator.md        # Preset-specific override (used when preset=best)
   │   └── explorer_append.md
@@ -116,7 +116,7 @@ All config files support **JSONC** (JSON with Comments):
 ## Package Composition
 
 Use `packages` and `packageDefinitions` to keep reusable agent, preset, skill,
-and MCP assignments in one config file while still emitting normal OmO-slim
+and MCP assignments in one config file while still emitting normal blacktower
 `presets` and `agents` behavior at runtime.
 
 Packages are resolved before the active `preset` is applied. Package contents are
@@ -182,10 +182,10 @@ kept so a typo does not erase existing agent settings.
 
 Use `skillProfiles` to define the global skill bundle and each agent's role
 skills while keeping unrelated niche skills out of each prompt context. By
-default, the installer omits `skillProfiles` so OMOC's code-owned built-in
+default, the installer omits `skillProfiles` so Blacktower's code-owned built-in
 agent defaults control availability. If an agent has an explicit `skills` array
 in the active preset or `agents` override, that explicit array wins. If it does
-not, OMOC resolves:
+not, Blacktower resolves:
 
 1. `skillProfiles.global` (or built-in global defaults if omitted)
 2. `skillProfiles.agents.<agent>` (or built-in focused defaults if omitted)
@@ -213,11 +213,11 @@ not, OMOC resolves:
 }
 ```
 
-Keep OpenCode host config minimal. OMOC materializes only the curated union of
+Keep OpenCode host config minimal. Blacktower materializes only the curated union of
 bundled skills referenced by enabled agents into a managed skill directory at
 startup, so you do not need broad external host paths like
 `"skills": { "paths": ["~/.agents/skills"] }`. The installer no longer
-bulk-copies OMOC's whole bundled skill catalog and bootstrap removes the legacy
+bulk-copies Blacktower's whole bundled skill catalog and bootstrap removes the legacy
 `~/.agents/skills` path. Assign availability through `skillProfiles` or
 explicit agent `skills` arrays; the plugin's skill permissions and prompt
 filtering enforce those code-owned allow lists per agent.
@@ -271,7 +271,7 @@ Toolkit flags are opt-in and default to `false`:
 | `agents.<customAgent>.orchestratorPrompt` | string | — | Compact `@agent` block injected into the orchestrator prompt's Board Consultants section; must start with `@<agent-name>` or its `displayName` |
 | `agents.<agent>.displayName` | string | — | Custom user-facing alias for the agent in the active config |
 | `disabled_agents` | string[] | `["observer"]` | Agent names to disable globally. Set to `[]` to enable Observer; this is global, not per-preset |
-| `autoUpdate` | boolean | `true` | Automatically install plugin updates in the background; set to `false` for notification-only mode |
+| `autoUpdate` | boolean | `false` | Automatically install plugin updates in the background when `true`; defaults to notification-only mode |
 | `multiplexer.type` | string | `"tmux"` | Multiplexer mode: `auto`, `tmux`, `zellij`, or `none` |
 | `multiplexer.layout` | string | `"main-vertical"` | Layout preset: `main-vertical`, `main-horizontal`, `tiled`, `even-horizontal`, `even-vertical` |
 | `multiplexer.main_pane_size` | number | `60` | Main pane size as percentage (20–80) |
@@ -317,16 +317,16 @@ Toolkit flags are opt-in and default to `false`:
 
 ## Provider Switching
 
-Use `bunx oh-my-opencode-slim@latest switch-agents <provider>` to move the
+Use `bunx blacktower@latest switch-agents <provider>` to move the
 whole board to one provider. Supported providers are `github-copilot`, `openai`,
 `anthropic`, and `gemini`.
 
 The command updates two config surfaces:
 
 - Custom BUILD, OPS, GROWTH, and MYTH JSON agents under
-  `~/.config/opencode/oh-my-opencode-slim/agents/`
-- The active OMOC config preset under
-  `~/.config/opencode/oh-my-opencode-slim.json`
+  `~/.config/opencode/blacktower/agents/`
+- The active Blacktower config preset under
+  `~/.config/opencode/blacktower.json`
 
 The generated preset is named `board-<provider>` and covers built-in
 specialists such as Explorer, Oracle, Librarian, Designer, Fixer, Observer,
@@ -335,7 +335,7 @@ config is loaded at startup.
 
 ### Agent definition files
 
-OMOC has a central bundled agent registry under `src/agents/definitions/`.
+Blacktower has a central bundled agent registry under `src/agents/definitions/`.
 Each core agent has one JSON manifest for default model, description,
 temperature, skills, MCPs, enabled/protected flags, and the compact routing
 prompt shown to Orchestrator.
@@ -344,7 +344,7 @@ You can add local custom agents without editing the main config by placing JSON
 files in:
 
 ```text
-~/.config/opencode/oh-my-opencode-slim/agents/*.json
+~/.config/opencode/blacktower/agents/*.json
 ```
 
 Example:
@@ -362,7 +362,7 @@ Example:
 
 Fields mirror `agents.<name>` config: `model`, `variant`, `temperature`,
 `skills`, `mcps`, `prompt`, `orchestratorPrompt`, `options`, and
-`displayName`. Main `oh-my-opencode-slim.json` values win if both define the
+`displayName`. Main `blacktower.json` values win if both define the
 same agent. Built-in protected agents such as `orchestrator` and `councillor`
 still always exist.
 
@@ -376,29 +376,27 @@ still always exist.
 
 ### Manual Update Mode
 
-Set `autoUpdate` to `false` if you want update notifications without automatic
-`bun install` runs.
+Set `autoUpdate` to `true` only if you want update notifications to trigger
+automatic `bun install` runs. The default is notification-only mode.
 
 ```jsonc
 {
-  "autoUpdate": false
+  "autoUpdate": true
 }
 ```
 
-With `autoUpdate` set to `false`, this becomes notification-only mode: you'll
-see that a new version is available, but the plugin won't install it
-automatically.
+With `autoUpdate` omitted or set to `false`, blacktower stays in
+notification-only mode: you'll see that a new version is available, but the
+plugin won't install it automatically.
 
 > Pinned plugin entries in `opencode.json` (for example
-> `"oh-my-opencode-slim@1.0.1"`) are the true version lock. Those stay pinned
+> `"blacktower@1.0.1"`) are the true version lock. Those stay pinned
 > regardless of `autoUpdate`.
 
 ### Divoom Display Integration
 
 Divoom integration is disabled by default. Install and start the Divoom MiniToo
-macOS daemon from
-[`divoom-minitoo-osx`](https://github.com/alvinunreal/divoom-minitoo-osx)
-first, then enable this plugin integration. See the full
+macOS daemon first, then enable this plugin integration. See the full
 **[Divoom guide](divoom.md)** for setup, daemon startup, and troubleshooting.
 
 When enabled, the plugin sends bundled GIFs to the Divoom MiniToo app's bundled
@@ -422,7 +420,7 @@ CLI:
 For a one-off run without editing config:
 
 ```bash
-OH_MY_OPENCODE_SLIM_DIVOOM=1 opencode
+BLACKTOWER_DIVOOM=1 opencode
 ```
 
 If `divoom.enabled` is explicitly set in config, the config value wins over the

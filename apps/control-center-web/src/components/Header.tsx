@@ -12,7 +12,7 @@ export function Header({
   return (
     <header className="flex flex-col gap-4 border-b border-white/10 px-5 py-5 md:flex-row md:items-center md:justify-between">
       <div>
-        <p className="panel-title">oh-my-opencode-slim</p>
+        <p className="panel-title">blacktower</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
           Scheduled Task Control Center
         </h1>

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # switch-provider.sh — switch board agent model provider
-# Thin wrapper around: bunx oh-my-opencode-slim switch-agents
+# Thin wrapper around: bunx blacktower switch-agents
 #
 # Usage:
 #   ./scripts/switch-provider.sh                  # show current + options

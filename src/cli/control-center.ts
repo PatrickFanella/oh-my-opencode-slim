@@ -36,10 +36,10 @@ export function parseControlCenterArgs(args: string[]): ControlCenterArgs {
 
 export function printControlCenterHelp(): void {
   console.log(`
-oh-my-opencode-slim control-center
+blacktower control-center
 
 Usage:
-  bunx oh-my-opencode-slim control-center [OPTIONS]
+  bunx blacktower control-center [OPTIONS]
 
 Options:
   --no-tui                  Print a read-only text snapshot and exit

@@ -13,7 +13,7 @@ let tempDir: string;
 
 beforeEach(() => {
   previousXdgDataHome = process.env.XDG_DATA_HOME;
-  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omos-tui-state-'));
+  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blacktower-tui-state-'));
   process.env.XDG_DATA_HOME = tempDir;
 });
 
@@ -99,7 +99,7 @@ describe('tui-state persistence', () => {
       tempDir,
       'opencode',
       'storage',
-      'oh-my-opencode-slim',
+      'blacktower',
       'tui-state.json',
     );
     fs.mkdirSync(path.dirname(filePath), { recursive: true });

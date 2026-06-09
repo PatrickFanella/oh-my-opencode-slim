@@ -16,8 +16,8 @@ bun run control-center:web
 Or use the installed CLI:
 
 ```bash
-bunx oh-my-opencode-slim control-center
-bunx oh-my-opencode-slim control-center-web
+bunx blacktower control-center
+bunx blacktower control-center-web
 ```
 
 Useful non-interactive modes:
@@ -36,7 +36,7 @@ reports, then show what is running, what failed, and where the output lives.
 
 ## Goal
 
-Build a first-class `oh-my-opencode-slim` control center that starts as an
+Build a first-class `blacktower` control center that starts as an
 OpenTUI-based terminal UI and can later support a web React UI without sharing
 renderer components.
 
@@ -48,7 +48,7 @@ same visual components.
 Use **OpenTUI + TypeScript** for the terminal UI.
 
 This is preferred over Bubble Tea or Ratatui because the feature is expected to
-become part of the main `oh-my-opencode-slim` app rather than a narrow external
+become part of the main `blacktower` app rather than a narrow external
 ops monitor. The project is already TypeScript/Bun-based, already exposes a TUI
 entrypoint, and future web UI work can reuse backend services, schemas, state
 derivation, and action workflows.
@@ -320,5 +320,5 @@ and edit flows have explicit preview and confirmation screens:
 - The backend domain/service layer can be reused by a future web UI.
 - Terminal and web renderers do not share visual components.
 - Task creation can be added without rewriting monitoring internals.
-- The implementation remains compatible with current `oh-my-opencode-slim`
+- The implementation remains compatible with current `blacktower`
   TypeScript/Bun conventions.

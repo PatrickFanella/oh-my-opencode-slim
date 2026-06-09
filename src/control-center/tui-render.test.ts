@@ -73,7 +73,7 @@ describe('control-center TUI renderer', () => {
       24,
     );
 
-    expect(output).toContain('OMOC Control Center OK');
+    expect(output).toContain('Blacktower Control Center OK');
     expect(output).toContain('watch');
     expect(output).toContain('scheduler ok');
     expect(output).toContain('scheduler tick');

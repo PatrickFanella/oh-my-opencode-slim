@@ -15,7 +15,7 @@ Use this as a compact memory aid. Refresh from live Docker/Compose before making
 | `management` | 2 | includes `dashy` dashboard UI |
 | `monitoring` | 15 | Prometheus/Grafana/Loki/exporters/alerting stack |
 | `patchwork` | 4 | project app |
-| `patrickfanella` | 2 | project app |
+| `blacktower` | 2 | project app |
 | `productivity` | 10 | Actual, Paperless, FreshRSS, Karakeep, Linkwarden, Vaultwarden, etc. |
 | `projects` | 2 | project-level shared services |
 | `subcult-corp` | 4 | project stack |
@@ -52,7 +52,7 @@ Keep on `almaz`:
 Keep on `nuc`:
 
 - subcult/subcult-tv/subcult-corp stacks
-- patchwork, artemis, galdr, patrickfanella, cutroom
+- patchwork, artemis, galdr, blacktower, cutroom
 - Actual Budget, Paperless, CouchDB, FreshRSS, Karakeep, Linkwarden, Vaultwarden
 - Gitea, Postgres, MinIO, registry, Umami
 - most exporters and observability services

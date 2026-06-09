@@ -1,5 +1,5 @@
 import type { PluginInput } from '@opencode-ai/plugin';
-import { crossSpawn } from '../../utils/compat';
+import { type CrossSpawnResult, crossSpawn } from '../../utils/compat';
 import { log } from '../../utils/logger';
 import { preparePackageUpdate, resolveInstallContext } from './cache';
 import {
@@ -22,7 +22,7 @@ export function createAutoUpdateCheckerHook(
   ctx: PluginInput,
   options: AutoUpdateCheckerOptions = {},
 ) {
-  const { autoUpdate = true } = options;
+  const { autoUpdate = false } = options;
 
   let hasChecked = false;
 
@@ -101,7 +101,7 @@ async function runBackgroundUpdateCheck(
   if (pluginInfo.isPinned) {
     showToast(
       ctx,
-      `OMO-Slim ${latestVersion}`,
+      `blacktower ${latestVersion}`,
       `v${latestVersion} available.\nVersion is pinned. Update your plugin config to apply.`,
       'info',
       8000,
@@ -113,7 +113,7 @@ async function runBackgroundUpdateCheck(
   if (!autoUpdate) {
     showToast(
       ctx,
-      `OMO-Slim ${latestVersion}`,
+      `blacktower ${latestVersion}`,
       `v${latestVersion} available. Auto-update is disabled.`,
       'info',
       8000,
@@ -126,7 +126,7 @@ async function runBackgroundUpdateCheck(
   if (!installDir) {
     showToast(
       ctx,
-      `OMO-Slim ${latestVersion}`,
+      `blacktower ${latestVersion}`,
       `v${latestVersion} available. Auto-update could not prepare the active install.`,
       'info',
       8000,
@@ -140,7 +140,7 @@ async function runBackgroundUpdateCheck(
   if (installSuccess) {
     showToast(
       ctx,
-      'OMO-Slim Updated!',
+      'blacktower updated',
       `v${currentVersion} → v${latestVersion}\nRestart OpenCode to apply.`,
       'success',
       8000,
@@ -151,7 +151,7 @@ async function runBackgroundUpdateCheck(
   } else {
     showToast(
       ctx,
-      `OMO-Slim ${latestVersion}`,
+      `blacktower ${latestVersion}`,
       `v${latestVersion} available, but auto-update failed to install it. Check logs or retry manually.`,
       'error',
       8000,
@@ -174,15 +174,21 @@ async function runBunInstallSafe(installDir: string): Promise<boolean> {
   try {
     const proc = crossSpawn(['bun', 'install'], {
       cwd: installDir,
-      stdout: 'pipe',
-      stderr: 'pipe',
+      stdout: 'ignore',
+      stderr: 'ignore',
     });
 
-    const timeoutPromise = new Promise<'timeout'>((resolve) =>
-      setTimeout(() => resolve('timeout'), 60_000),
-    );
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<'timeout'>((resolve) => {
+      timeout = setTimeout(() => resolve('timeout'), 60_000);
+      timeout.unref?.();
+    });
     const exitPromise = proc.exited.then(() => 'completed' as const);
-    const result = await Promise.race([exitPromise, timeoutPromise]);
+    const result = await Promise.race([exitPromise, timeoutPromise]).finally(
+      () => {
+        if (timeout) clearTimeout(timeout);
+      },
+    );
 
     if (result === 'timeout') {
       try {
@@ -190,6 +196,7 @@ async function runBunInstallSafe(installDir: string): Promise<boolean> {
       } catch {
         /* empty */
       }
+      await waitForProcessExit(proc, 1_000);
       return false;
     }
 
@@ -198,6 +205,23 @@ async function runBunInstallSafe(installDir: string): Promise<boolean> {
     log('[auto-update-checker] bun install error:', err);
     return false;
   }
+}
+
+async function waitForProcessExit(
+  proc: CrossSpawnResult,
+  timeoutMs: number,
+): Promise<void> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<void>((resolve) => {
+    timeout = setTimeout(resolve, timeoutMs);
+    timeout.unref?.();
+  });
+
+  await Promise.race([proc.exited.catch(() => 1), timeoutPromise]).finally(
+    () => {
+      if (timeout) clearTimeout(timeout);
+    },
+  );
 }
 
 /**

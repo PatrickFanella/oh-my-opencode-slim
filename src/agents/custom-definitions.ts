@@ -53,7 +53,7 @@ export function getAgentDefinitionDirs(): string[] {
   }
 
   return getConfigSearchDirs().map((configDir) =>
-    join(configDir, 'oh-my-opencode-slim', 'agents'),
+    join(configDir, 'blacktower', 'agents'),
   );
 }
 
@@ -122,7 +122,7 @@ function readAgentDefinitionsFromDir(
       definitions[name] = override;
     } catch (error) {
       console.warn(
-        `[oh-my-opencode-slim] Skipping invalid agent definition ${path}:`,
+        `[blacktower] Skipping invalid agent definition ${path}:`,
         error instanceof Error ? error.message : String(error),
       );
     }

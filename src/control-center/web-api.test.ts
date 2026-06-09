@@ -130,7 +130,10 @@ describe('control-center web API', () => {
   });
 
   test('confines static asset reads to the asset root', async () => {
-    const root = join('/tmp', `omoc-web-assets-${Date.now()}-${Math.random()}`);
+    const root = join(
+      '/tmp',
+      `blacktower-web-assets-${Date.now()}-${Math.random()}`,
+    );
     const assetRoot = join(root, 'dist');
     mkdirSync(assetRoot, { recursive: true });
     writeFileSync(join(assetRoot, 'index.html'), '<div>safe</div>');

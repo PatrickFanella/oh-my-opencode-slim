@@ -41,7 +41,9 @@ describe('default board agents', () => {
     const previousConfigDir = process.env.OPENCODE_CONFIG_DIR;
     const previousEnable =
       process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST;
-    const root = mkdtempSync(join(tmpdir(), 'omoc-default-board-agents-'));
+    const root = mkdtempSync(
+      join(tmpdir(), 'blacktower-default-board-agents-'),
+    );
 
     try {
       process.env.OPENCODE_CONFIG_DIR = join(root, 'opencode');

@@ -17,8 +17,8 @@ const repoRoot = path.resolve(__dirname, '..');
 const distDir = path.join(repoRoot, 'dist');
 
 const suspiciousPathPatterns = [
-  /\/Users\/[^\s'"`]+(?:node_modules|oh-my-opencode-slim)[^\s'"`]*/,
-  /\/home\/[^\s'"`]+(?:node_modules|oh-my-opencode-slim)[^\s'"`]*/,
+  /\/Users\/[^\s'"`]+(?:node_modules|blacktower)[^\s'"`]*/,
+  /\/home\/[^\s'"`]+(?:node_modules|blacktower)[^\s'"`]*/,
 ];
 
 const packagedRequiredFiles = [
@@ -41,7 +41,7 @@ const packagedRequiredFiles = [
   'dist/divoom/librarian.gif',
   'dist/divoom/oracle.gif',
   'dist/divoom/orchestrator.gif',
-  'oh-my-opencode-slim.schema.json',
+  'blacktower.schema.json',
   'src/skills/simplify/SKILL.md',
   'src/skills/codemap/SKILL.md',
   'src/skills/clonedeps/SKILL.md',
@@ -157,7 +157,7 @@ function packArtifact() {
 }
 
 function verifyFreshInstall(tarballPath: string) {
-  const tempRoot = mkdtempSync(path.join(tmpdir(), 'omos-release-'));
+  const tempRoot = mkdtempSync(path.join(tmpdir(), 'blacktower-release-'));
 
   try {
     console.log('Installing packed artifact into clean temp project...');
@@ -181,7 +181,7 @@ function verifyFreshInstall(tarballPath: string) {
     const installedEntry = path.join(
       installDir,
       'node_modules',
-      'oh-my-opencode-slim',
+      'blacktower',
       'dist',
       'index.js',
     );
@@ -196,7 +196,7 @@ function verifyFreshInstall(tarballPath: string) {
     }
 
     const smokeScript = [
-      "import pkg, { CUSTOM_SKILLS } from 'oh-my-opencode-slim';",
+      "import pkg, { CUSTOM_SKILLS } from 'blacktower';",
       "const pluginServer = typeof pkg === 'function' ? pkg : pkg?.server;",
       "if (typeof pluginServer !== 'function') throw new Error('default export is not a plugin module');",
       "if (!CUSTOM_SKILLS.find((s) => s.name === 'almaz')) throw new Error('root bundle missing almaz skill');",
@@ -215,7 +215,7 @@ function verifyFreshInstall(tarballPath: string) {
       path.join(
         installDir,
         'node_modules',
-        'oh-my-opencode-slim',
+        'blacktower',
         'dist',
         'cli',
         'index.js',

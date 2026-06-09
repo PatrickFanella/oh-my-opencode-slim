@@ -16,15 +16,15 @@ import {
   ensureConfigDir,
   ensureOpenCodeConfigDir,
   ensureTuiConfigDir,
+  getBlacktowerConfig,
   getConfigDir,
+  getExistingBlacktowerConfigPath,
   getExistingConfigPath,
-  getExistingLiteConfigPath,
   getExistingTuiConfigPath,
-  getLiteConfig,
 } from './paths';
 import {
   buildBoardProviderPreset,
-  generateLiteConfig,
+  generateBlacktowerConfig,
   isBoardProviderName,
   SCHEMA_URL,
 } from './providers';
@@ -35,7 +35,7 @@ import type {
   OpenCodeConfig,
 } from './types';
 
-const PACKAGE_NAME = 'oh-my-opencode-slim';
+const PACKAGE_NAME = 'blacktower';
 
 function isString(value: unknown): value is string {
   return typeof value === 'string';
@@ -187,7 +187,7 @@ function backupConfigFile(configPath: string): void {
   const backupDir = join(
     getConfigDir(),
     'backups',
-    `omoc-install-${timestamp()}`,
+    `blacktower-install-${timestamp()}`,
   );
   mkdirSync(backupDir, { recursive: true });
   copyFileSync(configPath, join(backupDir, basename(configPath)));
@@ -408,7 +408,7 @@ export interface SwitchProviderResult {
 }
 
 function getBoardAgentsDir(): string {
-  return join(getConfigDir(), 'oh-my-opencode-slim', 'agents');
+  return join(getConfigDir(), 'blacktower', 'agents');
 }
 
 export function materializeDefaultBoardAgentDefinitions(
@@ -472,7 +472,7 @@ export function switchProviderConfig(
   options: { dryRun?: boolean } = {},
 ): SwitchProviderResult {
   const dryRun = options.dryRun ?? false;
-  const configPath = getExistingLiteConfigPath();
+  const configPath = getExistingBlacktowerConfigPath();
 
   if (!isBoardProviderName(provider)) {
     const boardAgents: MaterializeDefaultBoardAgentDefinitionsResult = {
@@ -584,7 +584,7 @@ export async function addPluginToOpenCodeConfig(): Promise<ConfigMergeResult> {
 
     const pluginEntry = getPluginEntry();
 
-    // Remove existing oh-my-opencode-slim entries
+    // Remove existing blacktower entries
     const filteredPlugins = plugins.filter(
       (plugin) => !isMatchingPluginEntry(plugin),
     );
@@ -650,15 +650,15 @@ export async function addPluginToOpenCodeTuiConfig(): Promise<ConfigMergeResult>
 // Removed: addAuthPlugins - no longer needed with cliproxy
 // Removed: addProviderConfig - default opencode now has kimi provider config
 
-export function writeLiteConfig(
+export function writeBlacktowerConfig(
   installConfig: InstallConfig,
   targetPath?: string,
 ): ConfigMergeResult {
-  const configPath = targetPath ?? getLiteConfig();
+  const configPath = targetPath ?? getBlacktowerConfig();
 
   try {
     ensureConfigDir();
-    const config = generateLiteConfig(installConfig);
+    const config = generateBlacktowerConfig(installConfig);
 
     // Atomic write for lite config too
     const tmpPath = `${configPath}.tmp`;
@@ -873,9 +873,11 @@ export function detectCurrentConfig(): DetectedConfig {
   if (providers?.google) result.hasAntigravity = true;
 
   // Try to detect from lite config
-  const { config: liteConfig } = parseConfig(getExistingLiteConfigPath());
-  if (liteConfig && typeof liteConfig === 'object') {
-    const configObj = liteConfig as Record<string, unknown>;
+  const { config: blacktowerConfig } = parseConfig(
+    getExistingBlacktowerConfigPath(),
+  );
+  if (blacktowerConfig && typeof blacktowerConfig === 'object') {
+    const configObj = blacktowerConfig as Record<string, unknown>;
     const presetName = configObj.preset as string;
     const presets = configObj.presets as Record<string, unknown>;
     const agents = presets?.[presetName] as

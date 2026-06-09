@@ -334,7 +334,7 @@ export function createAgents(
     const override = getAgentOverride(config, name);
     if (!hasCustomAgentModel(override)) {
       console.warn(
-        `[oh-my-opencode] Custom agent '${name}' skipped: 'model' is required`,
+        `[blacktower] Custom agent '${name}' skipped: 'model' is required`,
       );
       return [];
     }
@@ -364,7 +364,7 @@ export function createAgents(
 
   // 2b. Backward compat: if council has no preset override and still uses the
   // hardcoded default model, fall back to the deprecated council.master.model.
-  // See https://github.com/alvinunreal/oh-my-opencode-slim/issues/369
+  // See https://github.com/blacktower/blacktower/issues/369
   const legacyMasterModel = config?.council?._legacyMasterModel;
   if (legacyMasterModel) {
     const councilAgent = builtInSubAgents.find((a) => a.name === 'council');

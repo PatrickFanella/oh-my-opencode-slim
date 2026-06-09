@@ -7,7 +7,7 @@ import { createSubtaskState } from './state';
 import { createReadSessionTool, createSubtaskTool } from './tools';
 
 function makeTempDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'omos-subtask-tool-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'blacktower-subtask-tool-'));
 }
 
 describe('subtask tool', () => {

@@ -48,7 +48,7 @@ const DEFAULT_DIVOOM_CONFIG: DivoomConfig = {
   posterizeBits: 3,
 };
 
-const DIVOOM_ENABLE_ENV = 'OH_MY_OPENCODE_SLIM_DIVOOM';
+const DIVOOM_ENABLE_ENV = 'BLACKTOWER_DIVOOM';
 
 type DivoomManagerOptions = {
   assetDir?: string | null;
@@ -98,7 +98,7 @@ export function getDivoomOutDir(homeDir = os.homedir()): string {
     baseDir,
     'opencode',
     'storage',
-    'oh-my-opencode-slim',
+    'blacktower',
     'divoom',
     'captures',
   );

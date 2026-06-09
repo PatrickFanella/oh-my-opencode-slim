@@ -4,7 +4,7 @@
 
 **Goal:** Re-found this repo as a Board-centered OpenCode operating system where Board runtime owns consultant routing, orchestration policy, escalation, and executor handoff.
 
-**Architecture:** Keep OpenCode as the host process for auth, providers, model discovery, and core session execution. Replace the current OMOC-compatible “custom agents + Board Consultants prompt block” approach with a first-class Board runtime subsystem that has typed roles, routing policy, decision records, council escalation, agent permission profiles, and future hooks for persistence/TUI. Implement in staged vertical slices so current MCP merge work remains usable as the foundation.
+**Architecture:** Keep OpenCode as the host process for auth, providers, model discovery, and core session execution. Replace the current Blacktower-compatible “custom agents + Board Consultants prompt block” approach with a first-class Board runtime subsystem that has typed roles, routing policy, decision records, council escalation, agent permission profiles, and future hooks for persistence/TUI. Implement in staged vertical slices so current MCP merge work remains usable as the foundation.
 
 **Tech Stack:** TypeScript, Bun, Zod, OpenCode plugin API, OpenCode MCP config, Biome.
 
@@ -16,9 +16,9 @@
 
 ## Approved Direction
 
-User clarified this is not about preserving oh-my-opencode-slim as a fork. The new direction is a full system integration:
+User clarified this is not about preserving blacktower as a fork. The new direction is a full system integration:
 
-- Treat this repo as a new project built from OMOC internals.
+- Treat this repo as a new project built from Blacktower internals.
 - Keep current MCP merge changes as prerequisite foundation.
 - Skip skill migration for now, but preserve migration policy and repo prep.
 - Build Level 5 Board runtime: dedicated router, delegation policy, Board session state, escalation, and product identity.
@@ -40,7 +40,7 @@ The current uncommitted MCP merge is part of the foundation:
 - `src/mcp/index.ts` registers the merged `.agents` MCP list.
 - host-dependent/product MCPs are opt-in by `enabled_mcps`.
 - default agent MCPs stay conservative.
-- `docs/mcps.md` and `docs/omoc-distribution-layer.md` document opt-in MCP behavior and future skill migration policy.
+- `docs/mcps.md` and `docs/blacktower-distribution-layer.md` document opt-in MCP behavior and future skill migration policy.
 
 Before starting Task 1, run:
 
@@ -96,7 +96,7 @@ test('loads board runtime config', () => {
   const projectConfigDir = path.join(projectDir, '.opencode');
   fs.mkdirSync(projectConfigDir, { recursive: true });
   fs.writeFileSync(
-    path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+    path.join(projectConfigDir, 'blacktower.json'),
     JSON.stringify({
       board: {
         enabled: true,
@@ -214,7 +214,7 @@ Run:
 bun run generate-schema
 ```
 
-Expected: `oh-my-opencode-slim.schema.json` changes include `board`.
+Expected: `blacktower.schema.json` changes include `board`.
 
 ## Task 2: Create Board Registry And Prompt Rendering
 
@@ -913,7 +913,7 @@ Expected: PASS.
 ## Task 7: Document New Project Direction
 
 **Files:**
-- Modify: `docs/omoc-distribution-layer.md`
+- Modify: `docs/blacktower-distribution-layer.md`
 - Create: `docs/board-runtime.md`
 - Modify: `README.md`
 
@@ -964,12 +964,12 @@ Add to docs table:
 | **[Board Runtime](docs/board-runtime.md)** | First-class Board routing, delegation policy, and future orchestration runtime |
 ```
 
-- [ ] **Step 3: Update OMOC distribution doc**
+- [ ] **Step 3: Update Blacktower distribution doc**
 
-In `docs/omoc-distribution-layer.md`, add a note:
+In `docs/blacktower-distribution-layer.md`, add a note:
 
 ```markdown
-This repository is being re-founded around Board Runtime. OMOC distribution-layer docs describe the migration foundation, not a permanent constraint to preserve fork identity.
+This repository is being re-founded around Board Runtime. Blacktower distribution-layer docs describe the migration foundation, not a permanent constraint to preserve fork identity.
 ```
 
 - [ ] **Step 4: Run docs check**

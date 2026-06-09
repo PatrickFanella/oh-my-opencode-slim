@@ -9,7 +9,7 @@ let tmpDir = '';
 beforeEach(() => {
   tmpDir = join(
     '/tmp',
-    `omoc-control-center-service-${Date.now()}-${Math.random()}`,
+    `blacktower-control-center-service-${Date.now()}-${Math.random()}`,
   );
   mkdirSync(tmpDir, { recursive: true });
 });

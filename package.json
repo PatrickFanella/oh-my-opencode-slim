@@ -1,7 +1,7 @@
 {
-  "name": "oh-my-opencode-slim",
+  "name": "blacktower",
   "version": "1.1.0",
-  "description": "Lightweight agent orchestration plugin for OpenCode - a slimmed-down fork of oh-my-opencode",
+  "description": "Agent orchestration plugin for OpenCode",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -15,7 +15,7 @@
     }
   },
   "bin": {
-    "oh-my-opencode-slim": "./dist/cli/index.js"
+    "blacktower": "./dist/cli/index.js"
   },
   "type": "module",
   "workspaces": [
@@ -35,12 +35,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/alvinunreal/oh-my-opencode-slim"
+    "url": "https://github.com/blacktower/blacktower"
   },
   "bugs": {
-    "url": "https://github.com/alvinunreal/oh-my-opencode-slim/issues"
+    "url": "https://github.com/blacktower/blacktower/issues"
   },
-  "homepage": "https://github.com/alvinunreal/oh-my-opencode-slim#readme",
+  "homepage": "https://github.com/blacktower/blacktower#readme",
   "files": [
     "dist",
     "src/skills",
@@ -49,7 +49,7 @@
     "scripts/audit_skills.py",
     "scripts/hub_doctor.py",
     "apps/control-center-web/dist",
-    "oh-my-opencode-slim.schema.json",
+    "blacktower.schema.json",
     "custom-agent.schema.json",
     "README.md",
     "LICENSE"
@@ -57,7 +57,7 @@
   "scripts": {
     "build:plugin": "bun build src/index.ts src/tui.ts --outdir dist --target node --format esm --external @ast-grep/napi --external @opencode-ai/plugin --external @opencode-ai/sdk --external @opentui/core --external @opentui/solid --external jsdom --external zod",
     "build:cli": "bun build src/cli/index.ts --outdir dist/cli --target node --format esm --external @ast-grep/napi --external @opencode-ai/plugin --external @opencode-ai/sdk --external @opentui/core --external jsdom --external zod",
-    "build:web": "bun run --filter @oh-my-opencode-slim/control-center-web build",
+    "build:web": "bun run --filter @blacktower/control-center-web build",
     "copy:divoom-assets": "bun run scripts/copy-divoom-assets.ts",
     "build": "bun run build:web && bun run build:plugin && bun run build:cli && bun run copy:divoom-assets && tsc --emitDeclarationOnly && bun run generate-schema",
     "prepare": "bun run build",
@@ -75,8 +75,8 @@
     "control-center": "bun run src/cli/index.ts control-center",
     "control-center:web": "bun run src/cli/index.ts control-center-web",
     "control-center:web:api": "bun run src/cli/index.ts control-center-web --api-only",
-    "control-center:web:dev": "bun run --filter @oh-my-opencode-slim/control-center-web dev",
-    "test:web": "bun run --filter @oh-my-opencode-slim/control-center-web test",
+    "control-center:web:dev": "bun run --filter @blacktower/control-center-web dev",
+    "test:web": "bun run --filter @blacktower/control-center-web test",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "lint": "biome lint .",

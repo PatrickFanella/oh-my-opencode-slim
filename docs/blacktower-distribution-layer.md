@@ -1,9 +1,9 @@
-# OMOC as an OpenCode Distribution Layer
+# Blacktower as an OpenCode Distribution Layer
 
-OMOC can be the main OpenCode plugin/distribution layer when you want one
+Blacktower can be the main OpenCode plugin/distribution layer when you want one
 config-driven orchestration surface and do not need multiple harnesses.
 
-This repository is being re-founded around Board Runtime. OMOC
+This repository is being re-founded around Board Runtime. Blacktower
 distribution-layer docs describe the migration foundation, not a permanent
 constraint to preserve fork identity.
 
@@ -15,27 +15,27 @@ OpenCode owns:
 - Model discovery/refresh and host schema validation
 - Core runtime/session execution
 
-OMOC owns:
+Blacktower owns:
 
 - Plugin distribution/runtime composition
 - Agent routing, presets, MCP defaults/permissions
 - Tools, hooks, council/session orchestration, multiplexer integration
-- Bundled custom skills and OMOC plugin configuration surface
+- Bundled custom skills and Blacktower plugin configuration surface
 
 External systems stay external:
 
 - DCP
 - Quota management
-- Private user skills not curated into OMOC
+- Private user skills not curated into Blacktower
 
 ## Boundary Findings (Task 1)
 
-- OMOC ownership is composition/runtime orchestration, not host replacement.
-- DCP is not a first-class OMOC namespace.
+- Blacktower ownership is composition/runtime orchestration, not host replacement.
+- DCP is not a first-class Blacktower namespace.
 - Quota concerns appear only in runtime rate-limit/fallback handling,
-  not as OMOC config domain.
+  not as Blacktower config domain.
 - Env vars are primarily for paths/state/log plumbing. The existing
-  `OH_MY_OPENCODE_SLIM_PRESET` override remains a runtime preset-selection
+  `BLACKTOWER_PRESET` override remains a runtime preset-selection
   escape hatch, but new behavior should stay config-owned.
 - Ownership split by surface:
   - `src/config/loader.ts`: layered config loading + env path/preset inputs
@@ -47,16 +47,16 @@ External systems stay external:
 ## Migration Path
 
 1. Keep OpenCode host config minimal (plugin registration + host settings).
-2. Put OMOC behavior in `~/.config/opencode/oh-my-opencode-slim.jsonc`.
+2. Put Blacktower behavior in `~/.config/opencode/blacktower.jsonc`.
 3. Inventory real workflow skills/MCP usage.
-4. Bundle only core OMOC workflow skills in `src/skills/`.
+4. Bundle only core Blacktower workflow skills in `src/skills/`.
 5. Keep externally maintained skills as recommended or permission-only.
-6. Keep DCP and quota concerns outside OMOC.
+6. Keep DCP and quota concerns outside Blacktower.
 7. Validate with `bun run check:ci`, `bun run typecheck`, `bun test` before release.
 
 ## MCP Registry Merge
 
-OMOC's built-in MCP registry is allowed to absorb portable MCP entries, but the
+Blacktower's built-in MCP registry is allowed to absorb portable MCP entries, but the
 installer writes them to OpenCode's host config so native MCP authentication can
 handle OAuth/API credentials. Remote MCP definitions must avoid embedded
 secrets. Local MCPs must avoid user-specific absolute paths; prefer stable
@@ -73,7 +73,7 @@ call them.
 
 ## Decision Rules
 
-Bundle a skill when it is core to OMOC workflow and maintained in this repo.
+Bundle a skill when it is core to Blacktower workflow and maintained in this repo.
 
 Keep a skill external when it belongs to DCP/quota, depends on an external
 runtime/release process, or is user-private/harness-agnostic.
@@ -83,9 +83,9 @@ runtime/release process, or is user-private/harness-agnostic.
 Skill migration is intentionally skipped for now. The repo is prepared by
 keeping the packaging policy explicit:
 
-- core OMOC workflow skills belong in `src/skills/` and the `CUSTOM_SKILLS`
+- core Blacktower workflow skills belong in `src/skills/` and the `CUSTOM_SKILLS`
   metadata registry, but should not be bulk-installed by default;
 - externally maintained skills stay in the recommended-skill installer path;
-- user-private, DCP, and quota skills stay outside OMOC or permission-only;
+- user-private, DCP, and quota skills stay outside Blacktower or permission-only;
 - any future migration should start with an inventory of real workflow usage,
   not a bulk copy of every `.agents` skill.

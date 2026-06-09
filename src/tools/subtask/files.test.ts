@@ -107,7 +107,9 @@ describe('FILE_REGEX', () => {
 
 describe('buildSyntheticFileParts', () => {
   it('loads readable files inside the workspace', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'omos-subtask-files-'));
+    const dir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'blacktower-subtask-files-'),
+    );
     try {
       fs.writeFileSync(path.join(dir, 'file.ts'), 'const x = 1;\n');
 
@@ -122,9 +124,11 @@ describe('buildSyntheticFileParts', () => {
   });
 
   it('skips path traversal and symlinks outside the workspace', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'omos-subtask-files-'));
+    const dir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'blacktower-subtask-files-'),
+    );
     const outside = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'omos-subtask-outside-'),
+      path.join(os.tmpdir(), 'blacktower-subtask-outside-'),
     );
     try {
       fs.writeFileSync(path.join(outside, 'secret.txt'), 'secret\n');

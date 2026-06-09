@@ -53,10 +53,10 @@ export function parseControlCenterWebArgs(
 
 export function printControlCenterWebHelp(): void {
   console.log(`
-oh-my-opencode-slim control-center-web
+blacktower control-center-web
 
 Usage:
-  bunx oh-my-opencode-slim control-center-web [OPTIONS]
+  bunx blacktower control-center-web [OPTIONS]
 
 Options:
   --host=<host>        Host to bind (default: 127.0.0.1)

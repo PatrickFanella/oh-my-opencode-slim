@@ -20,7 +20,7 @@
       "type": "boolean"
     },
     "autoUpdate": {
-      "description": "Disable automatic installation of plugin updates when false. Defaults to true.",
+      "description": "Enable automatic installation of plugin updates when true. Defaults to false.",
       "type": "boolean"
     },
     "manualPlan": {
@@ -1186,6 +1186,6 @@
       "required": ["presets"]
     }
   },
-  "title": "oh-my-opencode-slim",
-  "description": "Configuration schema for oh-my-opencode-slim plugin for OpenCode"
+  "title": "blacktower",
+  "description": "Configuration schema for blacktower plugin for OpenCode"
 }

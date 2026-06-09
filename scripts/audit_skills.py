@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static, resumable audit helper for OMOC's bundled skill catalog."""
+"""Static, resumable audit helper for blacktower's bundled skill catalog."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 RESOURCE_DIRS = ("references", "scripts", "assets", "templates", "examples")
-OMOC_DIRECT_SKILLS = {"clonedeps", "codemap", "simplify"}
+BLACKTOWER_DIRECT_SKILLS = {"clonedeps", "codemap", "simplify"}
 
 
 @dataclass
@@ -54,7 +54,7 @@ def iter_skill_dirs(root: Path, include_system: bool) -> list[Path]:
         rel_parts = skill_dir.relative_to(skills_root).parts
         if not include_system and any(part.startswith(".") for part in rel_parts):
             continue
-        if len(rel_parts) == 1 and rel_parts[0] in OMOC_DIRECT_SKILLS:
+        if len(rel_parts) == 1 and rel_parts[0] in BLACKTOWER_DIRECT_SKILLS:
             continue
         dirs.append(skill_dir)
     return dirs

@@ -1,9 +1,9 @@
 import type { PluginInput } from '@opencode-ai/plugin';
 import { tool } from '@opencode-ai/plugin/tool';
 import {
+  BLACKTOWER_INTERNAL_INITIATOR_MARKER,
   createInternalAgentTextPart,
   log,
-  SLIM_INTERNAL_INITIATOR_MARKER,
   withTimeout,
 } from '../../utils';
 import { createTodoHygiene } from './todo-hygiene';
@@ -285,7 +285,7 @@ export function createTodoContinuationHook(
         (part) =>
           part.type === 'text' &&
           typeof part.text === 'string' &&
-          !part.text.includes(SLIM_INTERNAL_INITIATOR_MARKER),
+          !part.text.includes(BLACKTOWER_INTERNAL_INITIATOR_MARKER),
       )
       .map((part) => part.text?.trim() ?? '')
       .filter(Boolean)
@@ -299,7 +299,7 @@ export function createTodoContinuationHook(
         (part) =>
           part.type === 'text' &&
           typeof part.text === 'string' &&
-          part.text.includes(SLIM_INTERNAL_INITIATOR_MARKER),
+          part.text.includes(BLACKTOWER_INTERNAL_INITIATOR_MARKER),
       )
     );
   }
@@ -319,7 +319,7 @@ export function createTodoContinuationHook(
         .map((part) => {
           if (part.type === 'text' && typeof part.text === 'string') {
             const text = stripTodoHygieneInstruction(part.text);
-            return `${part.type}:${text.includes(SLIM_INTERNAL_INITIATOR_MARKER) ? '<internal>' : text.trim()}`;
+            return `${part.type}:${text.includes(BLACKTOWER_INTERNAL_INITIATOR_MARKER) ? '<internal>' : text.trim()}`;
           }
           return part.type ?? 'unknown';
         })

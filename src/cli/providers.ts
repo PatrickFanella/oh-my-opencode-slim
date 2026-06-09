@@ -4,7 +4,7 @@ import providerAssignmentGuide from './provider-assignment-guide.json';
 import type { InstallConfig } from './types';
 
 export const SCHEMA_URL =
-  'https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json';
+  'https://unpkg.com/blacktower@latest/blacktower.schema.json';
 
 export const GENERATED_PRESETS = ['openai', 'opencode-go'] as const;
 
@@ -162,7 +162,7 @@ function getDisabledSkillProfilesConfig(): {
   return { global: [], agents };
 }
 
-export function generateLiteConfig(
+export function generateBlacktowerConfig(
   installConfig: InstallConfig,
 ): Record<string, unknown> {
   if (!installConfig.preset && installConfig.installSkills) {

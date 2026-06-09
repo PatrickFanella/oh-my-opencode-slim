@@ -232,8 +232,8 @@ describe('readConfigInvalid', () => {
     originalEnv = { ...process.env };
     // Isolate from real user config and env presets
     delete process.env.OPENCODE_CONFIG_DIR;
-    delete process.env.OH_MY_OPENCODE_SLIM_PRESET;
-    configHome = fs.mkdtempSync(path.join(os.tmpdir(), 'omos-tui-env-'));
+    delete process.env.BLACKTOWER_PRESET;
+    configHome = fs.mkdtempSync(path.join(os.tmpdir(), 'blacktower-tui-env-'));
     process.env.XDG_CONFIG_HOME = configHome;
   });
 
@@ -243,13 +243,13 @@ describe('readConfigInvalid', () => {
   });
 
   test('detects invalid config from the current directory without persisted state', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omos-tui-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blacktower-tui-'));
     try {
       const projectDir = path.join(tempDir, 'project');
       const configDir = path.join(projectDir, '.opencode');
       fs.mkdirSync(configDir, { recursive: true });
       fs.writeFileSync(
-        path.join(configDir, 'oh-my-opencode-slim.json'),
+        path.join(configDir, 'blacktower.json'),
         JSON.stringify({ agents: { oracle: { temperature: 5 } } }),
       );
 
@@ -260,13 +260,13 @@ describe('readConfigInvalid', () => {
   });
 
   test('returns false for valid config', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omos-tui-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blacktower-tui-'));
     try {
       const projectDir = path.join(tempDir, 'project');
       const configDir = path.join(projectDir, '.opencode');
       fs.mkdirSync(configDir, { recursive: true });
       fs.writeFileSync(
-        path.join(configDir, 'oh-my-opencode-slim.json'),
+        path.join(configDir, 'blacktower.json'),
         JSON.stringify({ agents: { oracle: { model: 'valid/model' } } }),
       );
 

@@ -111,7 +111,7 @@ describe('custom-agent creation', () => {
         agentDefs.find((agent) => agent.name === 'janitor'),
       ).toBeUndefined();
       expect(warnSpy).toHaveBeenCalledWith(
-        "[oh-my-opencode] Custom agent 'janitor' skipped: 'model' is required",
+        "[blacktower] Custom agent 'janitor' skipped: 'model' is required",
       );
     } finally {
       warnSpy.mockRestore();
@@ -207,9 +207,9 @@ describe('custom-agent creation', () => {
     const previousConfigDir = process.env.OPENCODE_CONFIG_DIR;
     const previousEnable =
       process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST;
-    const root = mkdtempSync(join(tmpdir(), 'omoc-agent-defs-'));
+    const root = mkdtempSync(join(tmpdir(), 'blacktower-agent-defs-'));
     const configDir = join(root, 'opencode');
-    const agentDir = join(configDir, 'oh-my-opencode-slim', 'agents');
+    const agentDir = join(configDir, 'blacktower', 'agents');
 
     try {
       mkdirSync(agentDir, { recursive: true });

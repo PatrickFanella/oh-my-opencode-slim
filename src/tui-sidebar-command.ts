@@ -38,7 +38,7 @@ export function registerTuiSidebarCommands(
   for (const [name, mode] of Object.entries(COMMANDS)) {
     if (configCommand?.[name]) continue;
     commands[name] = {
-      template: `Set OMOC sidebar mode to ${mode}`,
+      template: `Set Blacktower sidebar mode to ${mode}`,
       description: getCommandDescription(name),
     };
   }
@@ -61,21 +61,22 @@ export async function handleTuiSidebarCommandExecuteBefore(
   output.parts.length = 0;
   output.parts.push(
     createInternalAgentTextPart(
-      `OMOC sidebar mode set to ${state.mode}. The TUI refreshes automatically.`,
+      `Blacktower sidebar mode set to ${state.mode}. The TUI refreshes automatically.`,
     ),
   );
 }
 
 function getCommandDescription(command: string): string {
   if (command === 'board-toggle') {
-    return 'Cycle the OMOC sidebar between compact, minimal, and full.';
+    return 'Cycle the Blacktower sidebar between compact, minimal, and full.';
   }
-  if (command === 'board-full') return 'Expand every OMOC sidebar section.';
+  if (command === 'board-full')
+    return 'Expand every Blacktower sidebar section.';
   if (command === 'board-compact') {
-    return 'Show CORE and collapse custom OMOC sidebar sections.';
+    return 'Show CORE and collapse custom Blacktower sidebar sections.';
   }
   if (command === 'board-minimal') {
-    return 'Show only the OMOC sidebar status summary.';
+    return 'Show only the Blacktower sidebar status summary.';
   }
-  return 'Hide OMOC sidebar board content.';
+  return 'Hide Blacktower sidebar board content.';
 }

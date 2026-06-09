@@ -91,14 +91,14 @@ async function appLog(
 ): Promise<void> {
   try {
     await ctx.client.app.log({
-      body: { service: 'oh-my-opencode-slim', level, message },
+      body: { service: 'blacktower', level, message },
     });
   } catch {
     // client.app.log may deadlock or be unavailable; stderr is the
     // fallback
     const prefix =
       level === 'error' ? 'ERROR' : level === 'warn' ? 'WARN' : 'INFO';
-    console.error(`[oh-my-opencode-slim] ${prefix}: ${message}`);
+    console.error(`[blacktower] ${prefix}: ${message}`);
   }
 }
 
@@ -187,7 +187,7 @@ async function probeJSDOM(): Promise<string | null> {
 // re-runs, it checks this variable and applies the runtime preset instead
 // of the config file's preset. State lives in config/runtime-preset.ts.
 
-const OhMyOpenCodeLite: Plugin = async (ctx) => {
+const Blacktower: Plugin = async (ctx) => {
   const sessionId = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
   initLogger(sessionId);
 
@@ -395,7 +395,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
 
     // Initialize auto-update checker hook
     autoUpdateChecker = createAutoUpdateCheckerHook(ctx, {
-      autoUpdate: config.autoUpdate ?? true,
+      autoUpdate: config.autoUpdate ?? false,
     });
 
     // Initialize phase reminder hook for workflow compliance
@@ -470,7 +470,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
     await appLog(
       ctx,
       'error',
-      `INIT FAILED: ${String(err)}. Report at github.com/alvinunreal/oh-my-opencode-slim/issues/310`,
+      `INIT FAILED: ${String(err)}. Report at github.com/blacktower/blacktower/issues/310`,
     );
     throw err;
   }
@@ -487,7 +487,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
       `  tools:  ${toolCount} (expected >=${HEALTH_CHECK.minTools})`,
       'This usually means a dependency failed to resolve (jsdom, etc).',
       'If you recently updated opencode, see:',
-      '  github.com/alvinunreal/oh-my-opencode-slim/issues/310',
+      '  github.com/blacktower/blacktower/issues/310',
     ].join('\n');
     log(`[plugin] WARN: ${msg}`);
     await appLog(ctx, 'warn', msg);
@@ -512,7 +512,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   divoomManager.onPluginLoad();
 
   return {
-    name: 'oh-my-opencode-slim',
+    name: 'blacktower',
 
     agent: agents,
 
@@ -644,7 +644,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
               entry.variant = chosen.variant;
             }
           } else {
-            // Agent exists in slim but not in opencodeConfig.agent —
+            // Agent exists in blacktower but not in opencodeConfig.agent —
             // create entry
             (configAgent as Record<string, unknown>)[agentName] = {
               model: chosen.id,
@@ -1450,8 +1450,8 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
 };
 
 export default {
-  id: 'oh-my-opencode-slim',
-  server: OhMyOpenCodeLite,
+  id: 'blacktower',
+  server: Blacktower,
 } satisfies PluginModule;
 
 export { CUSTOM_SKILLS } from './cli/custom-skills';

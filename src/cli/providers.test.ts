@@ -4,7 +4,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   AVAILABLE_MODEL_IDS,
   buildBoardProviderPreset,
-  generateLiteConfig,
+  generateBlacktowerConfig,
   MODEL_MAPPINGS,
 } from './providers';
 
@@ -60,15 +60,15 @@ describe('providers', () => {
     expect(preset.designer.variant).toBe('medium');
   });
 
-  test('generateLiteConfig defaults to openai and includes only the active preset', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig defaults to openai and includes only the active preset', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: false,
       reset: false,
     });
 
     expect(config.$schema).toBe(
-      'https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json',
+      'https://unpkg.com/blacktower@latest/blacktower.schema.json',
     );
     expect(config.preset).toBe('openai');
     expect(config.disabled_agents).toBeUndefined();
@@ -84,21 +84,20 @@ describe('providers', () => {
     expect(agents.observer.model).toBe('openai/gpt-5.4-mini');
   });
 
-  test('generateLiteConfig writes schema-only config for default install', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig writes schema-only config for default install', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: true,
       reset: false,
     });
 
     expect(config).toEqual({
-      $schema:
-        'https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json',
+      $schema: 'https://unpkg.com/blacktower@latest/blacktower.schema.json',
     });
   });
 
-  test('generateLiteConfig uses correct OpenAI models', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig uses correct OpenAI models', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: false,
       reset: false,
@@ -120,8 +119,8 @@ describe('providers', () => {
     expect(agents.designer.variant).toBe('medium');
   });
 
-  test('generateLiteConfig can set opencode-go as active preset', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig can set opencode-go as active preset', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: false,
       preset: 'opencode-go',
@@ -146,9 +145,9 @@ describe('providers', () => {
     expect(agents.observer.model).toBe('opencode-go/kimi-k2.6');
   });
 
-  test('generateLiteConfig rejects unsupported preset', () => {
+  test('generateBlacktowerConfig rejects unsupported preset', () => {
     expect(() =>
-      generateLiteConfig({
+      generateBlacktowerConfig({
         hasTmux: false,
         installSkills: false,
         preset: 'not-real',
@@ -157,9 +156,9 @@ describe('providers', () => {
     ).toThrow('Unsupported preset "not-real"');
   });
 
-  test('generateLiteConfig rejects non-generated model mappings as active presets', () => {
+  test('generateBlacktowerConfig rejects non-generated model mappings as active presets', () => {
     expect(() =>
-      generateLiteConfig({
+      generateBlacktowerConfig({
         hasTmux: false,
         installSkills: false,
         preset: 'kimi',
@@ -168,9 +167,9 @@ describe('providers', () => {
     ).toThrow('Unsupported preset "kimi"');
   });
 
-  test('generateLiteConfig rejects inherited property names as presets', () => {
+  test('generateBlacktowerConfig rejects inherited property names as presets', () => {
     expect(() =>
-      generateLiteConfig({
+      generateBlacktowerConfig({
         hasTmux: false,
         installSkills: false,
         preset: 'toString',
@@ -179,8 +178,8 @@ describe('providers', () => {
     ).toThrow('Unsupported preset "toString"');
   });
 
-  test('generateLiteConfig omits multiplexer because plugin owns defaults', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig omits multiplexer because plugin owns defaults', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: true,
       installSkills: false,
       reset: false,
@@ -190,8 +189,8 @@ describe('providers', () => {
     expect(config.multiplexer).toBeUndefined();
   });
 
-  test('generateLiteConfig omits skillProfiles when code-managed skills are enabled', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig omits skillProfiles when code-managed skills are enabled', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: true,
       preset: 'openai',
@@ -206,8 +205,8 @@ describe('providers', () => {
     expect(config.skillProfiles).toBeUndefined();
   });
 
-  test('generateLiteConfig disables skill profiles when skills are disabled', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig disables skill profiles when skills are disabled', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: false,
       reset: false,
@@ -221,8 +220,8 @@ describe('providers', () => {
     expect(profiles.agents.fixer).toEqual([]);
   });
 
-  test('generateLiteConfig includes mcps field', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig includes mcps field', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: false,
       reset: false,
@@ -235,8 +234,8 @@ describe('providers', () => {
     expect(Array.isArray(agents.librarian.mcps)).toBe(true);
   });
 
-  test('generateLiteConfig openai includes correct mcps', () => {
-    const config = generateLiteConfig({
+  test('generateBlacktowerConfig openai includes correct mcps', () => {
+    const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: false,
       reset: false,

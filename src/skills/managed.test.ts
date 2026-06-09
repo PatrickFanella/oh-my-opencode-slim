@@ -11,7 +11,7 @@ describe('managed skills', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'omoc-managed-skills-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'blacktower-managed-skills-'));
   });
 
   afterEach(() => {

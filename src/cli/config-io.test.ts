@@ -24,8 +24,8 @@ import {
   parseConfigFile,
   stripJsonComments,
   switchProviderConfig,
+  writeBlacktowerConfig,
   writeConfig,
-  writeLiteConfig,
 } from './config-io';
 import * as paths from './paths';
 
@@ -54,7 +54,7 @@ describe('config-io', () => {
     mkdirSync(dir, { recursive: true });
     writeFileSync(
       join(dir, 'package.json'),
-      JSON.stringify({ name: 'oh-my-opencode-slim' }),
+      JSON.stringify({ name: 'blacktower' }),
     );
   }
 
@@ -142,7 +142,7 @@ describe('config-io', () => {
     paths.ensureConfigDir();
     writeFileSync(
       configPath,
-      JSON.stringify({ plugin: ['other', 'oh-my-opencode-slim@1.0.0'] }),
+      JSON.stringify({ plugin: ['other', 'blacktower@1.0.0'] }),
     );
     process.argv[1] = '';
 
@@ -150,8 +150,8 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
 
     const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.plugin).toContain('oh-my-opencode-slim');
-    expect(saved.plugin).not.toContain('oh-my-opencode-slim@1.0.0');
+    expect(saved.plugin).toContain('blacktower');
+    expect(saved.plugin).not.toContain('blacktower@1.0.0');
     expect(saved.plugin.length).toBe(2);
   });
 
@@ -173,16 +173,16 @@ describe('config-io', () => {
     const savedJson = JSON.parse(readFileSync(configPath, 'utf-8'));
     const savedJsonc = JSON.parse(readFileSync(configJsoncPath, 'utf-8'));
     expect(savedJson.plugin).toEqual(['json-config']);
-    expect(savedJsonc.plugin).toEqual(['jsonc-config', 'oh-my-opencode-slim']);
+    expect(savedJsonc.plugin).toEqual(['jsonc-config', 'blacktower']);
   });
 
   test('addPluginToOpenCodeConfig stores package name for bunx temp paths', async () => {
     const configPath = join(tmpDir, 'opencode', 'opencode.json');
     const packageRoot = join(
       tmpDir,
-      'bunx-1000-oh-my-opencode-slim@latest',
+      'bunx-1000-blacktower@latest',
       'node_modules',
-      'oh-my-opencode-slim',
+      'blacktower',
     );
     paths.ensureConfigDir();
     writeFileSync(configPath, JSON.stringify({ plugin: [] }));
@@ -193,7 +193,7 @@ describe('config-io', () => {
 
     expect(result.success).toBe(true);
     const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.plugin).toEqual(['oh-my-opencode-slim']);
+    expect(saved.plugin).toEqual(['blacktower']);
   });
 
   test('addPluginToOpenCodeConfig stores local repo path for local dev paths', async () => {
@@ -256,7 +256,7 @@ describe('config-io', () => {
     writeFileSync(
       configPath,
       JSON.stringify({
-        plugin: ['other-plugin', objectPlugin, 'oh-my-opencode-slim@1.0.0'],
+        plugin: ['other-plugin', objectPlugin, 'blacktower@1.0.0'],
       }),
     );
 
@@ -264,9 +264,9 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
 
     const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.plugin).toContain('oh-my-opencode-slim');
+    expect(saved.plugin).toContain('blacktower');
     expect(saved.plugin).toContain('other-plugin');
-    expect(saved.plugin).not.toContain('oh-my-opencode-slim@1.0.0');
+    expect(saved.plugin).not.toContain('blacktower@1.0.0');
     // Non-string entries (objects) must survive the plugin refresh
     expect(saved.plugin).toContainEqual(objectPlugin);
     expect(saved.plugin.length).toBe(3);
@@ -278,7 +278,7 @@ describe('config-io', () => {
     writeFileSync(
       configPath,
       JSON.stringify({
-        plugin: ['other', ['oh-my-opencode-slim', { enabled: true }]],
+        plugin: ['other', ['blacktower', { enabled: true }]],
       }),
     );
     process.argv[1] = '';
@@ -287,7 +287,7 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
 
     const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.plugin).toEqual(['other', 'oh-my-opencode-slim']);
+    expect(saved.plugin).toEqual(['other', 'blacktower']);
   });
 
   test('addBuiltinMcpsToOpenCodeConfig writes host MCP definitions without clobbering existing auth', () => {
@@ -345,12 +345,7 @@ describe('config-io', () => {
   });
 
   test('materializeDefaultBoardAgentDefinitions writes missing files and preserves existing ones', () => {
-    const boardAgentDir = join(
-      tmpDir,
-      'opencode',
-      'oh-my-opencode-slim',
-      'agents',
-    );
+    const boardAgentDir = join(tmpDir, 'opencode', 'blacktower', 'agents');
     const existingPath = join(boardAgentDir, 'backend-architect.json');
     paths.ensureConfigDir();
     mkdirSync(boardAgentDir, { recursive: true });
@@ -377,7 +372,7 @@ describe('config-io', () => {
     const result = materializeDefaultBoardAgentDefinitions({ dryRun: true });
 
     expect(result.targetDir).toBe(
-      join(customConfigDir, 'oh-my-opencode-slim', 'agents'),
+      join(customConfigDir, 'blacktower', 'agents'),
     );
     expect(result.written).toHaveLength(0);
     expect(result.skipped).toHaveLength(22);
@@ -390,15 +385,15 @@ describe('config-io', () => {
     const result = materializeDefaultBoardAgentDefinitions({ dryRun: true });
 
     expect(result.targetDir).toBe(
-      join(tmpDir, 'opencode', 'oh-my-opencode-slim', 'agents'),
+      join(tmpDir, 'opencode', 'blacktower', 'agents'),
     );
   });
 
   test('switchProviderConfig updates board agents and active built-in preset', () => {
     paths.ensureConfigDir();
-    const liteConfigPath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
+    const blacktowerConfigPath = join(tmpDir, 'opencode', 'blacktower.json');
     writeFileSync(
-      liteConfigPath,
+      blacktowerConfigPath,
       JSON.stringify({
         $schema: 'old-schema',
         preset: 'openai',
@@ -416,7 +411,7 @@ describe('config-io', () => {
     expect(result.presetName).toBe('board-github-copilot');
     expect(result.boardAgents.written).toContain('python-advisor');
 
-    const saved = JSON.parse(readFileSync(liteConfigPath, 'utf-8'));
+    const saved = JSON.parse(readFileSync(blacktowerConfigPath, 'utf-8'));
     expect(saved.preset).toBe('board-github-copilot');
     expect(saved.presets.openai.explorer.model).toBe('openai/gpt-5.4-mini');
     expect(saved.presets['board-github-copilot'].explorer.model).toBe(
@@ -434,18 +429,10 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
     expect(result.configUpdated).toBe(true);
     expect(result.boardAgents.skipped).toHaveLength(22);
-    expect(
-      existsSync(join(tmpDir, 'opencode', 'oh-my-opencode-slim.json')),
-    ).toBe(false);
+    expect(existsSync(join(tmpDir, 'opencode', 'blacktower.json'))).toBe(false);
     expect(
       existsSync(
-        join(
-          tmpDir,
-          'opencode',
-          'oh-my-opencode-slim',
-          'agents',
-          'python-advisor.json',
-        ),
+        join(tmpDir, 'opencode', 'blacktower', 'agents', 'python-advisor.json'),
       ),
     ).toBe(false);
   });
@@ -456,12 +443,10 @@ describe('config-io', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('Unknown provider: unknown-provider');
     expect(result.boardAgents.written).toHaveLength(0);
-    expect(
-      existsSync(join(tmpDir, 'opencode', 'oh-my-opencode-slim.json')),
-    ).toBe(false);
-    expect(
-      existsSync(join(tmpDir, 'opencode', 'oh-my-opencode-slim', 'agents')),
-    ).toBe(false);
+    expect(existsSync(join(tmpDir, 'opencode', 'blacktower.json'))).toBe(false);
+    expect(existsSync(join(tmpDir, 'opencode', 'blacktower', 'agents'))).toBe(
+      false,
+    );
   });
 
   test('addBuiltinMcpsToOpenCodeConfig upgrades broken generated github docker command', () => {
@@ -501,7 +486,7 @@ describe('config-io', () => {
     paths.ensureConfigDir();
     writeFileSync(
       tuiPath,
-      JSON.stringify({ plugin: ['other', 'oh-my-opencode-slim@1.0.0'] }),
+      JSON.stringify({ plugin: ['other', 'blacktower@1.0.0'] }),
     );
     process.argv[1] = '';
 
@@ -509,8 +494,8 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
 
     const saved = JSON.parse(readFileSync(tuiPath, 'utf-8'));
-    expect(saved.plugin).toContain('oh-my-opencode-slim/tui');
-    expect(saved.plugin).not.toContain('oh-my-opencode-slim@1.0.0');
+    expect(saved.plugin).toContain('blacktower/tui');
+    expect(saved.plugin).not.toContain('blacktower@1.0.0');
     expect(saved.plugin.length).toBe(2);
   });
 
@@ -529,19 +514,16 @@ describe('config-io', () => {
     const savedJson = JSON.parse(readFileSync(tuiPath, 'utf-8'));
     const savedJsonc = JSON.parse(readFileSync(tuiJsoncPath, 'utf-8'));
     expect(savedJson.plugin).toEqual(['json-config']);
-    expect(savedJsonc.plugin).toEqual([
-      'jsonc-config',
-      'oh-my-opencode-slim/tui',
-    ]);
+    expect(savedJsonc.plugin).toEqual(['jsonc-config', 'blacktower/tui']);
   });
 
   test('addPluginToOpenCodeTuiConfig stores package name for bunx temp paths', async () => {
     const tuiPath = join(tmpDir, 'opencode', 'tui.json');
     const packageRoot = join(
       tmpDir,
-      'bunx-1000-oh-my-opencode-slim@latest',
+      'bunx-1000-blacktower@latest',
       'node_modules',
-      'oh-my-opencode-slim',
+      'blacktower',
     );
     paths.ensureConfigDir();
     writeFileSync(tuiPath, JSON.stringify({ plugin: [] }));
@@ -552,7 +534,7 @@ describe('config-io', () => {
 
     expect(result.success).toBe(true);
     const saved = JSON.parse(readFileSync(tuiPath, 'utf-8'));
-    expect(saved.plugin).toEqual(['oh-my-opencode-slim/tui']);
+    expect(saved.plugin).toEqual(['blacktower/tui']);
   });
 
   test('addPluginToOpenCodeTuiConfig removes tuple plugin entries', async () => {
@@ -561,7 +543,7 @@ describe('config-io', () => {
     writeFileSync(
       tuiPath,
       JSON.stringify({
-        plugin: ['other', ['oh-my-opencode-slim', { enabled: true }]],
+        plugin: ['other', ['blacktower', { enabled: true }]],
       }),
     );
     process.argv[1] = '';
@@ -570,7 +552,7 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
 
     const saved = JSON.parse(readFileSync(tuiPath, 'utf-8'));
-    expect(saved.plugin).toEqual(['other', 'oh-my-opencode-slim/tui']);
+    expect(saved.plugin).toEqual(['other', 'blacktower/tui']);
   });
 
   test('addPluginToOpenCodeTuiConfig honors OPENCODE_TUI_CONFIG', async () => {
@@ -583,7 +565,7 @@ describe('config-io', () => {
     expect(result.configPath).toBe(tuiPath);
 
     const saved = JSON.parse(readFileSync(tuiPath, 'utf-8'));
-    expect(saved.plugin).toEqual(['oh-my-opencode-slim/tui']);
+    expect(saved.plugin).toEqual(['blacktower/tui']);
   });
 
   test('addPluginToOpenCodeTuiConfig does not bypass OPENCODE_TUI_CONFIG for existing default config', async () => {
@@ -600,7 +582,7 @@ describe('config-io', () => {
 
     const custom = JSON.parse(readFileSync(customTuiPath, 'utf-8'));
     const original = JSON.parse(readFileSync(defaultTuiPath, 'utf-8'));
-    expect(custom.plugin).toEqual(['oh-my-opencode-slim/tui']);
+    expect(custom.plugin).toEqual(['blacktower/tui']);
     expect(original.plugin).toEqual(['default']);
   });
 
@@ -653,7 +635,7 @@ describe('config-io', () => {
     writeFileSync(
       tuiPath,
       JSON.stringify({
-        plugin: ['other-plugin', objectPlugin, 'oh-my-opencode-slim@1.0.0'],
+        plugin: ['other-plugin', objectPlugin, 'blacktower@1.0.0'],
       }),
     );
 
@@ -661,19 +643,19 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
 
     const saved = JSON.parse(readFileSync(tuiPath, 'utf-8'));
-    expect(saved.plugin).toContain('oh-my-opencode-slim/tui');
+    expect(saved.plugin).toContain('blacktower/tui');
     expect(saved.plugin).toContain('other-plugin');
-    expect(saved.plugin).not.toContain('oh-my-opencode-slim@1.0.0');
+    expect(saved.plugin).not.toContain('blacktower@1.0.0');
     // Non-string entries (objects) must survive the plugin refresh
     expect(saved.plugin).toContainEqual(objectPlugin);
     expect(saved.plugin.length).toBe(3);
   });
 
-  test('writeLiteConfig writes schema-only config for default install', () => {
-    const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
+  test('writeBlacktowerConfig writes schema-only config for default install', () => {
+    const litePath = join(tmpDir, 'opencode', 'blacktower.json');
     paths.ensureConfigDir();
 
-    const result = writeLiteConfig({
+    const result = writeBlacktowerConfig({
       hasTmux: true,
       installSkills: true,
       reset: false,
@@ -682,16 +664,15 @@ describe('config-io', () => {
 
     const saved = JSON.parse(readFileSync(litePath, 'utf-8'));
     expect(saved).toEqual({
-      $schema:
-        'https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json',
+      $schema: 'https://unpkg.com/blacktower@latest/blacktower.schema.json',
     });
   });
 
-  test('writeLiteConfig writes generated OpenAI preset when skills are disabled', () => {
-    const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
+  test('writeBlacktowerConfig writes generated OpenAI preset when skills are disabled', () => {
+    const litePath = join(tmpDir, 'opencode', 'blacktower.json');
     paths.ensureConfigDir();
 
-    const result = writeLiteConfig({
+    const result = writeBlacktowerConfig({
       hasTmux: true,
       installSkills: false,
       reset: false,
@@ -705,11 +686,11 @@ describe('config-io', () => {
     expect(saved.skillProfiles.global).toEqual([]);
   });
 
-  test('writeLiteConfig writes selected preset', () => {
-    const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
+  test('writeBlacktowerConfig writes selected preset', () => {
+    const litePath = join(tmpDir, 'opencode', 'blacktower.json');
     paths.ensureConfigDir();
 
-    const result = writeLiteConfig({
+    const result = writeBlacktowerConfig({
       hasTmux: false,
       installSkills: false,
       preset: 'opencode-go',
@@ -781,13 +762,13 @@ describe('config-io', () => {
 
   test('detectCurrentConfig detects installed status', () => {
     const configPath = join(tmpDir, 'opencode', 'opencode.json');
-    const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
+    const litePath = join(tmpDir, 'opencode', 'blacktower.json');
     paths.ensureConfigDir();
 
     writeFileSync(
       configPath,
       JSON.stringify({
-        plugin: ['oh-my-opencode-slim'],
+        plugin: ['blacktower'],
         provider: {
           kimi: {
             npm: '@ai-sdk/openai-compatible',
@@ -823,14 +804,11 @@ describe('config-io', () => {
 
   test('detectCurrentConfig prefers lite .jsonc over .json', () => {
     const configPath = join(tmpDir, 'opencode', 'opencode.json');
-    const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
-    const liteJsoncPath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.jsonc');
+    const litePath = join(tmpDir, 'opencode', 'blacktower.json');
+    const liteJsoncPath = join(tmpDir, 'opencode', 'blacktower.jsonc');
     paths.ensureConfigDir();
 
-    writeFileSync(
-      configPath,
-      JSON.stringify({ plugin: ['oh-my-opencode-slim'] }),
-    );
+    writeFileSync(configPath, JSON.stringify({ plugin: ['blacktower'] }));
     writeFileSync(
       litePath,
       JSON.stringify({

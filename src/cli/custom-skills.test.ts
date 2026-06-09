@@ -6,7 +6,7 @@ import { CUSTOM_SKILLS, discoverCustomSkills } from './custom-skills';
 import { getSkillPermissionsForAgent } from './skills';
 
 describe('custom skills discovery', () => {
-  it('includes direct OMOC skills and migrated catalog skills', () => {
+  it('includes direct Blacktower skills and migrated catalog skills', () => {
     const names = new Set(CUSTOM_SKILLS.map((skill) => skill.name));
 
     expect(names.has('almaz')).toBe(true);
@@ -18,7 +18,7 @@ describe('custom skills discovery', () => {
     expect(names.has('agent-browser')).toBe(false);
   });
 
-  it('preserves default allowed agents for OMOC direct skills', () => {
+  it('preserves default allowed agents for Blacktower direct skills', () => {
     const byName = new Map(CUSTOM_SKILLS.map((skill) => [skill.name, skill]));
 
     expect(byName.get('simplify')?.allowedAgents).toEqual(['oracle']);
@@ -55,8 +55,8 @@ describe('custom skills duplicate handling', () => {
     writeFileSync(join(skillDir, 'SKILL.md'), content, 'utf8');
   }
 
-  it('prefers direct OMOC path for simplify duplicates', () => {
-    const root = mkdtempSync(join(tmpdir(), 'omoc-skills-'));
+  it('prefers direct Blacktower path for simplify duplicates', () => {
+    const root = mkdtempSync(join(tmpdir(), 'blacktower-skills-'));
     tempRoots.push(root);
 
     createSkill(
@@ -75,7 +75,7 @@ describe('custom skills duplicate handling', () => {
   });
 
   it('keeps first deterministic path for non-preferred duplicates', () => {
-    const root = mkdtempSync(join(tmpdir(), 'omoc-skills-'));
+    const root = mkdtempSync(join(tmpdir(), 'blacktower-skills-'));
     tempRoots.push(root);
 
     createSkill(

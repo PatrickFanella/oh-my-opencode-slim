@@ -1,6 +1,6 @@
 # Maintainer Guide
 
-This document is the source of truth for issue triage and lightweight repo maintenance in `oh-my-opencode-slim`.
+This document is the source of truth for issue triage and lightweight repo maintenance in `blacktower`.
 
 ## Goals
 
@@ -40,7 +40,7 @@ Bug reports should include:
 - steps to reproduce
 - relevant config
 - OpenCode version
-- `oh-my-opencode-slim` version
+- `blacktower` version
 - operating system
 - logs, screenshots, or extra context if relevant
 
@@ -117,4 +117,4 @@ If issue volume or maintainer load changes, this document can grow to include:
 - stale policies
 - contributor workflow guidance
 
-Until then, keep the system slim.
+Until then, keep the system lean.
