@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 190,
+    "total_skills": 191,
     "categories": {
       "agent-ecosystem": 8,
       "analytics-observability": 3,
@@ -12,7 +12,7 @@
       "debugging": 3,
       "dev-workflows": 17,
       "docs-documents": 8,
-      "frontend-ui": 2,
+      "frontend-ui": 3,
       "games-interactive": 2,
       "git-github": 3,
       "growth-marketing": 17,
@@ -379,6 +379,11 @@
     {
       "name": "frontend-design",
       "path": "skills/frontend-ui/frontend-design/SKILL.md",
+      "category": "frontend-ui"
+    },
+    {
+      "name": "neubrutal-hud",
+      "path": "skills/frontend-ui/neubrutal-hud/SKILL.md",
       "category": "frontend-ui"
     },
     {

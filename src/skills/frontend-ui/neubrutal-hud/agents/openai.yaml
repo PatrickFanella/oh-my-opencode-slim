@@ -1,0 +1,5 @@
+interface:
+  display_name: "Neubrutal HUD"
+  short_description: "Neubrutal HUD design system for broadcast control panels"
+  default_prompt: "Use neubrutal-hud to build a high-contrast broadcast overlay, live dashboard, or operator console UI"
+  brand_color: "#A855F7"

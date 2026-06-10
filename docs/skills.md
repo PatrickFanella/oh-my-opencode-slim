@@ -51,6 +51,7 @@ as the in-repo catalog grows.
 | [`nuc`](#almaz-homelab-and-nuc) | NUC homelab operations and documentation | `orchestrator`, `oracle` |
 | [`scheduled-tasks`](#scheduled-tasks) | OpenCode task scheduling guidance | all agents |
 | `gitea-repo-overhaul` | Gitea/Forgejo repo audit and governance playbook | `orchestrator`, `oracle` |
+| `neubrutal-hud` | Neubrutal HUD design system for broadcast overlays, dashboards, and control panels | `designer`, `fixer`, `orchestrator` |
 | `super-productivity-maintenance` | Super Productivity maintenance router | `orchestrator` |
 | `super-productivity-planning` | Super Productivity task hygiene and planning | `orchestrator` |
 

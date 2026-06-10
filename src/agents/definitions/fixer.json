@@ -21,6 +21,7 @@
     "llama-line-client",
     "llm-evaluation",
     "mcp-builder",
+    "neubrutal-hud",
     "nodejs-backend-patterns",
     "opentui",
     "postgres-data-quality",
