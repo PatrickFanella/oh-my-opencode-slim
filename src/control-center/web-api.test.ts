@@ -78,6 +78,20 @@ describe('control-center web API', () => {
     });
   });
 
+  test('returns scheduler status snapshot', async () => {
+    const api = createControlCenterWebApi({ services: fakeServices() });
+
+    const response = await api.fetch(
+      new Request('http://127.0.0.1/api/scheduler-status'),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.mode).toBe('read-only');
+    expect(body.hosts[0]?.status).toBe('healthy');
+    expect(body.hosts[0]?.tasks[0]?.name).toBe('observe');
+  });
+
   test('serves task detail and run history routes', async () => {
     const api = createControlCenterWebApi({ services: fakeServices() });
 

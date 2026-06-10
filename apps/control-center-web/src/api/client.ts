@@ -1,6 +1,7 @@
 import type {
   ControlCenterSnapshot,
   SchedulerHealth,
+  SchedulerStatusSnapshot,
   StreamEvent,
   TaskDetail,
   TaskRun,
@@ -36,6 +37,10 @@ export async function fetchTaskRuns(
 
 export async function fetchSchedulerHealth(): Promise<SchedulerHealth> {
   return fetchJson<SchedulerHealth>('/api/health/scheduler');
+}
+
+export async function fetchSchedulerStatus(): Promise<SchedulerStatusSnapshot> {
+  return fetchJson<SchedulerStatusSnapshot>('/api/scheduler-status');
 }
 
 export function createSchedulerEventSource(): EventSource {

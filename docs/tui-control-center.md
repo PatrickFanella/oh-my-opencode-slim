@@ -248,6 +248,7 @@ Web app
 Current read-only transport:
 
 - `GET /api/snapshot`
+- `GET /api/scheduler-status`
 - `GET /api/tasks`
 - `GET /api/tasks/:name`
 - `GET /api/tasks/:name/runs`

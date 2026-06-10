@@ -1,5 +1,7 @@
 import { existsSync, statSync } from 'node:fs';
+import { hostname } from 'node:os';
 import { extname, isAbsolute, join, relative, resolve } from 'node:path';
+import { createSchedulerStatusSnapshot } from './scheduler-status';
 import {
   type ControlCenterServices,
   createControlCenterServices,
@@ -109,6 +111,23 @@ async function handleApiRoute(
         return invalidTaskNameResponse();
       }
       return jsonResponse(await services.snapshot(selectedTask));
+    }
+
+    if (segments.length === 2 && segments[1] === 'scheduler-status') {
+      const [tasks, health] = await Promise.all([
+        services.tasks.listTasks(),
+        services.health.getSchedulerHealth(),
+      ]);
+      return jsonResponse(
+        createSchedulerStatusSnapshot([
+          {
+            host: hostname(),
+            generatedAt: new Date().toISOString(),
+            health,
+            tasks,
+          },
+        ]),
+      );
     }
 
     if (segments.length === 2 && segments[1] === 'tasks') {

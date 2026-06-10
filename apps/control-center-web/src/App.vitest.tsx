@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { App } from './App';
-import { fixtureSnapshot } from './test/fixtures';
+import { fixtureSchedulerStatus, fixtureSnapshot } from './test/fixtures';
 
 class FakeEventSource {
   onerror: (() => void) | null = null;
@@ -18,12 +18,21 @@ describe('App', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(
-        async () =>
-          new Response(JSON.stringify(fixtureSnapshot), {
-            headers: { 'content-type': 'application/json' },
-          }),
-      ),
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url =
+          typeof input === 'string'
+            ? input
+            : input instanceof Request
+              ? input.url
+              : input.toString();
+        const body = url.includes('/api/scheduler-status')
+          ? fixtureSchedulerStatus
+          : fixtureSnapshot;
+
+        return new Response(JSON.stringify(body), {
+          headers: { 'content-type': 'application/json' },
+        });
+      }),
     );
     vi.stubGlobal('EventSource', FakeEventSource);
   });
@@ -37,9 +46,11 @@ describe('App', () => {
   test('renders scheduler health, tasks, and selected task detail', async () => {
     render(<App />);
 
-    expect(await screen.findByText('scheduler ok')).toBeInTheDocument();
+    expect(screen.getByText('Scheduler health')).toBeInTheDocument();
+    expect(await screen.findByText('nuc')).toBeInTheDocument();
+    expect(screen.getAllByText('scheduler ok').length).toBeGreaterThan(0);
     expect(screen.getAllByText('observe')[0]).toBeInTheDocument();
-    expect(screen.getByText('daily-maintenance')).toBeInTheDocument();
+    expect(screen.getAllByText('daily-maintenance').length).toBeGreaterThan(0);
     expect(screen.getByText('Observe the system')).toBeInTheDocument();
   });
 
@@ -50,7 +61,7 @@ describe('App', () => {
     const input = await screen.findByPlaceholderText('Filter tasks…');
     await user.type(input, 'daily');
 
-    expect(screen.getByText('daily-maintenance')).toBeInTheDocument();
+    expect(screen.getAllByText('daily-maintenance').length).toBeGreaterThan(0);
   });
 
   test('switches to session tab and copies the session command', async () => {
@@ -71,7 +82,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await screen.findByText('scheduler ok');
+    await screen.findByText('Scheduler status');
     await user.keyboard('{Tab}');
     expect(screen.getByText('opencode -s sess-1')).toBeInTheDocument();
 

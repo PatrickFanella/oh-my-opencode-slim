@@ -1,14 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { HealthPanel } from './components/HealthPanel';
+import { SchedulerStatusPanel } from './components/SchedulerStatusPanel';
 import { StreamTabs } from './components/StreamTabs';
 import { TaskDetail } from './components/TaskDetail';
 import { TaskList } from './components/TaskList';
 import { useControlCenter } from './hooks/use-control-center';
+import { useSchedulerStatus } from './hooks/use-scheduler-status';
 
 export function App() {
   const filterRef = useRef<HTMLInputElement>(null);
   const state = useControlCenter();
+  const schedulerStatus = useSchedulerStatus();
   const selectedTask = state.snapshot?.selectedTask;
   const schedulerEvents = state.snapshot?.schedulerEvents ?? [];
 
@@ -35,6 +38,7 @@ export function App() {
         state.cycleStreamTab();
       } else if (event.key === 'r' && !isTyping) {
         void state.refresh('refreshed');
+        void schedulerStatus.refresh();
       } else if (event.key === 'f' && !isTyping) {
         state.toggleFollow();
       } else if (event.key === 'o' && !isTyping) {
@@ -49,10 +53,15 @@ export function App() {
 
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [selectedTask?.latestRun?.sessionId, state]);
+  }, [schedulerStatus, selectedTask?.latestRun?.sessionId, state]);
 
   const handleCopySession = () => {
     void copySessionCommand(selectedTask?.latestRun?.sessionId, state.refresh);
+  };
+
+  const handleRefresh = () => {
+    void state.refresh('refreshed');
+    void schedulerStatus.refresh();
   };
 
   return (
@@ -61,7 +70,7 @@ export function App() {
         generatedAt={state.generatedAt}
         isLoading={state.isLoading}
         message={state.message}
-        onRefresh={() => void state.refresh('refreshed')}
+        onRefresh={handleRefresh}
       />
       {state.error ? (
         <div className="mx-5 mt-5 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-4 text-rose-100">
@@ -79,6 +88,11 @@ export function App() {
         />
         <div className="grid min-w-0 gap-5">
           <HealthPanel health={state.snapshot?.health} />
+          <SchedulerStatusPanel
+            error={schedulerStatus.error}
+            isLoading={schedulerStatus.isLoading}
+            snapshot={schedulerStatus.snapshot}
+          />
           <TaskDetail detail={selectedTask} />
           <StreamTabs
             detail={selectedTask}
