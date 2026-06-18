@@ -17,7 +17,8 @@
     "hads",
     "postgres-pro",
     "protocol-reverse-engineering",
-    "security-ownership-map"
+    "security-ownership-map",
+    "obsidian-vault"
   ],
   "mcps": [],
   "orchestratorPrompt": "@explorer\n- Role: Parallel search specialist for discovering unknowns across the codebase\n- Permissions: Read files\n- Stats: 2x faster codebase search than orchestrator, 1/2 cost of orchestrator\n- Capabilities: Glob, grep, AST queries to locate files, symbols, patterns\n- **Delegate when:** Need to discover what exists before planning • Parallel searches speed discovery • Need summarized map vs full contents • Broad/uncertain scope\n- **Don't delegate when:** Know the path and need actual content • Need full file anyway • Single specific lookup • About to edit the file"

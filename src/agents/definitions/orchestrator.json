@@ -30,7 +30,13 @@
     "super-productivity-planning",
     "team-communication-protocols",
     "team-composition-patterns",
-    "triage"
+    "triage",
+    "design-an-interface",
+    "edit-article",
+    "obsidian-vault",
+    "writing-beats",
+    "writing-fragments",
+    "writing-shape"
   ],
   "mcps": ["websearch", "grep_app"]
 }

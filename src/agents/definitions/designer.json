@@ -26,7 +26,8 @@
     "vscode-ext-commands",
     "vscode-ext-localization",
     "wcag-audit-patterns",
-    "webapp-testing"
+    "webapp-testing",
+    "design-an-interface"
   ],
   "mcps": [],
   "orchestratorPrompt": "@designer\n- Role: UI/UX specialist for intentional, polished experiences\n- Permissions: Read/write files\n- Stats: 10x better UI/UX than orchestrator\n- Capabilities: Visual relevant edits, interactions, responsive layouts, design systems with aesthetic intent, deep UI/UX knowledge.\n- **Delegate when:** User-facing interfaces needing polish • Responsive layouts • UX-critical components (forms, nav, dashboards) • Visual consistency systems • Animations/micro-interactions • Landing/marketing pages • Refining functional→delightful • Reviewing existing UI/UX quality\n- **Don't delegate when:** Backend/logic with no visual • Quick prototypes where design doesn't matter yet\n- **Rule of thumb:** Users see it and polish matters? → @designer. Headless/functional? → yourself."

@@ -1,16 +1,16 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 191,
+    "total_skills": 205,
     "categories": {
-      "agent-ecosystem": 8,
+      "agent-ecosystem": 9,
       "analytics-observability": 3,
       "backend-architecture": 11,
       "cloud-infra": 5,
       "creative-media": 9,
       "data-database": 5,
       "debugging": 3,
-      "dev-workflows": 17,
+      "dev-workflows": 25,
       "docs-documents": 8,
       "frontend-ui": 3,
       "games-interactive": 2,
@@ -25,9 +25,9 @@
       "quality-review": 6,
       "security": 12,
       "testing": 6,
-      "tooling-integrations": 17,
+      "tooling-integrations": 18,
       "worldbuilding-fiction": 14,
-      "writing-craft": 24
+      "writing-craft": 28
     }
   },
   "skills": [
@@ -69,6 +69,11 @@
     {
       "name": "skills-cli",
       "path": "skills/agent-ecosystem/skills-cli/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "teach",
+      "path": "skills/agent-ecosystem/teach/SKILL.md",
       "category": "agent-ecosystem"
     },
     {
@@ -287,6 +292,11 @@
       "category": "dev-workflows"
     },
     {
+      "name": "design-an-interface",
+      "path": "skills/dev-workflows/design-an-interface/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
       "name": "grill-me",
       "path": "skills/dev-workflows/grill-me/SKILL.md",
       "category": "dev-workflows"
@@ -307,8 +317,23 @@
       "category": "dev-workflows"
     },
     {
+      "name": "prototype",
+      "path": "skills/dev-workflows/prototype/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "qa",
+      "path": "skills/dev-workflows/qa/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
       "name": "refactor",
       "path": "skills/dev-workflows/refactor/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "request-refactor-plan",
+      "path": "skills/dev-workflows/request-refactor-plan/SKILL.md",
       "category": "dev-workflows"
     },
     {
@@ -332,8 +357,28 @@
       "category": "dev-workflows"
     },
     {
+      "name": "to-issues",
+      "path": "skills/dev-workflows/to-issues/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "to-prd",
+      "path": "skills/dev-workflows/to-prd/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "ubiquitous-language",
+      "path": "skills/dev-workflows/ubiquitous-language/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
       "name": "writing-plans",
       "path": "skills/dev-workflows/writing-plans/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "zoom-out",
+      "path": "skills/dev-workflows/zoom-out/SKILL.md",
       "category": "dev-workflows"
     },
     {
@@ -732,6 +777,11 @@
       "category": "tooling-integrations"
     },
     {
+      "name": "obsidian-vault",
+      "path": "skills/tooling-integrations/obsidian-vault/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
       "name": "omarchy",
       "path": "skills/tooling-integrations/omarchy/SKILL.md",
       "category": "tooling-integrations"
@@ -892,6 +942,11 @@
       "category": "writing-craft"
     },
     {
+      "name": "edit-article",
+      "path": "skills/writing-craft/edit-article/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
       "name": "fact-check",
       "path": "skills/writing-craft/fact-check/SKILL.md",
       "category": "writing-craft"
@@ -984,6 +1039,21 @@
     {
       "name": "voice-analysis",
       "path": "skills/writing-craft/voice-analysis/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "writing-beats",
+      "path": "skills/writing-craft/writing-beats/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "writing-fragments",
+      "path": "skills/writing-craft/writing-fragments/SKILL.md",
+      "category": "writing-craft"
+    },
+    {
+      "name": "writing-shape",
+      "path": "skills/writing-craft/writing-shape/SKILL.md",
       "category": "writing-craft"
     }
   ]

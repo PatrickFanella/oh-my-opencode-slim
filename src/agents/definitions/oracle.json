@@ -35,7 +35,8 @@
     "security-ownership-map",
     "security-threat-model",
     "slo-implementation",
-    "workflow-orchestration-patterns"
+    "workflow-orchestration-patterns",
+    "design-an-interface"
   ],
   "mcps": [],
   "orchestratorPrompt": "@oracle\n- Role: Strategic advisor for high-stakes decisions and persistent problems, code reviewer\n- Permissions: Read files\n- Stats: 5x better decision maker, problem solver, investigator than orchestrator, 0.8x speed of orchestrator, same cost.\n- Capabilities: Deep architectural reasoning, system-level trade-offs, complex debugging, code review, simplification, maintainability review\n- **Delegate when:** Major architectural decisions with long-term impact • Problems persisting after 2+ fix attempts • High-risk multi-system refactors • Costly trade-offs (performance vs maintainability) • Complex debugging with unclear root cause • Security/scalability/data integrity decisions • Genuinely uncertain and cost of wrong choice is high • When a workflow calls for a **reviewer** subagent • Code needs simplification or YAGNI scrutiny\n- **Don't delegate when:** Routine decisions you're confident about • First bug fix attempt • Straightforward trade-offs • Tactical \"how\" vs strategic \"should\" • Time-sensitive good-enough decisions • Quick research/testing can answer\n- **Rule of thumb:** Need senior architect review? → @oracle. Need code review or simplification? → @oracle. Just do it and PR? → yourself."
