@@ -53,13 +53,13 @@ describe('managed skills', () => {
 
   test('reports configured skills that are not bundled', () => {
     const result = materializeCuratedSkills(
-      { agents: { orchestrator: { skills: ['customize-opencode'] } } },
+      { agents: { orchestrator: { skills: ['not-a-bundled-skill'] } } },
       ['orchestrator'],
       { targetDir: tmpDir },
     );
 
     expect(result.copied).toEqual([]);
-    expect(result.missing).toEqual(['customize-opencode']);
+    expect(result.missing).toEqual(['not-a-bundled-skill']);
     expect(readdirSync(tmpDir)).toEqual([]);
   });
 });

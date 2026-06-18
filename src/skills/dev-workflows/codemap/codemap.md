@@ -1,4 +1,4 @@
-# src/skills/codemap/
+# src/skills/dev-workflows/codemap/
 
 ## Responsibility
 
@@ -30,7 +30,7 @@
 
 ## Integration
 
-- Installed under OpenCode through `src/cli/custom-skills.ts` as `name: 'codemap'`, `sourcePath: 'src/skills/codemap'`.
+- Installed under OpenCode through `src/cli/custom-skills.ts` as `name: 'codemap'`, `sourcePath: 'src/skills/dev-workflows/codemap'`.
 - `src/cli/install.ts` copies this directory into the user skill directory; OpenCode executes `scripts/codemap.mjs` from that context.
 - `src/hooks/filter-available-skills/index.ts` applies agent-level skill gating via names from `getSkillPermissionsForAgent()`.
 - `scripts/verify-release-artifact.ts` includes codemap skill metadata and runtime checks as required packaged files.

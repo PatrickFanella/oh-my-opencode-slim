@@ -1,4 +1,4 @@
-# src/skills/clonedeps/
+# src/skills/dev-workflows/clonedeps/
 
 ## Responsibility
 

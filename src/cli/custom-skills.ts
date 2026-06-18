@@ -33,10 +33,10 @@ const DEFAULT_ALLOWED_AGENTS_BY_SKILL: Record<string, string[]> = {
   clonedeps: ['orchestrator'],
 };
 
-const PREFERRED_DIRECT_SOURCE_PATH_BY_SKILL: Record<string, string> = {
-  simplify: 'src/skills/simplify',
-  codemap: 'src/skills/codemap',
-  clonedeps: 'src/skills/clonedeps',
+const PREFERRED_SOURCE_PATH_BY_SKILL: Record<string, string> = {
+  simplify: 'src/skills/quality-review/simplify',
+  codemap: 'src/skills/dev-workflows/codemap',
+  clonedeps: 'src/skills/dev-workflows/clonedeps',
 };
 
 /**
@@ -192,7 +192,7 @@ export function discoverCustomSkills(packageRoot?: string): CustomSkill[] {
       continue;
     }
 
-    const preferredPath = PREFERRED_DIRECT_SOURCE_PATH_BY_SKILL[name];
+    const preferredPath = PREFERRED_SOURCE_PATH_BY_SKILL[name];
     if (preferredPath && existing.sourcePath !== preferredPath) {
       if (skill.sourcePath === preferredPath) {
         byName.set(name, skill);

@@ -15,11 +15,11 @@
 - The default installer does not bulk-copy bundled skill directories into the
   OpenCode skills directory; runtime config materializes only the selected
   curated subset into a managed path instead.
-- This directory is partitioned by skill and by migrated catalog category:
-  - `src/skills/codemap/` (command-style repository mapping skill)
-  - `src/skills/clonedeps/` (workflow skill for dependency source mirroring)
-  - `src/skills/simplify/` (readability/refactor guidance skill)
-  - `src/skills/<category>/<skill>/` (migrated catalog skills)
+- This directory is partitioned by catalog category:
+  - `src/skills/dev-workflows/codemap/` (command-style repository mapping skill)
+  - `src/skills/dev-workflows/clonedeps/` (workflow skill for dependency source mirroring)
+  - `src/skills/quality-review/simplify/` (readability/refactor guidance skill)
+  - `src/skills/<category>/<skill>/` (all bundled skills)
 - Top-level catalog references from the migrated source are stored directly in
   `src/skills/` (`README.md`, `CATALOG.md`, `QUALITY.md`, `AUDIT_WORKFLOW.md`,
   `STACK_PROFILE.md`, `index.json`, `index.md`, and `audits/`).
@@ -43,7 +43,5 @@
 - `src/cli/custom-skills.ts`: recursive manifest builder for bundled skill metadata and manual copy support.
 - `src/cli/skills.ts:getSkillPermissionsForAgent()` turns resolved skill profiles into deny-by-default permission rules.
 - `verify-release-artifact.ts` enforces artifact completeness by asserting key
-  bundled skill payloads such as `src/skills/simplify/SKILL.md`,
-  `src/skills/codemap/SKILL.md`, and `src/skills/clonedeps/SKILL.md` are present
-  in the tarball.
+  categorized bundled skill payloads are present in the tarball.
 - `package.json` scripts (`verify:release`, `build`) rely on these assets to ensure packaged skill availability.

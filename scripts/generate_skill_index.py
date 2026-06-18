@@ -10,9 +10,6 @@ from collections import Counter
 from pathlib import Path
 
 
-BLACKTOWER_DIRECT_SKILLS = {"clonedeps", "codemap", "simplify"}
-
-
 def split_frontmatter(text: str) -> tuple[dict[str, str], str]:
     if not text.startswith("---\n"):
         raise ValueError("missing YAML frontmatter")
@@ -54,8 +51,6 @@ def iter_skill_dirs(skills_root: Path):
         skill_dir = skill_file.parent
         rel_parts = skill_dir.relative_to(skills_root).parts
         if any(part.startswith(".") for part in rel_parts):
-            continue
-        if len(rel_parts) == 1 and rel_parts[0] in BLACKTOWER_DIRECT_SKILLS:
             continue
         yield skill_dir
 

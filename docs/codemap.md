@@ -16,8 +16,9 @@ Codemap is designed for repository understanding and hierarchical codemap genera
 ## How to use
 
 Codemap is bundled with the repo but is not installed automatically by the
-default blacktower installer. Copy or install the `src/skills/codemap/` skill only
-when you want repository-map generation available in OpenCode.
+default blacktower installer. Copy or install the
+`src/skills/dev-workflows/codemap/` skill only when you want repository-map
+generation available in OpenCode.
 
 ### Run it (manual / local)
 
@@ -57,5 +58,6 @@ The existing screenshot lives in `img/cartography.png`.
 
 ## Related
 
-- `src/skills/codemap/README.md` and `src/skills/codemap/SKILL.md` contain the skill’s internal docs.
+- `src/skills/dev-workflows/codemap/README.md` and
+  `src/skills/dev-workflows/codemap/SKILL.md` contain the skill’s internal docs.
 - `codemap.md` at the repo root is an example output/starting point.

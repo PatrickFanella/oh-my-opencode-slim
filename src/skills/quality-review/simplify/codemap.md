@@ -1,4 +1,4 @@
-# src/skills/simplify/
+# src/skills/quality-review/simplify/
 
 ## Responsibility
 
@@ -21,7 +21,7 @@
 
 ## Flow
 
-- Agent discovery resolves `src/skills/simplify` as a custom skill entrypoint, then reads `SKILL.md` at runtime.
+- Agent discovery resolves `src/skills/quality-review/simplify` as a custom skill entrypoint, then reads `SKILL.md` at runtime.
 - Runtime behavior is gated by `src/cli/custom-skills.ts` (`allowedAgents: ['oracle']`) and by skill permissions
   computed in `getSkillPermissionsForAgent()`.
 - In practice the workflow is read-only and context-driven: simplify instructions require understanding of callers,
@@ -32,5 +32,5 @@
 
 - Bundled as package skill source; install or copy it explicitly when the `simplify` skill should be available in OpenCode.
 - Permission surface is enforced by hook layer in `src/hooks/filter-available-skills/index.ts` (`permissionRules`).
-- Release integrity: `scripts/verify-release-artifact.ts` checks for `src/skills/simplify/SKILL.md` in package tarballs.
+- Release integrity: `scripts/verify-release-artifact.ts` checks for `src/skills/quality-review/simplify/SKILL.md` in package tarballs.
 - Operationally paired with codemap/fixer flows in `src/index.ts` orchestrations for post-feature readability hardening.

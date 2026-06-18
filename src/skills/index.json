@@ -1,9 +1,9 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 209,
+    "total_skills": 210,
     "categories": {
-      "agent-ecosystem": 11,
+      "agent-ecosystem": 12,
       "analytics-observability": 3,
       "backend-architecture": 11,
       "cloud-infra": 5,
@@ -39,6 +39,11 @@
     {
       "name": "context-engineer",
       "path": "skills/agent-ecosystem/context-engineer/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "customize-opencode",
+      "path": "skills/agent-ecosystem/customize-opencode/SKILL.md",
       "category": "agent-ecosystem"
     },
     {

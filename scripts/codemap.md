@@ -16,7 +16,7 @@
   - Uses `spawnSync` + `npm pack --json --ignore-scripts`.
   - Scans `dist/**/*` for leaked machine paths (`/Users/*`, `/home/*`).
   - Validates required package payload keys (`package.json`, `dist/index.js`, `README.md`, `LICENSE`,
-    `src/skills/codemap/SKILL.md`, `src/skills/simplify/SKILL.md`, etc.).
+    categorized bundled skills, etc.).
   - Performs clean install smoke by importing the installed `dist/index.js` default export in a temp project.
 - `verify-opencode-host-smoke.ts`
   - Builds temporary OpenCode environment (bin from `bun add opencode-ai`), mounts the plugin tarball,

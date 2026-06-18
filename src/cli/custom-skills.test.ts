@@ -6,7 +6,7 @@ import { CUSTOM_SKILLS, discoverCustomSkills } from './custom-skills';
 import { getSkillPermissionsForAgent } from './skills';
 
 describe('custom skills discovery', () => {
-  it('includes direct Blacktower skills and migrated catalog skills', () => {
+  it('includes categorized Blacktower skills and migrated catalog skills', () => {
     const names = new Set(CUSTOM_SKILLS.map((skill) => skill.name));
 
     expect(names.has('almaz')).toBe(true);
@@ -18,7 +18,7 @@ describe('custom skills discovery', () => {
     expect(names.has('agent-browser')).toBe(false);
   });
 
-  it('preserves default allowed agents for Blacktower direct skills', () => {
+  it('preserves default allowed agents for core Blacktower skills', () => {
     const byName = new Map(CUSTOM_SKILLS.map((skill) => [skill.name, skill]));
 
     expect(byName.get('simplify')?.allowedAgents).toEqual(['oracle']);
@@ -55,7 +55,7 @@ describe('custom skills duplicate handling', () => {
     writeFileSync(join(skillDir, 'SKILL.md'), content, 'utf8');
   }
 
-  it('prefers direct Blacktower path for simplify duplicates', () => {
+  it('prefers canonical categorized Blacktower paths for duplicates', () => {
     const root = mkdtempSync(join(tmpdir(), 'blacktower-skills-'));
     tempRoots.push(root);
 
@@ -64,14 +64,14 @@ describe('custom skills duplicate handling', () => {
       `---\nname: simplify\ndescription: alt\n---\n`,
     );
     createSkill(
-      join(root, 'src/skills/simplify'),
+      join(root, 'src/skills/quality-review/simplify'),
       `---\nname: simplify\ndescription: preferred\n---\n`,
     );
 
     const skills = discoverCustomSkills(root);
     const simplify = skills.find((skill) => skill.name === 'simplify');
 
-    expect(simplify?.sourcePath).toBe('src/skills/simplify');
+    expect(simplify?.sourcePath).toBe('src/skills/quality-review/simplify');
   });
 
   it('keeps first deterministic path for non-preferred duplicates', () => {

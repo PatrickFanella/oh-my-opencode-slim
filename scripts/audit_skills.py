@@ -13,9 +13,6 @@ from pathlib import Path
 
 
 RESOURCE_DIRS = ("references", "scripts", "assets", "templates", "examples")
-BLACKTOWER_DIRECT_SKILLS = {"clonedeps", "codemap", "simplify"}
-
-
 @dataclass
 class SkillAudit:
     name: str
@@ -53,8 +50,6 @@ def iter_skill_dirs(root: Path, include_system: bool) -> list[Path]:
         skill_dir = skill_file.parent
         rel_parts = skill_dir.relative_to(skills_root).parts
         if not include_system and any(part.startswith(".") for part in rel_parts):
-            continue
-        if len(rel_parts) == 1 and rel_parts[0] in BLACKTOWER_DIRECT_SKILLS:
             continue
         dirs.append(skill_dir)
     return dirs
