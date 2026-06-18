@@ -377,7 +377,9 @@ export function createTaskSessionManagerHook(
         source: 'task',
         contextFiles: contextFiles.map((file) => file.path),
       });
-      options.backgroundJobBoard?.updateState(taskId, 'running');
+      options.backgroundJobBoard?.updateState(taskId, 'completed', {
+        terminalUnreconciled: false,
+      });
       pruneContext();
     },
 
@@ -444,12 +446,28 @@ export function createTaskSessionManagerHook(
         input.event.properties?.info?.id ?? input.event.properties?.sessionID;
       if (!sessionId) return;
 
+      const backgroundJob = options.backgroundJobBoard?.get(sessionId);
+      if (backgroundJob?.cancellationRequested) {
+        options.backgroundJobBoard?.updateState(sessionId, 'cancelled', {
+          statusUncertain: false,
+          terminalUnreconciled: false,
+        });
+      } else if (
+        backgroundJob &&
+        !['completed', 'failed', 'cancelled', 'reconciled'].includes(
+          backgroundJob.state,
+        )
+      ) {
+        options.backgroundJobBoard?.updateState(sessionId, 'unknown', {
+          statusUncertain: true,
+        });
+      }
+
       sessionManager.dropTask(sessionId);
       sessionManager.clearParent(sessionId);
-      options.backgroundJobBoard?.updateState(sessionId, 'unknown', {
-        statusUncertain: true,
-      });
-      options.backgroundJobBoard?.removeForParent(sessionId);
+      if (options.shouldManageSession(sessionId)) {
+        options.backgroundJobBoard?.removeForParent(sessionId);
+      }
       contextByTask.delete(sessionId);
       pendingManagedTaskIds.delete(sessionId);
       pruneContext();

@@ -168,7 +168,36 @@ describe('task-session-manager hook', () => {
     expect(job?.agent).toBe('explorer');
     expect(job?.description).toBe('config schema');
     expect(job?.objective).toBe('inspect config schema deeply');
-    expect(job?.state).toBe('running');
+    expect(job?.state).toBe('completed');
+  });
+
+  test('session.deleted does not overwrite cancelled background job state', async () => {
+    const backgroundJobBoard = new BackgroundJobBoard();
+    const { hook } = createHook({ backgroundJobBoard });
+
+    await hook['tool.execute.before'](
+      { tool: 'task', sessionID: 'parent-1', callID: 'call-1' },
+      { args: { subagent_type: 'explorer', description: 'config schema' } },
+    );
+    await hook['tool.execute.after'](
+      { tool: 'task', sessionID: 'parent-1', callID: 'call-1' },
+      {
+        output:
+          'task_id: child-1 (for resuming to continue this task if needed)',
+      },
+    );
+    backgroundJobBoard.markCancellationRequested('child-1');
+
+    await hook.event({
+      event: {
+        type: 'session.deleted',
+        properties: { info: { id: 'child-1', parentID: 'parent-1' } },
+      },
+    });
+
+    const job = backgroundJobBoard.get('child-1');
+    expect(job?.state).toBe('cancelled');
+    expect(job?.statusUncertain).toBe(false);
   });
 
   test('marks missing resumed tasks uncertain in the background job board', async () => {

@@ -5,7 +5,12 @@ import type { PluginInput } from '@opencode-ai/plugin';
 import { stripJsonComments } from '../../cli/config-io';
 import { getConfigSearchDirs } from '../../cli/paths';
 import { loadPluginConfig } from '../../config/loader';
-import { createSessionWithTimeout, withTimeout } from '../../utils/session';
+import {
+  abortSessionWithTimeout,
+  createSessionWithTimeout,
+  OperationTimeoutError,
+  withTimeout,
+} from '../../utils/session';
 import { MAX_MODEL_CONTENT_CHARS } from './constants';
 import type { CachedFetch, SecondaryModel } from './types';
 
@@ -198,6 +203,47 @@ function isUsableSecondaryText(text: string) {
   return true;
 }
 
+async function promptSecondaryModelWithAbort(input: {
+  client: OpenCodeClient;
+  directory: string;
+  sessionId: string;
+  model: SecondaryModel;
+  disabledTools: Record<string, boolean>;
+  prompt: string;
+}) {
+  try {
+    return await withTimeout(
+      input.client.session.prompt({
+        responseStyle: 'data',
+        throwOnError: true,
+        path: { id: input.sessionId },
+        query: { directory: input.directory },
+        body: {
+          model: input.model,
+          system:
+            'Answer only from the supplied content. Do not use tools or outside knowledge.',
+          tools: input.disabledTools,
+          parts: [
+            {
+              type: 'text',
+              text: input.prompt,
+            },
+          ],
+        },
+      }),
+      SECONDARY_MODEL_PROMPT_TIMEOUT_MS,
+      `Secondary model prompt timed out after ${SECONDARY_MODEL_PROMPT_TIMEOUT_MS}ms`,
+    );
+  } catch (error) {
+    if (error instanceof OperationTimeoutError) {
+      await abortSessionWithTimeout(input.client, input.sessionId, 1_000, {
+        directory: input.directory,
+      }).catch(() => undefined);
+    }
+    throw error;
+  }
+}
+
 async function runSecondaryModel(
   client: OpenCodeClient,
   directory: string,
@@ -241,28 +287,14 @@ async function runSecondaryModel(
       (toolIDs || []).map((id: string) => [id, false]),
     );
 
-    const result = await withTimeout(
-      client.session.prompt({
-        responseStyle: 'data',
-        throwOnError: true,
-        path: { id: sessionId },
-        query: { directory },
-        body: {
-          model,
-          system:
-            'Answer only from the supplied content. Do not use tools or outside knowledge.',
-          tools: disabledTools,
-          parts: [
-            {
-              type: 'text',
-              text: buildPrompt(truncatedContent, effectivePrompt),
-            },
-          ],
-        },
-      }),
-      SECONDARY_MODEL_PROMPT_TIMEOUT_MS,
-      `Secondary model prompt timed out after ${SECONDARY_MODEL_PROMPT_TIMEOUT_MS}ms`,
-    );
+    const result = await promptSecondaryModelWithAbort({
+      client,
+      directory,
+      sessionId,
+      model,
+      disabledTools,
+      prompt: buildPrompt(truncatedContent, effectivePrompt),
+    });
 
     const parts =
       (result as { data?: { parts?: Array<{ type?: string; text?: string }> } })
