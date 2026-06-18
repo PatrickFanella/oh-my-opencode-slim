@@ -54,6 +54,7 @@ import {
 import {
   ast_grep_replace,
   ast_grep_search,
+  createCancelTaskTool,
   createCouncilTool,
   createPresetManager,
   createReadSessionTool,
@@ -487,6 +488,7 @@ const Blacktower: Plugin = async (ctx) => {
       Object.keys(observeToolkit?.tools ?? {}).length +
       1 + // webfetch
       2 + // ast_grep_search, ast_grep_replace
+      1 + // cancel_task
       2; // subtask, read_session
   } catch (err) {
     // Plugin init failed: log visibly before re-throwing so the user
@@ -552,6 +554,10 @@ const Blacktower: Plugin = async (ctx) => {
       ...(observeToolkit?.tools ?? {}),
       ast_grep_search,
       ast_grep_replace,
+      cancel_task: createCancelTaskTool({
+        client: ctx.client,
+        backgroundJobBoard,
+      }),
       subtask: createSubtaskTool(ctx, subtaskState, depthTracker),
       read_session: createReadSessionTool(ctx.client, subtaskState),
     },

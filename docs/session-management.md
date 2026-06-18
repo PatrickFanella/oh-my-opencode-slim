@@ -71,6 +71,12 @@ Session management is intentionally narrow:
 - Read context is best-effort and tracks normal OpenCode `read` tool usage, not
   arbitrary filesystem access through shell commands or external MCP tools.
 
+blacktower also mirrors delegated `task` sessions into an internal background job
+board so tracked work can be cancelled with `cancel_task` when needed. This does
+not replace resumable-session aliases; it adds a safer cancellation path for the
+same delegated session IDs. See
+[Background Orchestration](background-orchestration.md).
+
 This keeps the feature useful for continuity without turning child sessions into
 long-lived global state.
 

@@ -55,6 +55,23 @@ See [Subtask](subtask.md) for the full workflow.
 
 ---
 
+## Delegated Task Cancellation
+
+Stop a tracked delegated OpenCode task session without blocking the
+orchestrator.
+
+| Tool | Description |
+|------|-------------|
+| `cancel_task` | Cancel a delegated task by background job alias or raw task/session ID |
+
+`cancel_task` is scoped to the current parent session. It does not cancel
+scheduled tasks from the control center, and it does not roll back partial file
+edits already made by a worker.
+
+See [Background Orchestration](background-orchestration.md) for details.
+
+---
+
 ## Formatters
 
 OpenCode automatically formats files after they are written or edited, using language-specific formatters. No manual step needed.
