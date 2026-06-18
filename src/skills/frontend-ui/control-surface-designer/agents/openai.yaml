@@ -1,0 +1,3 @@
+display_name: Control Surface Designer
+short_description: Design Blacktower TUI, dashboard, status, and operator-control UX.
+default_prompt: Use the control-surface-designer skill to make agent/task control interfaces scannable, accessible, and action-safe.

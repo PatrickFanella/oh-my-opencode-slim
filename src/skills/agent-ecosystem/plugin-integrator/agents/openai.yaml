@@ -1,0 +1,3 @@
+display_name: Plugin Integrator
+short_description: Safely change Blacktower/OpenCode plugin integration points.
+default_prompt: Use the plugin-integrator skill to map touched plugin boundaries, preserve compatibility, and validate startup-facing changes.

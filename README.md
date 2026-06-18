@@ -114,7 +114,8 @@ The default installer writes a schema-only Blacktower config and lets code-owned
 defaults choose the active agent models. Passing `--preset=<name>` writes only
 that generated preset. It writes built-in
 MCP definitions to `opencode.json(c)` so OpenCode's native MCP auth flow owns
-remote authentication. It also materializes the BUILD, OPS, GROWTH, and MYTH
+remote authentication. It also materializes the BUILD, OPS, GROWTH, PRODUCT,
+and MYTH
 custom board agent JSON files into
 `~/.config/opencode/blacktower/agents/` without overwriting existing
 files. It does **not** copy the bundled skill catalog or depend on

@@ -53,3 +53,15 @@ This command is intentionally read-only in this phase.
 
 Future role editing and mutation commands come after this read-only surface is
 stable.
+
+## Default Board Groups
+
+The installer materializes five default groups:
+
+- **BUILD** — backend, language, and test advisors.
+- **OPS** — cloud, data, observability, SRE, and security advisors.
+- **GROWTH** — content, copy, conversion, launch, SEO, and social advisors.
+- **PRODUCT** — agent-systems, devtools product, DX documentation, and
+  maintainer-strategy advisors.
+- **MYTH** — documentation artifacts, media, story, SUBCULT creative direction,
+  and worldbuilding advisors.

@@ -1,0 +1,3 @@
+display_name: Codemod Surgeon
+short_description: Plan and verify repo-wide mechanical migrations and rewrites.
+default_prompt: Use the codemod-surgeon skill to inventory, transform, and prove completion for broad mechanical changes.

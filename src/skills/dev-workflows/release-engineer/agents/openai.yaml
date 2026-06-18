@@ -1,0 +1,3 @@
+display_name: Release Engineer
+short_description: Verify package, build, installer, schema, and bundled-skill release readiness.
+default_prompt: Use the release-engineer skill to classify release impact, update generated artifacts, and run the correct validation set.

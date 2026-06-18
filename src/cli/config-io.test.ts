@@ -375,7 +375,7 @@ describe('config-io', () => {
       join(customConfigDir, 'blacktower', 'agents'),
     );
     expect(result.written).toHaveLength(0);
-    expect(result.skipped).toHaveLength(22);
+    expect(result.skipped).toHaveLength(26);
     expect(existsSync(result.targetDir)).toBe(false);
   });
 
@@ -428,7 +428,7 @@ describe('config-io', () => {
 
     expect(result.success).toBe(true);
     expect(result.configUpdated).toBe(true);
-    expect(result.boardAgents.skipped).toHaveLength(22);
+    expect(result.boardAgents.skipped).toHaveLength(26);
     expect(existsSync(join(tmpDir, 'opencode', 'blacktower.json'))).toBe(false);
     expect(
       existsSync(

@@ -1,0 +1,3 @@
+display_name: Failure Anthropologist
+short_description: Turn recurring failures into timelines, root causes, and prevention actions.
+default_prompt: Use the failure-anthropologist skill to produce a concise postmortem with evidence, detection gaps, and durable prevention.

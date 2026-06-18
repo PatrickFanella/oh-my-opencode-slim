@@ -17,12 +17,13 @@ describe('default board agents', () => {
       'BUILD',
       'OPS',
       'GROWTH',
+      'PRODUCT',
       'MYTH',
     ]);
     expect(
       [...DEFAULT_BOARD_AGENT_GROUPS.flatMap((group) => group.names)].sort(),
     ).toEqual([...DEFAULT_BOARD_AGENT_NAMES].sort());
-    expect(DEFAULT_BOARD_AGENT_NAMES).toHaveLength(22);
+    expect(DEFAULT_BOARD_AGENT_NAMES).toHaveLength(26);
   });
 
   test('exports schema-valid custom agent definitions', () => {
@@ -51,7 +52,7 @@ describe('default board agents', () => {
 
       const result = materializeDefaultBoardAgentDefinitions();
       expect(result.success).toBe(true);
-      expect(result.written).toHaveLength(22);
+      expect(result.written).toHaveLength(26);
 
       const agentNames = new Set(createAgents({}).map((agent) => agent.name));
       for (const name of DEFAULT_BOARD_AGENT_NAMES) {

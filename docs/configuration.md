@@ -314,7 +314,7 @@ whole board to one provider. Supported providers are `github-copilot`, `openai`,
 
 The command updates two config surfaces:
 
-- Custom BUILD, OPS, GROWTH, and MYTH JSON agents under
+- Custom BUILD, OPS, GROWTH, PRODUCT, and MYTH JSON agents under
   `~/.config/opencode/blacktower/agents/`
 - The active Blacktower config preset under
   `~/.config/opencode/blacktower.json`

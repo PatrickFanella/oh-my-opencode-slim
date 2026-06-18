@@ -1,18 +1,18 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 210,
+    "total_skills": 216,
     "categories": {
-      "agent-ecosystem": 12,
+      "agent-ecosystem": 13,
       "analytics-observability": 3,
       "backend-architecture": 11,
       "cloud-infra": 5,
       "creative-media": 9,
       "data-database": 5,
-      "debugging": 3,
-      "dev-workflows": 27,
+      "debugging": 4,
+      "dev-workflows": 30,
       "docs-documents": 8,
-      "frontend-ui": 3,
+      "frontend-ui": 4,
       "games-interactive": 2,
       "git-github": 3,
       "growth-marketing": 17,
@@ -54,6 +54,11 @@
     {
       "name": "mcp-builder",
       "path": "skills/agent-ecosystem/mcp-builder/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "plugin-integrator",
+      "path": "skills/agent-ecosystem/plugin-integrator/SKILL.md",
       "category": "agent-ecosystem"
     },
     {
@@ -262,6 +267,11 @@
       "category": "debugging"
     },
     {
+      "name": "failure-anthropologist",
+      "path": "skills/debugging/failure-anthropologist/SKILL.md",
+      "category": "debugging"
+    },
+    {
       "name": "systematic-debugging",
       "path": "skills/debugging/systematic-debugging/SKILL.md",
       "category": "debugging"
@@ -294,6 +304,11 @@
     {
       "name": "codemap",
       "path": "skills/dev-workflows/codemap/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "codemod-surgeon",
+      "path": "skills/dev-workflows/codemod-surgeon/SKILL.md",
       "category": "dev-workflows"
     },
     {
@@ -352,6 +367,11 @@
       "category": "dev-workflows"
     },
     {
+      "name": "release-engineer",
+      "path": "skills/dev-workflows/release-engineer/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
       "name": "request-refactor-plan",
       "path": "skills/dev-workflows/request-refactor-plan/SKILL.md",
       "category": "dev-workflows"
@@ -364,6 +384,11 @@
     {
       "name": "session-handoff",
       "path": "skills/dev-workflows/session-handoff/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "session-warden",
+      "path": "skills/dev-workflows/session-warden/SKILL.md",
       "category": "dev-workflows"
     },
     {
@@ -445,6 +470,11 @@
       "name": "spreadsheet",
       "path": "skills/docs-documents/spreadsheet/SKILL.md",
       "category": "docs-documents"
+    },
+    {
+      "name": "control-surface-designer",
+      "path": "skills/frontend-ui/control-surface-designer/SKILL.md",
+      "category": "frontend-ui"
     },
     {
       "name": "frontend-design",

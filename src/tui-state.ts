@@ -9,6 +9,7 @@ export const DEFAULT_COLLAPSED_SIDEBAR_SECTIONS = [
   'BUILD',
   'OPS',
   'GROWTH',
+  'PRODUCT',
   'MYTH',
 ];
 
