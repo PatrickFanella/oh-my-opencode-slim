@@ -11,9 +11,13 @@ You have access to tools for scheduling OpenCode tasks. Tasks can be one-off (ru
 
 - `schedule_task` - Schedule a one-off task to run at a specific time
 - `list_tasks` - List all scheduled tasks (recurring and one-off)
-- `cancel_task` - Cancel a pending one-off task or disable a recurring task
 - `task_history` - Get execution history for a task
 - `get_task_instructions` - Get the full frontmatter format for recurring task files
+
+Do not use Blacktower's `cancel_task` tool for scheduled-task management. In
+Blacktower, `cancel_task` cancels delegated/background OpenCode task sessions
+tracked by the current orchestrator session; it does not cancel one-off or
+recurring scheduled tasks.
 
 ## Permissions for Scheduled Tasks
 

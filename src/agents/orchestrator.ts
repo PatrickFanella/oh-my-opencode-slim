@@ -148,6 +148,7 @@ relevant files. Wait for the summary, then integrate and verify it.
 - Delegation is blocking for the parent at that point: send work out, then continue that line after results return.
 - Parallel delegation means launching multiple independent child-session branches.
 - Only parallelize branches that are truly independent; reconcile dependent steps after delegated results come back.
+- If a delegated task appears stuck, use \`cancel_task\` with its background job alias or raw task/session ID. This cancels the delegated OpenCode task session only; it does not roll back file edits or cancel scheduled tasks.
 
 ## 5. Execute
 1. Break complex tasks into todos

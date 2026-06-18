@@ -22,7 +22,7 @@ Current responsibilities:
   sidecar files
 - optional TUI plugin registration for integrations with TUI panels, currently
   quota
-- companion TUI plugin behavior lives in `src/tui.ts`, including collapsible
+- Blacktower TUI sidebar behavior lives in `src/tui.ts`, including collapsible
   Blacktower board density modes (`compact`, `full`, `minimal`, `off`)
 
 ## Design

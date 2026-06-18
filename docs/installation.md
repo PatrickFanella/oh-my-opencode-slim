@@ -199,7 +199,7 @@ opencode models --refresh
 Open your generated config at `~/.config/opencode/blacktower.json`
 and adjust models if needed.
 
-The installer also registers the companion TUI sidebar plugin in
+The installer also registers the Blacktower TUI sidebar plugin in
 `~/.config/opencode/tui.json`. If OpenCode shows the sidebar but the Blacktower
 panel is absent, open the TUI plugin manager and enable the
 `blacktower:tui` module once. The panel shows the full board by

@@ -92,7 +92,7 @@ Binding the web server to a non-loopback host requires `--allow-network` because
 the read-only snapshot can include task prompts, cwd paths, report content,
 scheduler logs, and session IDs.
 
-The installer also registers the companion TUI plugin in OpenCode's
+The installer also registers the Blacktower TUI sidebar plugin in OpenCode's
 `tui.json`, which renders a full-board sidebar: core agents, custom SUBCULT
 board handles, config health, MCP/LSP/plugin counts, todos, and diff activity.
 The sidebar starts compact with CORE visible and custom groups collapsed. The
