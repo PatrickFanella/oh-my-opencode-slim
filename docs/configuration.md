@@ -312,12 +312,13 @@ Use `bunx blacktower@latest switch-agents <provider>` to move the
 whole board to one provider. Supported providers are `github-copilot`, `openai`,
 `openrouter`, `anthropic`, and `gemini`.
 
-The default `openai` provider is hybrid: sparse `openai/gpt-5.5` assignments for
-the highest-leverage core/review roles and cheap OpenRouter models for most
-long-lived specialist sessions. The pure `openrouter` provider is cost-tuned for
-persistent board sessions: DeepSeek V4 Flash for coding-heavy advisors,
-DeepSeek V4 Pro for the highest-risk strategy/security/session roles, and
-MiniMax M2.5 for docs, growth, product, and creative advisors.
+The default `openai` provider is hybrid but still mostly OpenAI: core and most
+board roles use `openai/` models, while a few design/creative/product-advisory
+roles use MiniMax M2.5 through OpenRouter for model variety. The pure
+`openrouter` provider remains cost-tuned for persistent board sessions:
+DeepSeek V4 Flash for coding-heavy advisors, DeepSeek V4 Pro for the
+highest-risk strategy/security/session roles, and MiniMax M2.5 for docs,
+growth, product, and creative advisors.
 
 The command updates two config surfaces:
 

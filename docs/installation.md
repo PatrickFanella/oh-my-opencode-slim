@@ -146,9 +146,9 @@ bunx blacktower@latest install --reset
 
 ### After Installation
 
-The default installer writes a hybrid `openai` Blacktower preset: sparse
-`openai/` models for the highest-leverage core/review roles and cheap
-OpenRouter models for most long-lived specialist sessions. Passing
+The default installer writes a hybrid `openai` Blacktower preset: mostly
+`openai/` models, with a few OpenRouter models for design/creative roles where
+model variety is useful. Passing
 `--preset=<name>` writes only that generated preset. It also writes built-in MCP
 definitions into `opencode.json(c)` so OpenCode's native MCP auth flow owns any
 OAuth/API authentication. It can add

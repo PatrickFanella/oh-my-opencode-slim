@@ -61,7 +61,7 @@ describe('default board agents', () => {
     );
   });
 
-  test('openai board provider is sparse OpenAI plus OpenRouter defaults', () => {
+  test('openai board provider is mostly OpenAI with sparse OpenRouter variety', () => {
     const definitions = Object.fromEntries(
       getBoardAgentDefinitions('openai').map((definition) => [
         definition.name,
@@ -70,11 +70,13 @@ describe('default board agents', () => {
     );
 
     expect(definitions['backend-architect']?.model).toBe('openai/gpt-5.5');
-    expect(definitions['security-advisor']?.model).toBe('openai/gpt-5.5');
-    expect(definitions['go-advisor']?.model).toBe(
-      'openrouter/deepseek/deepseek-v4-flash',
+    expect(definitions['go-advisor']?.model).toBe('openai/gpt-5.5');
+    expect(definitions['ops-sre-advisor']?.model).toBe('openai/gpt-5.4');
+    expect(definitions['docs-advisor']?.model).toBe('openai/gpt-5.4-mini');
+    expect(definitions['devtools-product-advisor']?.model).toBe(
+      'openrouter/minimax/minimax-m2.5',
     );
-    expect(definitions['docs-advisor']?.model).toBe(
+    expect(definitions['subcult-creative-director']?.model).toBe(
       'openrouter/minimax/minimax-m2.5',
     );
   });

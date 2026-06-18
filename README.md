@@ -110,10 +110,10 @@ enable the `blacktower:tui` plugin module.
 
 ### Getting Started
 
-The default installer writes a hybrid `openai` preset: sparse `openai/` models
-for the highest-leverage core/review roles, and cheap OpenRouter models for
-most long-lived specialist sessions. Passing `--preset=<name>` writes only that
-generated preset. It writes built-in
+The default installer writes a hybrid `openai` preset: mostly `openai/` models,
+with a few OpenRouter models for design/creative roles where model variety is
+useful. Passing `--preset=<name>` writes only that generated preset. It writes
+built-in
 MCP definitions to `opencode.json(c)` so OpenCode's native MCP auth flow owns
 remote authentication. It also materializes the BUILD, OPS, GROWTH, PRODUCT,
 and MYTH
@@ -153,8 +153,8 @@ Then:
 > [!TIP]
 > It's **recommended** to understand how automatic delegation works. The **[Orchestrator prompt](https://github.com/blacktower/blacktower/blob/master/src/agents/orchestrator.ts#L28)** contains the delegation rules, specialist routing logic, and the thresholds for when the main agent should hand work off to subagents. You can alway delegate manually by calling a subagent via: `@agentName <task>`
 
-The default generated configuration uses sparse OpenAI plus cost-aware
-OpenRouter models:
+The default generated configuration is mostly OpenAI, with OpenRouter only for
+the Designer role:
 
 ```jsonc
 {
@@ -165,11 +165,11 @@ OpenRouter models:
       "orchestrator": { "model": "openai/gpt-5.5", "mcps": ["websearch", "grep_app"] },
       "oracle": { "model": "openai/gpt-5.5", "variant": "high", "mcps": [] },
       "council": { "model": "openai/gpt-5.5", "variant": "high", "mcps": [] },
-      "librarian": { "model": "openrouter/minimax/minimax-m2.5", "variant": "low", "mcps": ["websearch", "context7", "grep_app"] },
-      "explorer": { "model": "openrouter/minimax/minimax-m2.5", "variant": "low", "mcps": [] },
+      "librarian": { "model": "openai/gpt-5.4-mini", "variant": "low", "mcps": ["websearch", "context7", "grep_app"] },
+      "explorer": { "model": "openai/gpt-5.4-mini", "variant": "low", "mcps": [] },
       "designer": { "model": "openrouter/minimax/minimax-m2.5", "variant": "medium", "mcps": [] },
-      "fixer": { "model": "openrouter/deepseek/deepseek-v4-flash", "variant": "low", "mcps": [] },
-      "observer": { "model": "openrouter/minimax/minimax-m2.5", "mcps": [] }
+      "fixer": { "model": "openai/gpt-5.4-mini", "variant": "low", "mcps": [] },
+      "observer": { "model": "openai/gpt-5.4-mini", "mcps": [] }
     }
   }
 }
@@ -180,9 +180,8 @@ Skill profiles are omitted by default so the code-owned built-in agent defaults
 control skill availability. Use `--skills=no` if you want the generated config
 to explicitly deny all skills.
 
-The `openai` board provider is also hybrid: a few high-risk advisors use
-`openai/gpt-5.5`, while coding-heavy agents use DeepSeek V4 Flash and
-docs/growth/product/creative agents use MiniMax M2.5 through OpenRouter.
+The `openai` board provider is also mostly OpenAI. Only a few
+design/creative/product-advisory roles use MiniMax M2.5 through OpenRouter.
 
 With `--preset=openai`, the installer writes the same hybrid core preset shown
 above.

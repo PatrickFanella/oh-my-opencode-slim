@@ -69,9 +69,9 @@ The CLI reads a single data file:
 
 ## OpenRouter cost profile
 
-`openai` is the default hybrid provider. It keeps sparse `openai/gpt-5.5`
-assignments for the highest-leverage core/review roles and routes most
-long-lived board specialists through cheap OpenRouter DeepSeek/MiniMax models.
+`openai` is the default hybrid provider. It is mostly OpenAI, with only a few
+OpenRouter MiniMax assignments for design/creative/product-advisory roles where
+model variety is useful.
 
 `openrouter` is tuned for cheap persistent board sessions:
 

@@ -365,7 +365,7 @@ describe('config-io', () => {
     ).toMatchObject({
       name: 'go-advisor',
       displayName: 'go-runner',
-      model: 'openrouter/deepseek/deepseek-v4-flash',
+      model: 'openai/gpt-5.5',
     });
   });
 
@@ -701,9 +701,10 @@ describe('config-io', () => {
     );
     expect(saved.preset).toBe('openai');
     expect(saved.presets.openai.orchestrator.model).toBe('openai/gpt-5.5');
-    expect(saved.presets.openai.fixer.model).toBe(
-      'openrouter/deepseek/deepseek-v4-flash',
+    expect(saved.presets.openai.designer.model).toBe(
+      'openrouter/minimax/minimax-m2.5',
     );
+    expect(saved.presets.openai.fixer.model).toBe('openai/gpt-5.4-mini');
     expect(saved.skillProfiles).toBeUndefined();
   });
 
