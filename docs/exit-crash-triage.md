@@ -38,8 +38,7 @@ a time:
 2. Control center web API and SSE clients.
 3. Multiplexer session polling and child OpenCode attachments.
 4. Todo continuation timers.
-5. Divoom integration.
-6. Scheduled-task support.
+5. Scheduled-task support.
 
 Record the exact config change that makes the crash disappear or return.
 

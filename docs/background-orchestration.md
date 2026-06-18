@@ -48,6 +48,6 @@ This feature does not remove or replace:
 
 - `subtask`,
 - todo continuation,
-- Divoom/control-center integration,
+- control-center integration,
 - `fallback.chains`,
 - existing `grep_app` compatibility.
