@@ -1,16 +1,16 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 205,
+    "total_skills": 209,
     "categories": {
-      "agent-ecosystem": 9,
+      "agent-ecosystem": 11,
       "analytics-observability": 3,
       "backend-architecture": 11,
       "cloud-infra": 5,
       "creative-media": 9,
       "data-database": 5,
       "debugging": 3,
-      "dev-workflows": 25,
+      "dev-workflows": 27,
       "docs-documents": 8,
       "frontend-ui": 3,
       "games-interactive": 2,
@@ -31,6 +31,11 @@
     }
   },
   "skills": [
+    {
+      "name": "blacktower",
+      "path": "skills/agent-ecosystem/blacktower/SKILL.md",
+      "category": "agent-ecosystem"
+    },
     {
       "name": "context-engineer",
       "path": "skills/agent-ecosystem/context-engineer/SKILL.md",
@@ -54,6 +59,11 @@
     {
       "name": "rag-implementation",
       "path": "skills/agent-ecosystem/rag-implementation/SKILL.md",
+      "category": "agent-ecosystem"
+    },
+    {
+      "name": "reflect",
+      "path": "skills/agent-ecosystem/reflect/SKILL.md",
       "category": "agent-ecosystem"
     },
     {
@@ -287,6 +297,11 @@
       "category": "dev-workflows"
     },
     {
+      "name": "deepwork",
+      "path": "skills/dev-workflows/deepwork/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
       "name": "dependency-upgrade",
       "path": "skills/dev-workflows/dependency-upgrade/SKILL.md",
       "category": "dev-workflows"
@@ -369,6 +384,11 @@
     {
       "name": "ubiquitous-language",
       "path": "skills/dev-workflows/ubiquitous-language/SKILL.md",
+      "category": "dev-workflows"
+    },
+    {
+      "name": "worktrees",
+      "path": "skills/dev-workflows/worktrees/SKILL.md",
       "category": "dev-workflows"
     },
     {
