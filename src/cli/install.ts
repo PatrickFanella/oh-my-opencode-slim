@@ -1,6 +1,10 @@
 import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import {
+  type BackgroundSubagentsMode,
+  installBackgroundSubagentsEnv,
+} from './background-subagents';
+import {
   addBuiltinMcpsToOpenCodeConfig,
   addPluginToOpenCodeConfig,
   addPluginToOpenCodeTuiConfig,
@@ -104,6 +108,19 @@ async function askToStarRepo(config: InstallConfig): Promise<void> {
   }
 }
 
+async function shouldInstallBackgroundSubagentsEnv(
+  mode: BackgroundSubagentsMode,
+): Promise<boolean> {
+  if (mode === 'yes') return true;
+  if (mode === 'no' || !process.stdin.isTTY) return false;
+
+  console.log();
+  return await confirm(
+    `${SYMBOLS.info} Enable OpenCode native background subagents?`,
+    true,
+  );
+}
+
 async function checkOpenCodeInstalled(): Promise<{
   ok: boolean;
   version?: string;
@@ -182,7 +199,7 @@ async function runInstall(config: InstallConfig): Promise<number> {
 
   printHeader(isUpdate);
 
-  const totalSteps = 9;
+  const totalSteps = 10;
 
   let step = 1;
 
@@ -265,6 +282,33 @@ async function runInstall(config: InstallConfig): Promise<number> {
     if (!handleStepResult(mcpResult, 'MCP definitions installed')) return 1;
   }
 
+  printStep(step++, totalSteps, 'Configuring native background subagents...');
+  if (config.dryRun) {
+    if (config.backgroundSubagents === 'no') {
+      printInfo(
+        'Dry run mode - background subagent env configuration disabled',
+      );
+    } else {
+      const result = installBackgroundSubagentsEnv({ dryRun: true });
+      printInfo(
+        `Dry run mode - would update ${result.changed.length} shell startup files for background subagents`,
+      );
+    }
+  } else if (
+    await shouldInstallBackgroundSubagentsEnv(config.backgroundSubagents)
+  ) {
+    const result = installBackgroundSubagentsEnv();
+    if (result.changed.length > 0) {
+      printSuccess(
+        `Background subagent env configured in ${result.changed.length} shell startup files`,
+      );
+    } else {
+      printInfo('Background subagent env already configured');
+    }
+  } else {
+    printInfo('Skipped background subagent env configuration');
+  }
+
   printStep(step++, totalSteps, 'Writing blacktower configuration...');
   if (config.dryRun) {
     const blacktowerConfig = generateBlacktowerConfig(config);
@@ -344,6 +388,7 @@ export function createInstallConfig(
   return {
     hasTmux,
     installSkills: args.skills === 'yes',
+    backgroundSubagents: args.backgroundSubagents ?? (args.tui ? 'ask' : 'no'),
     preset: args.preset,
     boardProvider: args.boardProvider,
     promptForStar: args.tui,

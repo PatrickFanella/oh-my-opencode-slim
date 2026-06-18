@@ -10,6 +10,7 @@ describe('install config', () => {
 
     expect(config.hasTmux).toBe(true);
     expect(config.installSkills).toBe(true);
+    expect(config.backgroundSubagents).toBe('no');
     expect(config.reset).toBe(true);
   });
 
@@ -21,5 +22,20 @@ describe('install config', () => {
 
     expect(config.hasTmux).toBe(false);
     expect(config.installSkills).toBe(false);
+  });
+
+  test('defaults background subagents to ask for interactive installs', () => {
+    const config = createInstallConfig({ tui: true, skills: 'yes' }, false);
+
+    expect(config.backgroundSubagents).toBe('ask');
+  });
+
+  test('honors explicit background subagents mode', () => {
+    const config = createInstallConfig(
+      { tui: false, skills: 'yes', backgroundSubagents: 'yes' },
+      false,
+    );
+
+    expect(config.backgroundSubagents).toBe('yes');
   });
 });

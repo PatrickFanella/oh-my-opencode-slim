@@ -30,7 +30,11 @@ import {
   hasHelpFlag,
   isShortcutCommand,
 } from './shortcuts';
-import type { BooleanArg, InstallArgs } from './types';
+import type { BooleanArg, InstallArgs, PromptArg } from './types';
+
+function isPromptArg(value: string): value is PromptArg {
+  return value === 'ask' || value === 'yes' || value === 'no';
+}
 
 function parseArgs(args: string[]): InstallArgs {
   const result: InstallArgs = {
@@ -43,6 +47,15 @@ function parseArgs(args: string[]): InstallArgs {
       result.tui = false;
     } else if (arg.startsWith('--skills=')) {
       result.skills = arg.split('=')[1] as BooleanArg;
+    } else if (arg.startsWith('--background-subagents=')) {
+      const mode = arg.split('=')[1];
+      if (!isPromptArg(mode)) {
+        console.error(
+          `Unsupported background subagents mode: ${mode}. Use ask, yes, or no.`,
+        );
+        process.exit(1);
+      }
+      result.backgroundSubagents = mode;
     } else if (arg.startsWith('--preset=')) {
       const preset = arg.split('=')[1];
       if (!isGeneratedPresetName(preset)) {
@@ -89,6 +102,8 @@ Usage:
 
 Options:
   --skills=yes|no        Enable code-managed bundled skills (default: yes)
+  --background-subagents=ask|yes|no
+                          Enable native OpenCode background-subagent env var
   --preset=<name>        Active generated config preset (default: openai)
   --board-provider=<p>   Board agent model provider (github-copilot|openai|anthropic|gemini)
   --no-tui               Non-interactive mode

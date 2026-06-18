@@ -1,8 +1,10 @@
 export type BooleanArg = 'yes' | 'no';
+export type PromptArg = 'ask' | 'yes' | 'no';
 
 export interface InstallArgs {
   tui: boolean;
   skills?: BooleanArg;
+  backgroundSubagents?: PromptArg;
   preset?: string;
   boardProvider?: string;
   dryRun?: boolean;
@@ -19,6 +21,7 @@ export interface OpenCodeConfig {
 export interface InstallConfig {
   hasTmux: boolean;
   installSkills: boolean;
+  backgroundSubagents: PromptArg;
   preset?: string;
   boardProvider?: string;
   promptForStar?: boolean;
