@@ -210,8 +210,10 @@ describe('bootstrap CLI helpers', () => {
     expect(config.compress).toMatchObject({
       mode: 'range',
       permission: 'allow',
-      minContextLimit: '35%',
-      maxContextLimit: '65%',
+      minContextLimit: '15%',
+      maxContextLimit: '40%',
+      iterationNudgeThreshold: 10,
+      nudgeFrequency: 3,
       showCompression: false,
       summaryBuffer: true,
     });
