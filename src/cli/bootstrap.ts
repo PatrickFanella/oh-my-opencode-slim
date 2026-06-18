@@ -3,7 +3,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
-  rmSync,
+  renameSync,
   writeFileSync,
 } from 'node:fs';
 import { cp } from 'node:fs/promises';
@@ -391,14 +391,23 @@ export function resetOpenCodeConfigDirectory(dryRun = false): StepResult {
     };
   }
 
-  for (const entry of entries) {
-    rmSync(join(configDir, entry), { recursive: true, force: true });
+  if (entries.length > 0) {
+    const resetDir = join(
+      configDir,
+      'backups',
+      `blacktower-reset-removed-${timestamp()}`,
+    );
+    mkdirSync(resetDir, { recursive: true });
+
+    for (const entry of entries) {
+      renameSync(join(configDir, entry), join(resetDir, entry));
+    }
   }
   mkdirSync(join(configDir, 'backups'), { recursive: true });
 
   return {
     ok: true,
-    message: `Reset OpenCode config directory; preserved backups`,
+    message: `Reset OpenCode config directory; moved ${entries.length} existing entries into backups`,
   };
 }
 

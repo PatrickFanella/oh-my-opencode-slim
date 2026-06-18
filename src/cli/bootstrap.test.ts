@@ -236,11 +236,12 @@ describe('bootstrap CLI helpers', () => {
     });
   });
 
-  test('resetOpenCodeConfigDirectory removes everything except backups', () => {
+  test('resetOpenCodeConfigDirectory moves entries into backups instead of recursively deleting', () => {
     const configDir = join(tmpDir, 'opencode');
     mkdirSync(join(configDir, 'backups', 'existing'), { recursive: true });
     mkdirSync(join(configDir, 'skills'), { recursive: true });
     writeFileSync(join(configDir, 'opencode.jsonc'), '{}');
+    writeFileSync(join(configDir, 'skills', 'legacy.md'), 'skill');
     writeFileSync(join(configDir, 'backups', 'existing', 'old.json'), '{}');
 
     const result = resetOpenCodeConfigDirectory(false);
@@ -250,6 +251,15 @@ describe('bootstrap CLI helpers', () => {
     expect(existsSync(join(configDir, 'skills'))).toBe(false);
     expect(existsSync(join(configDir, 'backups', 'existing', 'old.json'))).toBe(
       true,
+    );
+    const resetDirs = readdirSync(join(configDir, 'backups')).filter((entry) =>
+      entry.startsWith('blacktower-reset-removed-'),
+    );
+    expect(resetDirs).toHaveLength(1);
+    const resetDir = join(configDir, 'backups', resetDirs[0] ?? '');
+    expect(readFileSync(join(resetDir, 'opencode.jsonc'), 'utf-8')).toBe('{}');
+    expect(readFileSync(join(resetDir, 'skills', 'legacy.md'), 'utf-8')).toBe(
+      'skill',
     );
   });
 
