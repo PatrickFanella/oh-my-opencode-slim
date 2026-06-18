@@ -72,6 +72,7 @@ import {
   type TuiAgentSnapshot,
 } from './tui-state';
 import {
+  BackgroundJobBoard,
   createDisplayNameMentionRewriter,
   resolveRuntimeAgentName,
   withTimeout,
@@ -238,6 +239,7 @@ const Blacktower: Plugin = async (ctx) => {
   let foregroundFallback: ForegroundFallbackManager;
   let todoContinuationHook: ReturnType<typeof createTodoContinuationHook>;
   let taskSessionManagerHook: ReturnType<typeof createTaskSessionManagerHook>;
+  let backgroundJobBoard: BackgroundJobBoard;
   let interviewManager: ReturnType<typeof createInterviewManager>;
   let presetManager: ReturnType<typeof createPresetManager>;
   let divoomManager: ReturnType<typeof createDivoomManager>;
@@ -459,12 +461,14 @@ const Blacktower: Plugin = async (ctx) => {
       autoEnable: config.todoContinuation?.autoEnable ?? false,
       autoEnableThreshold: config.todoContinuation?.autoEnableThreshold ?? 4,
     });
+    backgroundJobBoard = new BackgroundJobBoard();
     taskSessionManagerHook = createTaskSessionManagerHook(ctx, {
       maxSessionsPerAgent: config.sessionManager?.maxSessionsPerAgent ?? 2,
       readContextMinLines: config.sessionManager?.readContextMinLines ?? 10,
       readContextMaxFiles: config.sessionManager?.readContextMaxFiles ?? 8,
       shouldManageSession: (sessionID) =>
         sessionAgentMap.get(sessionID) === 'orchestrator',
+      backgroundJobBoard,
     });
     interviewManager = createInterviewManager(ctx, config);
     presetManager = createPresetManager(ctx, config);

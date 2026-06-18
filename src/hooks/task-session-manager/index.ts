@@ -2,6 +2,7 @@ import path from 'node:path';
 import type { PluginInput } from '@opencode-ai/plugin';
 import type { AgentName } from '../../config';
 import {
+  type BackgroundJobBoard,
   BLACKTOWER_INTERNAL_INITIATOR_MARKER,
   type ContextFile,
   deriveTaskSessionLabel,
@@ -21,6 +22,7 @@ interface PendingTaskCall {
   parentSessionId: string;
   agentType: AgentName;
   label: string;
+  prompt: string;
   resumedTaskId?: string;
 }
 
@@ -116,6 +118,7 @@ export function createTaskSessionManagerHook(
     readContextMinLines?: number;
     readContextMaxFiles?: number;
     shouldManageSession: (sessionID: string) => boolean;
+    backgroundJobBoard?: BackgroundJobBoard;
   },
 ) {
   const sessionManager = new SessionManager(options.maxSessionsPerAgent, {
@@ -150,6 +153,9 @@ export function createTaskSessionManagerHook(
     }
 
     sessionManager.addContext(taskId, contextFilesForPrompt(context));
+    options.backgroundJobBoard?.updateState(taskId, 'running', {
+      contextFiles: files.map((file) => file.path),
+    });
   }
 
   function contextFilesForPrompt(
@@ -262,6 +268,7 @@ export function createTaskSessionManagerHook(
         prompt: typeof args.prompt === 'string' ? args.prompt : undefined,
         agentType: args.subagent_type,
       });
+      const prompt = typeof args.prompt === 'string' ? args.prompt : label;
 
       const pendingCall: PendingTaskCall = {
         callId: pendingCallId({
@@ -271,6 +278,7 @@ export function createTaskSessionManagerHook(
         parentSessionId: input.sessionID,
         agentType: args.subagent_type,
         label,
+        prompt,
       };
       rememberPendingCall(pendingCall);
 
@@ -331,6 +339,14 @@ export function createTaskSessionManagerHook(
             pending.agentType,
             pending.resumedTaskId,
           );
+          options.backgroundJobBoard?.updateState(
+            pending.resumedTaskId,
+            'unknown',
+            {
+              lastError: output.output.split(/\r?\n/, 1)[0],
+              statusUncertain: true,
+            },
+          );
         }
         return;
       }
@@ -352,6 +368,16 @@ export function createTaskSessionManagerHook(
       pendingManagedTaskIds.delete(taskId);
       const contextFiles = contextFilesForPrompt(contextByTask.get(taskId));
       sessionManager.addContext(taskId, contextFiles);
+      options.backgroundJobBoard?.recordLaunch({
+        parentSessionID: pending.parentSessionId,
+        taskID: taskId,
+        agent: pending.agentType,
+        description: pending.label,
+        objective: pending.prompt,
+        source: 'task',
+        contextFiles: contextFiles.map((file) => file.path),
+      });
+      options.backgroundJobBoard?.updateState(taskId, 'running');
       pruneContext();
     },
 
@@ -420,6 +446,10 @@ export function createTaskSessionManagerHook(
 
       sessionManager.dropTask(sessionId);
       sessionManager.clearParent(sessionId);
+      options.backgroundJobBoard?.updateState(sessionId, 'unknown', {
+        statusUncertain: true,
+      });
+      options.backgroundJobBoard?.removeForParent(sessionId);
       contextByTask.delete(sessionId);
       pendingManagedTaskIds.delete(sessionId);
       pruneContext();

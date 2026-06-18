@@ -1,10 +1,12 @@
 import { describe, expect, mock, test } from 'bun:test';
+import { BackgroundJobBoard } from '../../utils/background-job-board';
 import { createTaskSessionManagerHook } from './index';
 
 function createHook(options?: {
   shouldManageSession?: (sessionID: string) => boolean;
   readContextMinLines?: number;
   readContextMaxFiles?: number;
+  backgroundJobBoard?: BackgroundJobBoard;
 }) {
   const hook = createTaskSessionManagerHook(
     {
@@ -17,6 +19,7 @@ function createHook(options?: {
       readContextMinLines: options?.readContextMinLines,
       readContextMaxFiles: options?.readContextMaxFiles,
       shouldManageSession: options?.shouldManageSession ?? (() => true),
+      backgroundJobBoard: options?.backgroundJobBoard,
     },
   );
 
@@ -128,6 +131,81 @@ describe('task-session-manager hook', () => {
     );
 
     expect(next.args.task_id).toBe('child-1');
+  });
+
+  test('records launched tasks in the background job board', async () => {
+    const backgroundJobBoard = new BackgroundJobBoard();
+    const { hook } = createHook({ backgroundJobBoard });
+
+    await hook['tool.execute.before'](
+      {
+        tool: 'task',
+        sessionID: 'parent-1',
+        callID: 'call-1',
+      },
+      {
+        args: {
+          subagent_type: 'explorer',
+          description: 'config schema',
+          prompt: 'inspect config schema deeply',
+        },
+      },
+    );
+    await hook['tool.execute.after'](
+      {
+        tool: 'task',
+        sessionID: 'parent-1',
+        callID: 'call-1',
+      },
+      {
+        output:
+          'task_id: child-1 (for resuming to continue this task if needed)',
+      },
+    );
+
+    const job = backgroundJobBoard.resolve('parent-1', 'exp-1');
+    expect(job?.taskID).toBe('child-1');
+    expect(job?.agent).toBe('explorer');
+    expect(job?.description).toBe('config schema');
+    expect(job?.objective).toBe('inspect config schema deeply');
+    expect(job?.state).toBe('running');
+  });
+
+  test('marks missing resumed tasks uncertain in the background job board', async () => {
+    const backgroundJobBoard = new BackgroundJobBoard();
+    const { hook } = createHook({ backgroundJobBoard });
+
+    await hook['tool.execute.before'](
+      { tool: 'task', sessionID: 'parent-1', callID: 'call-1' },
+      { args: { subagent_type: 'explorer', description: 'config schema' } },
+    );
+    await hook['tool.execute.after'](
+      { tool: 'task', sessionID: 'parent-1', callID: 'call-1' },
+      {
+        output:
+          'task_id: child-1 (for resuming to continue this task if needed)',
+      },
+    );
+
+    const next = {
+      args: {
+        subagent_type: 'explorer',
+        description: 'continue schema work',
+        task_id: 'exp-1',
+      },
+    };
+    await hook['tool.execute.before'](
+      { tool: 'task', sessionID: 'parent-1', callID: 'call-2' },
+      next,
+    );
+    await hook['tool.execute.after'](
+      { tool: 'task', sessionID: 'parent-1', callID: 'call-2' },
+      { output: '[ERROR] Session not found' },
+    );
+
+    const job = backgroundJobBoard.get('child-1');
+    expect(job?.state).toBe('unknown');
+    expect(job?.statusUncertain).toBe(true);
   });
 
   test('tracks files read by child sessions in resumable message context', async () => {
