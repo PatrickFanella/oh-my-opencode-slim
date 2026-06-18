@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -263,6 +264,29 @@ describe('bootstrap CLI helpers', () => {
     expect(readFileSync(join(resetDir, 'skills', 'legacy.md'), 'utf-8')).toBe(
       'skill',
     );
+  });
+
+  test('resetOpenCodeConfigDirectory skips protected entries instead of aborting', () => {
+    const configDir = join(tmpDir, 'opencode');
+    mkdirSync(join(configDir, 'backups'), { recursive: true });
+    mkdirSync(join(configDir, 'agents'), { recursive: true });
+    writeFileSync(join(configDir, 'opencode.jsonc'), '{}');
+
+    const result = resetOpenCodeConfigDirectory(false, {
+      moveEntry(source, destination) {
+        if (source.endsWith('/agents')) {
+          throw Object.assign(new Error('permission denied'), {
+            code: 'EACCES',
+          });
+        }
+        renameSync(source, destination);
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain('skipped protected entries: agents');
+    expect(existsSync(join(configDir, 'agents'))).toBe(true);
+    expect(existsSync(join(configDir, 'opencode.jsonc'))).toBe(false);
   });
 
   test('backupOpenCodeConfig backs up the whole config directory except backups', async () => {

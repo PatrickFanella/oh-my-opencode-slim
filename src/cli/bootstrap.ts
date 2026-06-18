@@ -376,7 +376,13 @@ export async function backupOpenCodeConfig(
       };
 }
 
-export function resetOpenCodeConfigDirectory(dryRun = false): StepResult {
+export function resetOpenCodeConfigDirectory(
+  dryRun = false,
+  options: {
+    moveEntry?: (source: string, destination: string) => void;
+  } = {},
+): StepResult {
+  const moveEntry = options.moveEntry ?? renameSync;
   const configDir = getConfigDir();
   if (!existsSync(configDir)) {
     if (!dryRun) mkdirSync(join(configDir, 'backups'), { recursive: true });
@@ -399,8 +405,26 @@ export function resetOpenCodeConfigDirectory(dryRun = false): StepResult {
     );
     mkdirSync(resetDir, { recursive: true });
 
+    const skipped: string[] = [];
     for (const entry of entries) {
-      renameSync(join(configDir, entry), join(resetDir, entry));
+      try {
+        moveEntry(join(configDir, entry), join(resetDir, entry));
+      } catch (error) {
+        if (isPermissionError(error)) {
+          skipped.push(entry);
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (skipped.length > 0) {
+      return {
+        ok: true,
+        message: `Reset OpenCode config directory; moved ${
+          entries.length - skipped.length
+        } entries into backups; skipped protected entries: ${skipped.join(', ')}`,
+      };
     }
   }
   mkdirSync(join(configDir, 'backups'), { recursive: true });
@@ -409,6 +433,10 @@ export function resetOpenCodeConfigDirectory(dryRun = false): StepResult {
     ok: true,
     message: `Reset OpenCode config directory; moved ${entries.length} existing entries into backups`,
   };
+}
+
+function isPermissionError(error: unknown): boolean {
+  return isRecord(error) && (error.code === 'EACCES' || error.code === 'EPERM');
 }
 
 async function runCommand(
