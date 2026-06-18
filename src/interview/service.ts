@@ -7,6 +7,9 @@ import {
   createInternalAgentTextPart,
   hasInternalInitiatorMarker,
   log,
+  messagesWithTimeout,
+  promptAsyncWithTimeout,
+  withTimeout,
 } from '../utils';
 import { parseModelReference } from '../utils/session';
 import {
@@ -247,7 +250,7 @@ export function createInterviewService(
   }
 
   async function loadMessages(sessionID: string): Promise<InterviewMessage[]> {
-    const result = await ctx.client.session.messages({
+    const result = await messagesWithTimeout(ctx.client, {
       path: { id: sessionID },
     });
     return result.data as InterviewMessage[];
@@ -405,25 +408,29 @@ export function createInterviewService(
     // Auto-open browser on initial creation (not on every poll/refresh)
     maybeOpenBrowser(interview.id, url);
 
-    await ctx.client.session.prompt({
-      path: { id: sessionID },
-      body: {
-        noReply: true,
-        parts: [
-          {
-            type: 'text',
-            text: [
-              '⎔ Interview UI ready',
-              '',
-              `Open: ${url}`,
-              `Document: ${relativeInterviewPath(ctx.directory, interview.markdownPath)}`,
-              '',
-              '[system status: continue without acknowledging this notification]',
-            ].join('\n'),
-          },
-        ],
-      },
-    });
+    await withTimeout(
+      ctx.client.session.prompt({
+        path: { id: sessionID },
+        body: {
+          noReply: true,
+          parts: [
+            {
+              type: 'text',
+              text: [
+                '⎔ Interview UI ready',
+                '',
+                `Open: ${url}`,
+                `Document: ${relativeInterviewPath(ctx.directory, interview.markdownPath)}`,
+                '',
+                '[system status: continue without acknowledging this notification]',
+              ].join('\n'),
+            },
+          ],
+        },
+      }),
+      5_000,
+      'Interview URL notification timed out after 5000ms',
+    );
   }
 
   function registerCommand(opencodeConfig: Record<string, unknown>): void {
@@ -523,7 +530,7 @@ export function createInterviewService(
       // Use promptAsync for non-blocking — returns immediately, LLM
       // processes in background. State push updates dashboard when done.
       const model = sessionModel.get(interview.sessionID);
-      await ctx.client.session.promptAsync({
+      await promptAsyncWithTimeout(ctx.client, {
         path: { id: interview.sessionID },
         body: {
           parts: [createInternalAgentTextPart(prompt)],
@@ -756,7 +763,7 @@ export function createInterviewService(
       }
 
       const model = sessionModel.get(interview.sessionID);
-      await ctx.client.session.promptAsync({
+      await promptAsyncWithTimeout(ctx.client, {
         path: { id: interview.sessionID },
         body: {
           parts: [createInternalAgentTextPart(prompt)],

@@ -7,6 +7,9 @@ import type { PluginInput } from '@opencode-ai/plugin';
 type OpencodeClient = PluginInput['client'];
 
 export const SESSION_ABORT_TIMEOUT_MS = 1_000;
+export const SESSION_CREATE_TIMEOUT_MS = 5_000;
+export const SESSION_MESSAGES_TIMEOUT_MS = 5_000;
+export const SESSION_PROMPT_ASYNC_TIMEOUT_MS = 5_000;
 
 export class OperationTimeoutError extends Error {
   constructor(message: string) {
@@ -41,11 +44,68 @@ export async function abortSessionWithTimeout(
   client: OpencodeClient,
   sessionId: string,
   timeoutMs = SESSION_ABORT_TIMEOUT_MS,
+  options?: { directory?: string },
 ): Promise<void> {
   await withTimeout(
-    client.session.abort({ path: { id: sessionId } }),
+    client.session.abort({
+      path: { id: sessionId },
+      ...(options?.directory
+        ? { query: { directory: options.directory } }
+        : {}),
+    }),
     timeoutMs,
     `Session abort timed out after ${timeoutMs}ms`,
+  );
+}
+
+export async function createSessionWithTimeout(
+  client: OpencodeClient,
+  args: Parameters<OpencodeClient['session']['create']>[0],
+  timeoutMs = SESSION_CREATE_TIMEOUT_MS,
+): Promise<Awaited<ReturnType<OpencodeClient['session']['create']>>> {
+  return await withTimeout(
+    client.session.create(args) as Promise<
+      Awaited<ReturnType<OpencodeClient['session']['create']>>
+    >,
+    timeoutMs,
+    `Session create timed out after ${timeoutMs}ms`,
+  );
+}
+
+export async function messagesWithTimeout(
+  client: OpencodeClient,
+  args: Parameters<OpencodeClient['session']['messages']>[0],
+  timeoutMs = SESSION_MESSAGES_TIMEOUT_MS,
+): Promise<Awaited<ReturnType<OpencodeClient['session']['messages']>>> {
+  return await withTimeout(
+    client.session.messages(args) as Promise<
+      Awaited<ReturnType<OpencodeClient['session']['messages']>>
+    >,
+    timeoutMs,
+    `Session messages lookup timed out after ${timeoutMs}ms`,
+  );
+}
+
+export async function promptAsyncWithTimeout(
+  client: OpencodeClient,
+  args: {
+    path: { id: string };
+    body: Record<string, unknown>;
+  },
+  timeoutMs = SESSION_PROMPT_ASYNC_TIMEOUT_MS,
+): Promise<unknown> {
+  const sessionClient = client.session as unknown as {
+    promptAsync?: (promptArgs: typeof args) => Promise<unknown>;
+  };
+
+  if (typeof sessionClient.promptAsync !== 'function') {
+    throw new Error('session.promptAsync is unavailable');
+  }
+
+  return await withTimeout(
+    sessionClient.promptAsync(args),
+    timeoutMs,
+    `Session promptAsync timed out after ${timeoutMs}ms`,
   );
 }
 
@@ -175,7 +235,7 @@ export async function extractSessionResult(
 ): Promise<SessionExtractionResult> {
   const includeReasoning = options?.includeReasoning ?? true;
 
-  const messagesResult = await client.session.messages({
+  const messagesResult = await messagesWithTimeout(client, {
     path: { id: sessionId },
     ...(options?.directory ? { query: { directory: options.directory } } : {}),
   });

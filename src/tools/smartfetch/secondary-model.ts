@@ -5,10 +5,52 @@ import type { PluginInput } from '@opencode-ai/plugin';
 import { stripJsonComments } from '../../cli/config-io';
 import { getConfigSearchDirs } from '../../cli/paths';
 import { loadPluginConfig } from '../../config/loader';
+import { createSessionWithTimeout, withTimeout } from '../../utils/session';
 import { MAX_MODEL_CONTENT_CHARS } from './constants';
 import type { CachedFetch, SecondaryModel } from './types';
 
 type OpenCodeClient = PluginInput['client'];
+
+const SECONDARY_MODEL_PROMPT_TIMEOUT_MS = 30_000;
+const SECONDARY_MODEL_SESSION_DELETE_TIMEOUT_MS = 1_000;
+const SESSION_DELETE_RETRIES = 3;
+const SESSION_DELETE_RETRY_DELAY_MS = 500;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function deleteSessionSafely(
+  client: OpenCodeClient,
+  sessionId: string,
+  directory: string,
+): Promise<void> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= SESSION_DELETE_RETRIES; attempt += 1) {
+    try {
+      await withTimeout(
+        client.session.delete({
+          path: { id: sessionId },
+          query: { directory },
+        }),
+        SECONDARY_MODEL_SESSION_DELETE_TIMEOUT_MS,
+        `Secondary model session delete timed out after ${SECONDARY_MODEL_SESSION_DELETE_TIMEOUT_MS}ms`,
+      );
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < SESSION_DELETE_RETRIES) {
+        await delay(SESSION_DELETE_RETRY_DELAY_MS);
+      }
+    }
+  }
+
+  console.warn('[smartfetch] failed to clean up temporary session', {
+    sessionId,
+    error: lastError instanceof Error ? lastError.message : String(lastError),
+  });
+}
 
 function parseModelRef(value: string | undefined) {
   if (!value) return undefined;
@@ -163,7 +205,7 @@ async function runSecondaryModel(
   prompt: string,
   content: string,
 ) {
-  const session = await client.session.create({
+  const session = await createSessionWithTimeout(client, {
     responseStyle: 'data',
     throwOnError: true,
     query: { directory },
@@ -199,24 +241,28 @@ async function runSecondaryModel(
       (toolIDs || []).map((id: string) => [id, false]),
     );
 
-    const result = await client.session.prompt({
-      responseStyle: 'data',
-      throwOnError: true,
-      path: { id: sessionId },
-      query: { directory },
-      body: {
-        model,
-        system:
-          'Answer only from the supplied content. Do not use tools or outside knowledge.',
-        tools: disabledTools,
-        parts: [
-          {
-            type: 'text',
-            text: buildPrompt(truncatedContent, effectivePrompt),
-          },
-        ],
-      },
-    });
+    const result = await withTimeout(
+      client.session.prompt({
+        responseStyle: 'data',
+        throwOnError: true,
+        path: { id: sessionId },
+        query: { directory },
+        body: {
+          model,
+          system:
+            'Answer only from the supplied content. Do not use tools or outside knowledge.',
+          tools: disabledTools,
+          parts: [
+            {
+              type: 'text',
+              text: buildPrompt(truncatedContent, effectivePrompt),
+            },
+          ],
+        },
+      }),
+      SECONDARY_MODEL_PROMPT_TIMEOUT_MS,
+      `Secondary model prompt timed out after ${SECONDARY_MODEL_PROMPT_TIMEOUT_MS}ms`,
+    );
 
     const parts =
       (result as { data?: { parts?: Array<{ type?: string; text?: string }> } })
@@ -235,12 +281,7 @@ async function runSecondaryModel(
       sourceChars,
     };
   } finally {
-    await client.session
-      .delete({
-        path: { id: sessionId },
-        query: { directory },
-      })
-      .catch(() => undefined);
+    await deleteSessionSafely(client, sessionId, directory);
   }
 }
 

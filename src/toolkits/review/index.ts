@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { type ToolDefinition, tool } from '@opencode-ai/plugin';
+import { withTimeout } from '../../utils/session';
 import {
   type CommandTemplate,
   registerCommandTemplates,
@@ -171,18 +172,22 @@ export function createReviewToolkit({
     }
 
     try {
-      await client.session.prompt({
-        path: { id: sessionID },
-        body: {
-          noReply: true,
-          parts: [
-            {
-              type: 'text',
-              text: `<review-summary>Changed files detected. Run review_changed_files, review_summary, or review_pr_ready before finalizing. Files:\n${trimmedDiff}\n</review-summary>`,
-            },
-          ],
-        },
-      });
+      await withTimeout(
+        client.session.prompt({
+          path: { id: sessionID },
+          body: {
+            noReply: true,
+            parts: [
+              {
+                type: 'text',
+                text: `<review-summary>Changed files detected. Run review_changed_files, review_summary, or review_pr_ready before finalizing. Files:\n${trimmedDiff}\n</review-summary>`,
+              },
+            ],
+          },
+        }),
+        5_000,
+        'Review notification timed out after 5000ms',
+      );
 
       reviewState.lastNotifiedAt = new Date().toISOString();
       reviewState.lastNotifiedFingerprint = currentFingerprint;

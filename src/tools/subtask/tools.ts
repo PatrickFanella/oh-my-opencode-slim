@@ -8,7 +8,13 @@
 
 import type { PluginInput, ToolDefinition } from '@opencode-ai/plugin';
 import { tool } from '@opencode-ai/plugin';
-import { extractSessionResult, promptWithTimeout } from '../../utils/session';
+import {
+  abortSessionWithTimeout,
+  createSessionWithTimeout,
+  extractSessionResult,
+  messagesWithTimeout,
+  promptWithTimeout,
+} from '../../utils/session';
 import type { SubagentDepthTracker } from '../../utils/subagent-depth';
 import {
   buildSyntheticFileParts,
@@ -103,7 +109,7 @@ Do not spawn another subtask.`;
 
       let childSessionID: string | undefined;
       try {
-        const session = await client.session.create({
+        const session = await createSessionWithTimeout(client, {
           responseStyle: 'data',
           throwOnError: true,
           query: { directory },
@@ -173,9 +179,8 @@ Do not spawn another subtask.`;
       } finally {
         if (childSessionID) {
           try {
-            await client.session.abort({
-              path: { id: childSessionID },
-              query: { directory },
+            await abortSessionWithTimeout(client, childSessionID, undefined, {
+              directory,
             });
             state.unmarkSession(childSessionID);
           } catch {
@@ -303,7 +308,7 @@ export function createReadSessionTool(
       }
 
       try {
-        const response = (await client.session.messages({
+        const response = (await messagesWithTimeout(client, {
           path: { id: args.sessionID },
           query: { limit, ...(directory ? { directory } : {}) },
         })) as { data?: Array<{ info: { role?: string }; parts: unknown[] }> };

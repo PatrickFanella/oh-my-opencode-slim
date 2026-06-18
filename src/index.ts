@@ -74,6 +74,7 @@ import {
 import {
   createDisplayNameMentionRewriter,
   resolveRuntimeAgentName,
+  withTimeout,
 } from './utils';
 import { initLogger, log } from './utils/logger';
 import { SubagentDepthTracker } from './utils/subagent-depth';
@@ -107,6 +108,26 @@ const HEALTH_CHECK = {
   minAgents: 5,
   minTools: 5,
 } as const;
+
+const EVENT_HANDLER_TIMEOUT_MS = 5_000;
+
+async function runEventStep(
+  name: string,
+  operation: () => void | Promise<void>,
+): Promise<void> {
+  try {
+    await withTimeout(
+      Promise.resolve(operation()),
+      EVENT_HANDLER_TIMEOUT_MS,
+      `event handler "${name}" timed out after ${EVENT_HANDLER_TIMEOUT_MS}ms`,
+    );
+  } catch (error) {
+    log('[plugin] event handler failed or timed out', {
+      handler: name,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
 
 function ensureManagedSkillsPath(
   opencodeConfig: Record<string, unknown>,
@@ -982,73 +1003,105 @@ const Blacktower: Plugin = async (ctx) => {
       }
 
       // Runtime model fallback for foreground agents (rate-limit detection)
-      await foregroundFallback.handleEvent(input.event);
+      await runEventStep('foregroundFallback.handleEvent', () =>
+        foregroundFallback.handleEvent(input.event),
+      );
 
       // Todo-continuation: auto-continue orchestrator on incomplete todos
-      await todoContinuationHook.handleEvent(input);
+      await runEventStep('todoContinuationHook.handleEvent', () =>
+        todoContinuationHook.handleEvent(input),
+      );
 
       // Handle auto-update checking
-      await autoUpdateChecker.event(input);
-
-      await reviewToolkit?.handleEvent(
-        input as {
-          event: {
-            type: string;
-            properties?: {
-              sessionID?: string;
-              info?: { sessionID?: string; id?: string };
-            };
-          };
-        },
+      await runEventStep('autoUpdateChecker.event', () =>
+        autoUpdateChecker.event(input),
       );
 
-      await cavemanToolkit?.handleEvent(
-        input as {
-          event: {
-            type: string;
-            properties?: {
-              sessionID?: string;
-              info?: { sessionID?: string; id?: string };
-            };
-          };
-        },
+      await runEventStep(
+        'reviewToolkit.handleEvent',
+        async () =>
+          await reviewToolkit?.handleEvent(
+            input as {
+              event: {
+                type: string;
+                properties?: {
+                  sessionID?: string;
+                  info?: { sessionID?: string; id?: string };
+                };
+              };
+            },
+          ),
       );
 
-      await observeToolkit?.handleEvent(
-        input as {
-          event: {
-            type: string;
-            properties?: {
-              sessionID?: string;
-              info?: { sessionID?: string; id?: string };
-              part?: { type?: string; text?: string; synthetic?: boolean };
-            };
-          };
-        },
+      await runEventStep(
+        'cavemanToolkit.handleEvent',
+        async () =>
+          await cavemanToolkit?.handleEvent(
+            input as {
+              event: {
+                type: string;
+                properties?: {
+                  sessionID?: string;
+                  info?: { sessionID?: string; id?: string };
+                };
+              };
+            },
+          ),
+      );
+
+      await runEventStep(
+        'observeToolkit.handleEvent',
+        async () =>
+          await observeToolkit?.handleEvent(
+            input as {
+              event: {
+                type: string;
+                properties?: {
+                  sessionID?: string;
+                  info?: { sessionID?: string; id?: string };
+                  part?: { type?: string; text?: string; synthetic?: boolean };
+                };
+              };
+            },
+          ),
       );
 
       // Handle multiplexer pane spawning for OpenCode's Task tool sessions
-      await multiplexerSessionManager.onSessionCreated(event);
-
-      // Handle session.status events for pane cleanup
-      await multiplexerSessionManager.onSessionStatus(event);
-
-      // Handle session.deleted events for pane cleanup
-      await multiplexerSessionManager.onSessionDeleted(event);
-
-      await interviewManager.handleEvent(
-        input as {
-          event: { type: string; properties?: Record<string, unknown> };
-        },
+      await runEventStep('multiplexerSessionManager.onSessionCreated', () =>
+        multiplexerSessionManager.onSessionCreated(event),
       );
 
-      await taskSessionManagerHook.event(
-        input as {
-          event: {
-            type: string;
-            properties?: { info?: { id?: string }; sessionID?: string };
-          };
-        },
+      // Handle session.status events for pane cleanup
+      await runEventStep('multiplexerSessionManager.onSessionStatus', () =>
+        multiplexerSessionManager.onSessionStatus(event),
+      );
+
+      // Handle session.deleted events for pane cleanup
+      await runEventStep('multiplexerSessionManager.onSessionDeleted', () =>
+        multiplexerSessionManager.onSessionDeleted(event),
+      );
+
+      await runEventStep(
+        'interviewManager.handleEvent',
+        async () =>
+          await interviewManager.handleEvent(
+            input as {
+              event: { type: string; properties?: Record<string, unknown> };
+            },
+          ),
+      );
+
+      await runEventStep(
+        'taskSessionManagerHook.event',
+        async () =>
+          await taskSessionManagerHook.event(
+            input as {
+              event: {
+                type: string;
+                properties?: { info?: { id?: string }; sessionID?: string };
+              };
+            },
+          ),
       );
 
       subtaskCommandManager.handleEvent(
@@ -1070,6 +1123,11 @@ const Blacktower: Plugin = async (ctx) => {
         const props = event.properties as
           | { sessionID?: string; id?: string; requestID?: string }
           | undefined;
+        log('[plugin] session waiting for user input', {
+          event: event.type,
+          sessionID: props?.sessionID,
+          requestID: props?.id ?? props?.requestID,
+        });
         divoomManager.onUserInputRequired({
           sessionId: props?.sessionID,
           requestId: props?.id ?? props?.requestID,
@@ -1084,6 +1142,11 @@ const Blacktower: Plugin = async (ctx) => {
         const props = event.properties as
           | { sessionID?: string; requestID?: string; id?: string }
           | undefined;
+        log('[plugin] user input wait resolved', {
+          event: event.type,
+          sessionID: props?.sessionID,
+          requestID: props?.requestID ?? props?.id,
+        });
         divoomManager.onUserInputResolved({
           sessionId: props?.sessionID,
           requestId: props?.requestID ?? props?.id,

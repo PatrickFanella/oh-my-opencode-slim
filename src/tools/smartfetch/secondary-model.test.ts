@@ -7,9 +7,14 @@ type PromptStep = {
   error?: Error;
 };
 
-function createMockClient(steps: PromptStep[]) {
+type DeleteStep = {
+  error?: Error;
+};
+
+function createMockClient(steps: PromptStep[], deleteSteps: DeleteStep[] = []) {
   let createCount = 0;
   let promptCount = 0;
+  let deleteCount = 0;
 
   return {
     session: {
@@ -25,7 +30,13 @@ function createMockClient(steps: PromptStep[]) {
           },
         };
       }),
-      delete: mock(async () => ({})),
+      delete: mock(async () => {
+        const step = deleteSteps[deleteCount++] ?? {};
+        if (step.error) {
+          throw step.error;
+        }
+        return {};
+      }),
     },
     tool: {
       ids: mock(async () => ({ data: ['read', 'bash'] })),
@@ -81,5 +92,55 @@ describe('smartfetch/secondary-model', () => {
     expect(result.model).toEqual(models[1]);
     expect(client.session.prompt).toHaveBeenCalledTimes(2);
     expect(client.session.delete).toHaveBeenCalledTimes(2);
+  });
+
+  test('retries temporary session cleanup before falling back', async () => {
+    const client = createMockClient(
+      [{ error: new Error('primary failed') }, { text: 'Recovered answer' }],
+      [{ error: new Error('delete failed') }, {}, {}],
+    );
+
+    const result = await runSecondaryModelWithFallback(
+      client,
+      '/tmp/project',
+      models,
+      'Extract the answer',
+      'This is enough fetched content to clear the short-content guard.',
+    );
+
+    expect(result.text).toBe('Recovered answer');
+    expect(result.model).toEqual(models[1]);
+    expect(client.session.prompt).toHaveBeenCalledTimes(2);
+    expect(client.session.delete).toHaveBeenCalledTimes(3);
+  });
+
+  test('cleanup retry exhaustion does not mask successful secondary output', async () => {
+    const warn = mock(() => {});
+    const originalWarn = console.warn;
+    console.warn = warn;
+    try {
+      const client = createMockClient(
+        [{ text: 'Useful answer' }],
+        [
+          { error: new Error('delete failed 1') },
+          { error: new Error('delete failed 2') },
+          { error: new Error('delete failed 3') },
+        ],
+      );
+
+      const result = await runSecondaryModelWithFallback(
+        client,
+        '/tmp/project',
+        models,
+        'Summarize the page',
+        'This is enough fetched content to clear the short-content guard.',
+      );
+
+      expect(result.text).toBe('Useful answer');
+      expect(client.session.delete).toHaveBeenCalledTimes(3);
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      console.warn = originalWarn;
+    }
   });
 });

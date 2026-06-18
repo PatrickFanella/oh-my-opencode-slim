@@ -16,7 +16,11 @@
 
 import type { PluginInput } from '@opencode-ai/plugin';
 import { log } from '../../utils/logger';
-import { abortSessionWithTimeout } from '../../utils/session';
+import {
+  abortSessionWithTimeout,
+  messagesWithTimeout,
+  promptAsyncWithTimeout,
+} from '../../utils/session';
 
 type OpencodeClient = PluginInput['client'];
 
@@ -265,7 +269,7 @@ export class ForegroundFallbackManager {
       }
 
       // Retrieve the last user message to re-submit with the fallback model.
-      const result = await this.client.session.messages({
+      const result = await messagesWithTimeout(this.client, {
         path: { id: sessionID },
       });
       const messages = (result.data ?? []) as Array<{
@@ -286,13 +290,7 @@ export class ForegroundFallbackManager {
       // blacktower but IS present on the real OpenCode client at
       // runtime (verified by opencode-rate-limit-fallback reference impl).
       const sessionClient = this.client.session as unknown as {
-        promptAsync?: (args: {
-          path: { id: string };
-          body: {
-            parts: unknown[];
-            model: { providerID: string; modelID: string };
-          };
-        }) => Promise<unknown>;
+        promptAsync?: (args: unknown) => Promise<unknown>;
       };
       if (typeof sessionClient.promptAsync !== 'function') {
         log('[foreground-fallback] promptAsync unavailable', { sessionID });
@@ -313,7 +311,7 @@ export class ForegroundFallbackManager {
       // Give the server a moment to finalise the abort before re-prompting.
       await new Promise((r) => setTimeout(r, REPROMPT_DELAY_MS));
 
-      await sessionClient.promptAsync({
+      await promptAsyncWithTimeout(this.client, {
         path: { id: sessionID },
         body: { parts: lastUser.parts, model: ref },
       });

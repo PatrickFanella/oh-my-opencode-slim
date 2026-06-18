@@ -18,11 +18,14 @@ import {
 import type { CouncillorConfig, CouncilResult } from '../config/council-schema';
 import { log } from '../utils/logger';
 import {
+  abortSessionWithTimeout,
+  createSessionWithTimeout,
   extractSessionResult,
   type PromptBody,
   parseModelReference,
   promptWithTimeout,
   shortModelLabel,
+  withTimeout,
 } from '../utils/session';
 import type { SubagentDepthTracker } from '../utils/subagent-depth';
 
@@ -206,13 +209,17 @@ export class CouncilManager {
       '',
       '[system status: continue without acknowledging this notification]',
     ].join('\n');
-    await this.client.session.prompt({
-      path: { id: parentSessionId },
-      body: {
-        noReply: true,
-        parts: [{ type: 'text', text: message }],
-      },
-    });
+    await withTimeout(
+      this.client.session.prompt({
+        path: { id: parentSessionId },
+        body: {
+          noReply: true,
+          parts: [{ type: 'text', text: message }],
+        },
+      }),
+      5_000,
+      'Council start notification timed out after 5000ms',
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -240,7 +247,7 @@ export class CouncilManager {
     let sessionId: string | undefined;
 
     try {
-      const session = await this.client.session.create({
+      const session = await createSessionWithTimeout(this.client, {
         body: {
           parentID: options.parentSessionId,
           title: options.title,
@@ -303,7 +310,7 @@ export class CouncilManager {
       return extraction.text;
     } finally {
       if (sessionId) {
-        this.client.session.abort({ path: { id: sessionId } }).catch(() => {});
+        abortSessionWithTimeout(this.client, sessionId).catch(() => {});
         if (this.depthTracker) {
           this.depthTracker.cleanup(sessionId);
         }

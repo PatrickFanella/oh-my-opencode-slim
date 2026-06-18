@@ -4,6 +4,7 @@ import {
   BLACKTOWER_INTERNAL_INITIATOR_MARKER,
   createInternalAgentTextPart,
   log,
+  messagesWithTimeout,
   withTimeout,
 } from '../../utils';
 import { createTodoHygiene } from './todo-hygiene';
@@ -11,6 +12,7 @@ import { createTodoHygiene } from './todo-hygiene';
 const HOOK_NAME = 'todo-continuation';
 const COMMAND_NAME = 'auto-continue';
 const TODO_STATE_TIMEOUT_MS = 500;
+const SESSION_PROMPT_TIMEOUT_MS = 5_000;
 
 const CONTINUATION_PROMPT =
   '[Auto-continue: enabled - there are incomplete todos remaining. Continue with the next uncompleted item. Press Esc to cancel. If you need user input or review for the next item, ask instead of proceeding.]';
@@ -577,7 +579,7 @@ export function createTodoContinuationHook(
       // Safety gate 3: last assistant message is not a question
       let lastAssistantIsQuestion = false;
       try {
-        const messagesResult = await ctx.client.session.messages({
+        const messagesResult = await messagesWithTimeout(ctx.client, {
           path: { id: sessionID },
         });
         const messages = messagesResult.data as Message[];
@@ -646,8 +648,8 @@ export function createTodoContinuationHook(
 
       // Show countdown notification (noReply = agent doesn't respond)
       markNotificationStarted(sessionID);
-      ctx.client.session
-        .prompt({
+      withTimeout(
+        ctx.client.session.prompt({
           path: { id: sessionID },
           body: {
             noReply: true,
@@ -662,7 +664,10 @@ export function createTodoContinuationHook(
               },
             ],
           },
-        })
+        }),
+        SESSION_PROMPT_TIMEOUT_MS,
+        `Auto-continue notification timed out after ${SESSION_PROMPT_TIMEOUT_MS}ms`,
+      )
         .catch(() => {
           /* best-effort notification */
         })
@@ -686,12 +691,16 @@ export function createTodoContinuationHook(
 
         state.isAutoInjecting = true;
         try {
-          await ctx.client.session.prompt({
-            path: { id: sessionID },
-            body: {
-              parts: [createInternalAgentTextPart(CONTINUATION_PROMPT)],
-            },
-          });
+          await withTimeout(
+            ctx.client.session.prompt({
+              path: { id: sessionID },
+              body: {
+                parts: [createInternalAgentTextPart(CONTINUATION_PROMPT)],
+              },
+            }),
+            SESSION_PROMPT_TIMEOUT_MS,
+            `Auto-continue prompt timed out after ${SESSION_PROMPT_TIMEOUT_MS}ms`,
+          );
           state.consecutiveContinuations++;
           log(`[${HOOK_NAME}] Continuation injected`, {
             sessionID,

@@ -1,7 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
 import {
   abortSessionWithTimeout,
+  createSessionWithTimeout,
+  messagesWithTimeout,
   OperationTimeoutError,
+  promptAsyncWithTimeout,
   promptWithTimeout,
   withTimeout,
 } from './session';
@@ -67,5 +70,29 @@ describe('session utilities', () => {
     await expect(abortSessionWithTimeout(client, 's1', 5)).rejects.toThrow(
       'Session abort timed out after 5ms',
     );
+  });
+
+  test('createSessionWithTimeout rejects if create hangs', async () => {
+    const client = { session: { create: mock(() => never()) } } as any;
+
+    await expect(createSessionWithTimeout(client, {}, 5)).rejects.toThrow(
+      'Session create timed out after 5ms',
+    );
+  });
+
+  test('messagesWithTimeout rejects if messages lookup hangs', async () => {
+    const client = { session: { messages: mock(() => never()) } } as any;
+
+    await expect(
+      messagesWithTimeout(client, { path: { id: 's1' } }, 5),
+    ).rejects.toThrow('Session messages lookup timed out after 5ms');
+  });
+
+  test('promptAsyncWithTimeout rejects if promptAsync hangs', async () => {
+    const client = { session: { promptAsync: mock(() => never()) } } as any;
+
+    await expect(
+      promptAsyncWithTimeout(client, { path: { id: 's1' }, body: {} }, 5),
+    ).rejects.toThrow('Session promptAsync timed out after 5ms');
   });
 });

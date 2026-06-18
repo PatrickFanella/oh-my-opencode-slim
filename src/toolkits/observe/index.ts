@@ -1,4 +1,5 @@
 import { type ToolDefinition, tool } from '@opencode-ai/plugin';
+import { withTimeout } from '../../utils/session';
 import {
   type CommandTemplate,
   registerCommandTemplates,
@@ -173,10 +174,14 @@ async function enqueueCyclePrompt(
     `Reply with a short summary and include a final line exactly in this format: <observe-result loop_id="${loop.id}" status="healthy|degraded|blocked|failed" summary="..." />.`,
   ].join(' ');
 
-  await client.session.prompt({
-    path: { id: sessionID },
-    body: { noReply: false, parts: [{ type: 'text', text }] },
-  });
+  await withTimeout(
+    client.session.prompt({
+      path: { id: sessionID },
+      body: { noReply: false, parts: [{ type: 'text', text }] },
+    }),
+    5_000,
+    'Observe cycle prompt timed out after 5000ms',
+  );
 }
 
 async function injectResumeNote(
@@ -188,13 +193,17 @@ async function injectResumeNote(
     return;
   }
 
-  await client.session.prompt({
-    path: { id: sessionID },
-    body: {
-      noReply: true,
-      parts: [{ type: 'text', text: renderObservationResumeNote(loops) }],
-    },
-  });
+  await withTimeout(
+    client.session.prompt({
+      path: { id: sessionID },
+      body: {
+        noReply: true,
+        parts: [{ type: 'text', text: renderObservationResumeNote(loops) }],
+      },
+    }),
+    5_000,
+    'Observe resume notification timed out after 5000ms',
+  );
 }
 
 export function createObserveToolkit({
