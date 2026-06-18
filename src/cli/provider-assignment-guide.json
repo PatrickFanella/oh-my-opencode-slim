@@ -10,6 +10,11 @@
       "heavy": "openai/gpt-5.4",
       "light": "openai/gpt-5.4-mini"
     },
+    "openrouter": {
+      "coding": "openrouter/deepseek/deepseek-v4-flash",
+      "heavy": "openrouter/deepseek/deepseek-v4-pro",
+      "light": "openrouter/minimax/minimax-m2.5"
+    },
     "anthropic": {
       "coding": "anthropic/claude-sonnet-4-6",
       "heavy": "anthropic/claude-sonnet-4-5",
@@ -38,6 +43,48 @@
     "explorer": "low",
     "designer": "medium",
     "fixer": "low"
+  },
+  "coreAgentModelOverrides": {
+    "openrouter": {
+      "orchestrator": "openrouter/deepseek/deepseek-v4-pro",
+      "oracle": "openrouter/deepseek/deepseek-v4-pro",
+      "council": "openrouter/deepseek/deepseek-v4-pro",
+      "librarian": "openrouter/minimax/minimax-m2.5",
+      "explorer": "openrouter/minimax/minimax-m2.5",
+      "designer": "openrouter/minimax/minimax-m2.5",
+      "fixer": "openrouter/deepseek/deepseek-v4-flash",
+      "observer": "openrouter/minimax/minimax-m2.5"
+    }
+  },
+  "boardAgentModelOverrides": {
+    "openrouter": {
+      "backend-architect": "openrouter/deepseek/deepseek-v4-flash",
+      "go-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "python-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "rust-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "typescript-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "qa-test-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "database-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "security-advisor": "openrouter/deepseek/deepseek-v4-pro",
+      "agent-systems-architect": "openrouter/deepseek/deepseek-v4-pro",
+      "cloud-devops-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "observability-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "ops-sre-advisor": "openrouter/deepseek/deepseek-v4-pro",
+      "maintainer-strategy-advisor": "openrouter/deepseek/deepseek-v4-pro",
+      "content-strategist": "openrouter/minimax/minimax-m2.5",
+      "copy-chief": "openrouter/minimax/minimax-m2.5",
+      "cro-strategist": "openrouter/minimax/minimax-m2.5",
+      "launch-strategist": "openrouter/minimax/minimax-m2.5",
+      "seo-strategist": "openrouter/minimax/minimax-m2.5",
+      "social-media-strategist": "openrouter/minimax/minimax-m2.5",
+      "devtools-product-advisor": "openrouter/minimax/minimax-m2.5",
+      "dx-documentation-advisor": "openrouter/minimax/minimax-m2.5",
+      "docs-advisor": "openrouter/minimax/minimax-m2.5",
+      "media-producer": "openrouter/minimax/minimax-m2.5",
+      "story-editor": "openrouter/minimax/minimax-m2.5",
+      "subcult-creative-director": "openrouter/minimax/minimax-m2.5",
+      "worldbuilder": "openrouter/minimax/minimax-m2.5"
+    }
   },
   "boardAgentTiers": {
     "backend-architect": "coding",
@@ -79,6 +126,11 @@
     "anthropic/claude-haiku-4-5",
     "google/gemini-2.5-pro",
     "google/gemini-2.5-flash",
+    "openrouter/deepseek/deepseek-v4-flash",
+    "openrouter/deepseek/deepseek-v4-pro",
+    "openrouter/deepseek/deepseek-v3.2",
+    "openrouter/minimax/minimax-m2.5",
+    "openrouter/moonshotai/kimi-k2.7-code",
     "kimi-for-coding/k2p5",
     "github-copilot/claude-opus-4.6",
     "github-copilot/grok-code-fast-1",

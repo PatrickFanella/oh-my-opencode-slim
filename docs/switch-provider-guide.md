@@ -9,8 +9,10 @@ The CLI reads a single data file:
 ## Schema
 
 - `boardAgentModelTiers`: provider -> `{ coding, heavy, light }`
+- `boardAgentModelOverrides`: provider -> per-board-agent model overrides
 - `coreAgentProviderTiers`: core agent -> tier key
 - `coreAgentVariants`: core agent -> optional variant
+- `coreAgentModelOverrides`: provider -> per-core-agent model overrides
 - `boardAgentTiers`: custom board agent -> tier key
 - `availableModels`: deduped list of model IDs used by provider switch data and
   built-in generated presets
@@ -19,6 +21,7 @@ The CLI reads a single data file:
 
 - `github-copilot`
 - `openai`
+- `openrouter`
 - `anthropic`
 - `gemini`
 
@@ -58,3 +61,21 @@ The CLI reads a single data file:
 - `opencode-go/minimax-m2.7`
 - `opencode-go/kimi-k2.6`
 - `opencode-go/deepseek-v4-flash`
+- `openrouter/deepseek/deepseek-v4-flash`
+- `openrouter/deepseek/deepseek-v4-pro`
+- `openrouter/deepseek/deepseek-v3.2`
+- `openrouter/minimax/minimax-m2.5`
+- `openrouter/moonshotai/kimi-k2.7-code`
+
+## OpenRouter cost profile
+
+`openrouter` is tuned for cheap persistent board sessions:
+
+- coding/build advisors default to `deepseek-v4-flash`
+- complex security, SRE, agent-systems, and maintainer strategy advisors use
+  `deepseek-v4-pro`
+- docs, growth, product, and creative advisors use `minimax-m2.5`
+
+DeepSeek models are preferred for long-lived sessions because OpenRouter can reuse
+prompt caches when routing stays sticky. Use `switch-agents openrouter` to write
+the board files and active `board-openrouter` core preset.

@@ -105,7 +105,7 @@ Options:
   --background-subagents=ask|yes|no
                           Enable native OpenCode background-subagent env var
   --preset=<name>        Active generated config preset (default: openai)
-  --board-provider=<p>   Board agent model provider (github-copilot|openai|anthropic|gemini)
+  --board-provider=<p>   Board agent model provider (github-copilot|openai|openrouter|anthropic|gemini)
   --no-tui               Non-interactive mode
   --dry-run              Simulate install without writing files
   --reset                Force overwrite of existing configuration

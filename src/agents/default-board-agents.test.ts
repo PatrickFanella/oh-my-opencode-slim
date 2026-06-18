@@ -8,6 +8,7 @@ import {
   DEFAULT_BOARD_AGENT_DEFINITIONS,
   DEFAULT_BOARD_AGENT_GROUPS,
   DEFAULT_BOARD_AGENT_NAMES,
+  getBoardAgentDefinitions,
 } from './default-board-agents';
 import { createAgents, getAgentConfigs } from './index';
 
@@ -36,6 +37,28 @@ describe('default board agents', () => {
         ...DEFAULT_BOARD_AGENT_DEFINITIONS.map((definition) => definition.name),
       ].sort(),
     ).toEqual([...DEFAULT_BOARD_AGENT_NAMES].sort());
+  });
+
+  test('openrouter board provider applies per-agent cost-aware model overrides', () => {
+    const definitions = Object.fromEntries(
+      getBoardAgentDefinitions('openrouter').map((definition) => [
+        definition.name,
+        definition,
+      ]),
+    );
+
+    expect(definitions['backend-architect']?.model).toBe(
+      'openrouter/deepseek/deepseek-v4-flash',
+    );
+    expect(definitions['security-advisor']?.model).toBe(
+      'openrouter/deepseek/deepseek-v4-pro',
+    );
+    expect(definitions['agent-systems-architect']?.model).toBe(
+      'openrouter/deepseek/deepseek-v4-pro',
+    );
+    expect(definitions['docs-advisor']?.model).toBe(
+      'openrouter/minimax/minimax-m2.5',
+    );
   });
 
   test('materialized definitions load as runtime subagents', () => {

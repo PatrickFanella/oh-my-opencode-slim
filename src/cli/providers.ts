@@ -49,6 +49,12 @@ const CORE_AGENT_VARIANTS =
     Record<CoreAgentName, string>
   >;
 
+const CORE_AGENT_MODEL_OVERRIDES =
+  providerAssignmentGuide.coreAgentModelOverrides as Record<
+    string,
+    Record<string, string>
+  >;
+
 export const AVAILABLE_MODEL_IDS = providerAssignmentGuide.availableModels;
 
 export function buildBoardProviderPreset(
@@ -65,10 +71,11 @@ export function buildBoardProviderPreset(
     Object.entries(CORE_AGENT_PROVIDER_TIERS).map(([agentName, tier]) => {
       const coreAgentName = agentName as CoreAgentName;
       const variant = CORE_AGENT_VARIANTS[coreAgentName];
+      const modelOverride = CORE_AGENT_MODEL_OVERRIDES[provider]?.[agentName];
       return [
         agentName,
         {
-          model: tiers[tier],
+          model: modelOverride ?? tiers[tier],
           ...(variant ? { variant } : {}),
           mcps:
             DEFAULT_AGENT_MCPS[agentName as keyof typeof DEFAULT_AGENT_MCPS] ??
@@ -127,6 +134,16 @@ export const MODEL_MAPPINGS = {
     designer: { model: 'opencode-go/kimi-k2.6', variant: 'medium' },
     fixer: { model: 'opencode-go/deepseek-v4-flash', variant: 'high' },
     observer: { model: 'opencode-go/kimi-k2.6' },
+  },
+  openrouter: {
+    orchestrator: { model: 'openrouter/deepseek/deepseek-v4-pro' },
+    oracle: { model: 'openrouter/deepseek/deepseek-v4-pro', variant: 'high' },
+    council: { model: 'openrouter/deepseek/deepseek-v4-pro', variant: 'high' },
+    librarian: { model: 'openrouter/minimax/minimax-m2.5', variant: 'low' },
+    explorer: { model: 'openrouter/minimax/minimax-m2.5', variant: 'low' },
+    designer: { model: 'openrouter/minimax/minimax-m2.5', variant: 'medium' },
+    fixer: { model: 'openrouter/deepseek/deepseek-v4-flash', variant: 'low' },
+    observer: { model: 'openrouter/minimax/minimax-m2.5' },
   },
 } as const;
 

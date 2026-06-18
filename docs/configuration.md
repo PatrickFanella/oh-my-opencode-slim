@@ -310,7 +310,12 @@ Toolkit flags are opt-in and default to `false`:
 
 Use `bunx blacktower@latest switch-agents <provider>` to move the
 whole board to one provider. Supported providers are `github-copilot`, `openai`,
-`anthropic`, and `gemini`.
+`openrouter`, `anthropic`, and `gemini`.
+
+The `openrouter` provider is cost-tuned for persistent board sessions: DeepSeek
+V4 Flash for coding-heavy advisors, DeepSeek V4 Pro for the highest-risk
+strategy/security/session roles, and MiniMax M2.5 for docs, growth, product,
+and creative advisors.
 
 The command updates two config surfaces:
 

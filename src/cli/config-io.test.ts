@@ -423,6 +423,35 @@ describe('config-io', () => {
     expect(saved.presets['board-github-copilot'].oracle.variant).toBe('high');
   });
 
+  test('switchProviderConfig applies openrouter board and core overrides', () => {
+    paths.ensureConfigDir();
+
+    const result = switchProviderConfig('openrouter');
+
+    expect(result.success).toBe(true);
+    expect(result.presetName).toBe('board-openrouter');
+
+    const blacktowerConfigPath = join(tmpDir, 'opencode', 'blacktower.json');
+    const saved = JSON.parse(readFileSync(blacktowerConfigPath, 'utf-8'));
+    expect(saved.preset).toBe('board-openrouter');
+    expect(saved.presets['board-openrouter'].oracle.model).toBe(
+      'openrouter/deepseek/deepseek-v4-pro',
+    );
+    expect(saved.presets['board-openrouter'].fixer.model).toBe(
+      'openrouter/deepseek/deepseek-v4-flash',
+    );
+
+    const agentPath = join(
+      tmpDir,
+      'opencode',
+      'blacktower',
+      'agents',
+      'docs-advisor.json',
+    );
+    const docsAdvisor = JSON.parse(readFileSync(agentPath, 'utf-8'));
+    expect(docsAdvisor.model).toBe('openrouter/minimax/minimax-m2.5');
+  });
+
   test('switchProviderConfig dry-run does not write config or board agents', () => {
     const result = switchProviderConfig('anthropic', { dryRun: true });
 

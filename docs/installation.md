@@ -122,6 +122,7 @@ The installer supports the following options:
 | `--skills=yes|no` | Enable code-managed bundled skills (default: yes); `no` writes explicit empty skill profiles |
 | `--background-subagents=ask|yes|no` | Configure `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true` in shell startup files for native OpenCode background subagents (`ask` by default for interactive installs, `no` with `--no-tui`) |
 | `--preset=<name>` | Active generated config preset: `openai` or `opencode-go` (default: `openai`) |
+| `--board-provider=<provider>` | Materialize board agents for `github-copilot`, `openai`, `openrouter`, `anthropic`, or `gemini` |
 | `--no-tui` | Non-interactive mode |
 | `--dry-run` | Simulate install without writing files |
 | `--reset` | Force overwrite of existing configuration |

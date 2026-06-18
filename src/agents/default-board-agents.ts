@@ -16,10 +16,20 @@ const CUSTOM_AGENT_SCHEMA_URL =
 export const BOARD_AGENT_TIERS =
   providerAssignmentGuide.boardAgentTiers as Record<string, BoardAgentTier>;
 
+const BOARD_AGENT_MODEL_OVERRIDES =
+  providerAssignmentGuide.boardAgentModelOverrides as Record<
+    string,
+    Record<string, string>
+  >;
+
 export function getBoardAgentModel(
   agentName: string,
   tiers: BoardAgentTierModels,
+  overrides: Record<string, string> = {},
 ): string {
+  const override = overrides[agentName];
+  if (override) return override;
+
   const tier = BOARD_AGENT_TIERS[agentName] ?? 'heavy';
   return tiers[tier];
 }
@@ -30,9 +40,10 @@ export function getBoardAgentDefinitions(
   if (!boardProvider) return DEFAULT_BOARD_AGENT_DEFINITIONS;
   const tiers = BOARD_AGENT_MODEL_TIERS[boardProvider];
   if (!tiers) return DEFAULT_BOARD_AGENT_DEFINITIONS;
+  const overrides = BOARD_AGENT_MODEL_OVERRIDES[boardProvider] ?? {};
   return DEFAULT_BOARD_AGENT_DEFINITIONS.map((def) => ({
     ...def,
-    model: getBoardAgentModel(def.name, tiers),
+    model: getBoardAgentModel(def.name, tiers, overrides),
   }));
 }
 

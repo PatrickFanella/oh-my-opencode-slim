@@ -16,6 +16,7 @@ describe('providers', () => {
       'kimi',
       'openai',
       'opencode-go',
+      'openrouter',
       'zai-plan',
     ]);
   });
@@ -29,6 +30,9 @@ describe('providers', () => {
         'github-copilot/gpt-5.4-mini',
         'anthropic/claude-sonnet-4-6',
         'google/gemini-2.5-flash',
+        'openrouter/deepseek/deepseek-v4-flash',
+        'openrouter/deepseek/deepseek-v4-pro',
+        'openrouter/minimax/minimax-m2.5',
         'opencode-go/deepseek-v4-flash',
       ]),
     );
@@ -58,6 +62,20 @@ describe('providers', () => {
     expect(preset.librarian.variant).toBe('low');
     expect(preset.designer.model).toBe('anthropic/claude-haiku-4-5');
     expect(preset.designer.variant).toBe('medium');
+  });
+
+  test('buildBoardProviderPreset maps openrouter core agents with cost-aware overrides', () => {
+    const preset = buildBoardProviderPreset('openrouter');
+
+    expect(preset.orchestrator.model).toBe(
+      'openrouter/deepseek/deepseek-v4-pro',
+    );
+    expect(preset.oracle.model).toBe('openrouter/deepseek/deepseek-v4-pro');
+    expect(preset.oracle.variant).toBe('high');
+    expect(preset.council.model).toBe('openrouter/deepseek/deepseek-v4-pro');
+    expect(preset.librarian.model).toBe('openrouter/minimax/minimax-m2.5');
+    expect(preset.explorer.model).toBe('openrouter/minimax/minimax-m2.5');
+    expect(preset.fixer.model).toBe('openrouter/deepseek/deepseek-v4-flash');
   });
 
   test('generateBlacktowerConfig defaults to openai and includes only the active preset', () => {
@@ -143,6 +161,17 @@ describe('providers', () => {
     expect(agents.fixer.model).toBe('opencode-go/deepseek-v4-flash');
     expect(agents.fixer.variant).toBe('high');
     expect(agents.observer.model).toBe('opencode-go/kimi-k2.6');
+  });
+
+  test('generateBlacktowerConfig rejects openrouter as generated install preset', () => {
+    expect(() =>
+      generateBlacktowerConfig({
+        hasTmux: false,
+        installSkills: false,
+        preset: 'openrouter',
+        reset: false,
+      }),
+    ).toThrow('Unsupported preset "openrouter"');
   });
 
   test('generateBlacktowerConfig rejects unsupported preset', () => {
