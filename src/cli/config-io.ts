@@ -437,7 +437,9 @@ export function materializeDefaultBoardAgentDefinitions(
     };
   }
 
-  const definitions = getBoardAgentDefinitions(options.boardProvider);
+  const definitions = getBoardAgentDefinitions(
+    options.boardProvider ?? 'openai',
+  );
 
   for (const definition of definitions) {
     const filePath = join(targetDir, `${definition.name}.json`);

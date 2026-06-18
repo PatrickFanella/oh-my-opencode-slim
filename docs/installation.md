@@ -146,7 +146,33 @@ bunx blacktower@latest install --reset
 
 ### After Installation
 
-The default installer writes a schema-only Blacktower config and lets code-owned defaults choose the active agent models. Passing `--preset=<name>` writes only that generated preset. It also writes built-in MCP definitions into `opencode.json(c)` so OpenCode's native MCP auth flow owns any OAuth/API authentication. It can add `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true` to Bash, Zsh, and Fish startup files for OpenCode's native background-subagent runtime; use `--background-subagents=yes` to force this in non-interactive installs or `--background-subagents=no` to skip it. It materializes the BUILD, OPS, GROWTH, PRODUCT, and MYTH custom board agent JSON files into `~/.config/opencode/blacktower/agents/` without overwriting existing files. It does not copy the whole bundled skill catalog into `~/.config/opencode/skills` or depend on `~/.agents/skills`; with the default `--skills=yes`, the plugin materializes only the curated union of code-owned skills referenced by enabled agents into a managed skill directory, then controls per-agent skill access through permissions. To make OpenCode Go active during install, run `bunx blacktower@latest install --preset=opencode-go`. That preset uses GLM-5.1 for Orchestrator, so the installer also enables Observer with `opencode-go/kimi-k2.6` for visual analysis. To switch every board agent later, including built-in specialists such as Explorer, Oracle, Librarian, Designer, Fixer, Observer, Council, and Orchestrator, run `bunx blacktower@latest switch-agents <provider>`. The command refreshes custom board JSON files and writes an active `board-<provider>` preset to `~/.config/opencode/blacktower.json`; restart OpenCode after switching. To build a mixed setup, use **[Configuration Reference](configuration.md)** for the full option reference and the preset docs for copyable examples.
+The default installer writes a hybrid `openai` Blacktower preset: sparse
+`openai/` models for the highest-leverage core/review roles and cheap
+OpenRouter models for most long-lived specialist sessions. Passing
+`--preset=<name>` writes only that generated preset. It also writes built-in MCP
+definitions into `opencode.json(c)` so OpenCode's native MCP auth flow owns any
+OAuth/API authentication. It can add
+`OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true` to Bash, Zsh, and Fish startup
+files for OpenCode's native background-subagent runtime; use
+`--background-subagents=yes` to force this in non-interactive installs or
+`--background-subagents=no` to skip it. It materializes the BUILD, OPS, GROWTH,
+PRODUCT, and MYTH custom board agent JSON files into
+`~/.config/opencode/blacktower/agents/` without overwriting existing files. It
+does not copy the whole bundled skill catalog into `~/.config/opencode/skills`
+or depend on `~/.agents/skills`; with the default `--skills=yes`, the plugin
+materializes only the curated union of code-owned skills referenced by enabled
+agents into a managed skill directory, then controls per-agent skill access
+through permissions. To make OpenCode Go active during install, run
+`bunx blacktower@latest install --preset=opencode-go`. That preset uses GLM-5.1
+for Orchestrator, so the installer also enables Observer with
+`opencode-go/kimi-k2.6` for visual analysis. To switch every board agent later,
+including built-in specialists such as Explorer, Oracle, Librarian, Designer,
+Fixer, Observer, Council, and Orchestrator, run
+`bunx blacktower@latest switch-agents <provider>`. The command refreshes custom
+board JSON files and writes an active `board-<provider>` preset to
+`~/.config/opencode/blacktower.json`; restart OpenCode after switching. To build
+a mixed setup, use **[Configuration Reference](configuration.md)** for the full
+option reference and the preset docs for copyable examples.
 
 The clone-based `bootstrap` command also applies trusted machine defaults in
 OpenCode's host config. Those defaults intentionally trust the local machine by
@@ -257,7 +283,8 @@ If not installed, direct the user to https://opencode.ai/docs first.
 
 ### Step 2: Run the Installer
 
-The default installer writes a schema-only Blacktower config. Passing `--preset=<name>` writes only that generated preset:
+The default installer writes the hybrid `openai` Blacktower preset. Passing
+`--preset=<name>` writes only that generated preset:
 
 ```bash
 bunx blacktower@latest install --no-tui --skills=yes

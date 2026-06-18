@@ -61,6 +61,24 @@ describe('default board agents', () => {
     );
   });
 
+  test('openai board provider is sparse OpenAI plus OpenRouter defaults', () => {
+    const definitions = Object.fromEntries(
+      getBoardAgentDefinitions('openai').map((definition) => [
+        definition.name,
+        definition,
+      ]),
+    );
+
+    expect(definitions['backend-architect']?.model).toBe('openai/gpt-5.5');
+    expect(definitions['security-advisor']?.model).toBe('openai/gpt-5.5');
+    expect(definitions['go-advisor']?.model).toBe(
+      'openrouter/deepseek/deepseek-v4-flash',
+    );
+    expect(definitions['docs-advisor']?.model).toBe(
+      'openrouter/minimax/minimax-m2.5',
+    );
+  });
+
   test('materialized definitions load as runtime subagents', () => {
     const previousConfigDir = process.env.OPENCODE_CONFIG_DIR;
     const previousEnable =

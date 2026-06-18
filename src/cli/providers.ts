@@ -92,11 +92,11 @@ export const MODEL_MAPPINGS = {
     orchestrator: { model: 'openai/gpt-5.5' },
     oracle: { model: 'openai/gpt-5.5', variant: 'high' },
     council: { model: 'openai/gpt-5.5', variant: 'high' },
-    librarian: { model: 'openai/gpt-5.4-mini', variant: 'low' },
-    explorer: { model: 'openai/gpt-5.4-mini', variant: 'low' },
-    designer: { model: 'openai/gpt-5.4-mini', variant: 'medium' },
-    fixer: { model: 'openai/gpt-5.4-mini', variant: 'low' },
-    observer: { model: 'openai/gpt-5.4-mini' },
+    librarian: { model: 'openrouter/minimax/minimax-m2.5', variant: 'low' },
+    explorer: { model: 'openrouter/minimax/minimax-m2.5', variant: 'low' },
+    designer: { model: 'openrouter/minimax/minimax-m2.5', variant: 'medium' },
+    fixer: { model: 'openrouter/deepseek/deepseek-v4-flash', variant: 'low' },
+    observer: { model: 'openrouter/minimax/minimax-m2.5' },
   },
   kimi: {
     orchestrator: { model: 'kimi-for-coding/k2p5' },
@@ -182,10 +182,6 @@ function getDisabledSkillProfilesConfig(): {
 export function generateBlacktowerConfig(
   installConfig: InstallConfig,
 ): Record<string, unknown> {
-  if (!installConfig.preset && installConfig.installSkills) {
-    return { $schema: SCHEMA_URL };
-  }
-
   const preset = installConfig.preset ?? 'openai';
   if (!isGeneratedPresetName(preset)) {
     throw new Error(

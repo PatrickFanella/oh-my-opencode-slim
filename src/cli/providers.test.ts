@@ -44,10 +44,11 @@ describe('providers', () => {
     expect(preset.orchestrator.model).toBe('openai/gpt-5.5');
     expect(preset.oracle.model).toBe('openai/gpt-5.5');
     expect(preset.oracle.variant).toBe('high');
-    expect(preset.librarian.model).toBe('openai/gpt-5.4-mini');
+    expect(preset.librarian.model).toBe('openrouter/minimax/minimax-m2.5');
     expect(preset.librarian.variant).toBe('low');
-    expect(preset.designer.model).toBe('openai/gpt-5.4-mini');
+    expect(preset.designer.model).toBe('openrouter/minimax/minimax-m2.5');
     expect(preset.designer.variant).toBe('medium');
+    expect(preset.fixer.model).toBe('openrouter/deepseek/deepseek-v4-flash');
   });
 
   test('buildBoardProviderPreset maps anthropic core agents correctly', () => {
@@ -97,21 +98,26 @@ describe('providers', () => {
     expect(agents.orchestrator.variant).toBeUndefined();
     expect(agents.council.model).toBe('openai/gpt-5.5');
     expect(agents.council.variant).toBe('high');
-    expect(agents.fixer.model).toBe('openai/gpt-5.4-mini');
+    expect(agents.fixer.model).toBe('openrouter/deepseek/deepseek-v4-flash');
     expect(agents.fixer.variant).toBe('low');
-    expect(agents.observer.model).toBe('openai/gpt-5.4-mini');
+    expect(agents.observer.model).toBe('openrouter/minimax/minimax-m2.5');
   });
 
-  test('generateBlacktowerConfig writes schema-only config for default install', () => {
+  test('generateBlacktowerConfig writes hybrid openai preset for default install', () => {
     const config = generateBlacktowerConfig({
       hasTmux: false,
       installSkills: true,
       reset: false,
     });
 
-    expect(config).toEqual({
-      $schema: 'https://unpkg.com/blacktower@latest/blacktower.schema.json',
-    });
+    expect(config.$schema).toBe(
+      'https://unpkg.com/blacktower@latest/blacktower.schema.json',
+    );
+    expect(config.preset).toBe('openai');
+    const agents = (config.presets as any).openai;
+    expect(agents.orchestrator.model).toBe('openai/gpt-5.5');
+    expect(agents.fixer.model).toBe('openrouter/deepseek/deepseek-v4-flash');
+    expect(agents.librarian.model).toBe('openrouter/minimax/minimax-m2.5');
   });
 
   test('generateBlacktowerConfig uses correct OpenAI models', () => {
@@ -129,11 +135,11 @@ describe('providers', () => {
     expect(agents.oracle.variant).toBe('high');
     expect(agents.council.model).toBe('openai/gpt-5.5');
     expect(agents.council.variant).toBe('high');
-    expect(agents.librarian.model).toBe('openai/gpt-5.4-mini');
+    expect(agents.librarian.model).toBe('openrouter/minimax/minimax-m2.5');
     expect(agents.librarian.variant).toBe('low');
-    expect(agents.explorer.model).toBe('openai/gpt-5.4-mini');
+    expect(agents.explorer.model).toBe('openrouter/minimax/minimax-m2.5');
     expect(agents.explorer.variant).toBe('low');
-    expect(agents.designer.model).toBe('openai/gpt-5.4-mini');
+    expect(agents.designer.model).toBe('openrouter/minimax/minimax-m2.5');
     expect(agents.designer.variant).toBe('medium');
   });
 

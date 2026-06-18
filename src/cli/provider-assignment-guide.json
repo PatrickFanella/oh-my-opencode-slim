@@ -6,9 +6,9 @@
       "light": "github-copilot/gpt-5.4-mini"
     },
     "openai": {
-      "coding": "openai/gpt-5.5",
-      "heavy": "openai/gpt-5.4",
-      "light": "openai/gpt-5.4-mini"
+      "coding": "openrouter/deepseek/deepseek-v4-flash",
+      "heavy": "openrouter/deepseek/deepseek-v4-pro",
+      "light": "openrouter/minimax/minimax-m2.5"
     },
     "openrouter": {
       "coding": "openrouter/deepseek/deepseek-v4-flash",
@@ -45,6 +45,16 @@
     "fixer": "low"
   },
   "coreAgentModelOverrides": {
+    "openai": {
+      "orchestrator": "openai/gpt-5.5",
+      "oracle": "openai/gpt-5.5",
+      "council": "openai/gpt-5.5",
+      "librarian": "openrouter/minimax/minimax-m2.5",
+      "explorer": "openrouter/minimax/minimax-m2.5",
+      "designer": "openrouter/minimax/minimax-m2.5",
+      "fixer": "openrouter/deepseek/deepseek-v4-flash",
+      "observer": "openrouter/minimax/minimax-m2.5"
+    },
     "openrouter": {
       "orchestrator": "openrouter/deepseek/deepseek-v4-pro",
       "oracle": "openrouter/deepseek/deepseek-v4-pro",
@@ -57,6 +67,34 @@
     }
   },
   "boardAgentModelOverrides": {
+    "openai": {
+      "backend-architect": "openai/gpt-5.5",
+      "go-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "python-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "rust-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "typescript-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "qa-test-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "database-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "security-advisor": "openai/gpt-5.5",
+      "agent-systems-architect": "openai/gpt-5.5",
+      "cloud-devops-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "observability-advisor": "openrouter/deepseek/deepseek-v4-flash",
+      "ops-sre-advisor": "openrouter/deepseek/deepseek-v4-pro",
+      "maintainer-strategy-advisor": "openai/gpt-5.5",
+      "content-strategist": "openrouter/minimax/minimax-m2.5",
+      "copy-chief": "openrouter/minimax/minimax-m2.5",
+      "cro-strategist": "openrouter/minimax/minimax-m2.5",
+      "launch-strategist": "openrouter/minimax/minimax-m2.5",
+      "seo-strategist": "openrouter/minimax/minimax-m2.5",
+      "social-media-strategist": "openrouter/minimax/minimax-m2.5",
+      "devtools-product-advisor": "openrouter/minimax/minimax-m2.5",
+      "dx-documentation-advisor": "openrouter/minimax/minimax-m2.5",
+      "docs-advisor": "openrouter/minimax/minimax-m2.5",
+      "media-producer": "openrouter/minimax/minimax-m2.5",
+      "story-editor": "openrouter/minimax/minimax-m2.5",
+      "subcult-creative-director": "openrouter/minimax/minimax-m2.5",
+      "worldbuilder": "openrouter/minimax/minimax-m2.5"
+    },
     "openrouter": {
       "backend-architect": "openrouter/deepseek/deepseek-v4-flash",
       "go-advisor": "openrouter/deepseek/deepseek-v4-flash",

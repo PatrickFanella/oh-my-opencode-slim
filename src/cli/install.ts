@@ -366,7 +366,7 @@ async function runInstall(config: InstallConfig): Promise<number> {
 
   const modelsInfo = config.preset
     ? `Generated ${config.preset} preset and made it active.`
-    : 'Wrote schema-only Blacktower config; code-owned defaults are active.';
+    : 'Generated hybrid OpenAI preset and made it active.';
   console.log(`${modelsInfo}`);
   const altProviders = 'For the full configuration reference, see:';
   console.log(altProviders);

@@ -362,7 +362,11 @@ describe('config-io', () => {
     });
     expect(
       JSON.parse(readFileSync(join(boardAgentDir, 'go-advisor.json'), 'utf-8')),
-    ).toMatchObject({ name: 'go-advisor', displayName: 'go-runner' });
+    ).toMatchObject({
+      name: 'go-advisor',
+      displayName: 'go-runner',
+      model: 'openrouter/deepseek/deepseek-v4-flash',
+    });
   });
 
   test('materializeDefaultBoardAgentDefinitions uses OPENCODE_CONFIG_DIR when set', () => {
@@ -680,7 +684,7 @@ describe('config-io', () => {
     expect(saved.plugin.length).toBe(3);
   });
 
-  test('writeBlacktowerConfig writes schema-only config for default install', () => {
+  test('writeBlacktowerConfig writes hybrid OpenAI config for default install', () => {
     const litePath = join(tmpDir, 'opencode', 'blacktower.json');
     paths.ensureConfigDir();
 
@@ -692,9 +696,15 @@ describe('config-io', () => {
     expect(result.success).toBe(true);
 
     const saved = JSON.parse(readFileSync(litePath, 'utf-8'));
-    expect(saved).toEqual({
-      $schema: 'https://unpkg.com/blacktower@latest/blacktower.schema.json',
-    });
+    expect(saved.$schema).toBe(
+      'https://unpkg.com/blacktower@latest/blacktower.schema.json',
+    );
+    expect(saved.preset).toBe('openai');
+    expect(saved.presets.openai.orchestrator.model).toBe('openai/gpt-5.5');
+    expect(saved.presets.openai.fixer.model).toBe(
+      'openrouter/deepseek/deepseek-v4-flash',
+    );
+    expect(saved.skillProfiles).toBeUndefined();
   });
 
   test('writeBlacktowerConfig writes generated OpenAI preset when skills are disabled', () => {
