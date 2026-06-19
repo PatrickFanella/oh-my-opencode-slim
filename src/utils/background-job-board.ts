@@ -218,7 +218,9 @@ export class BackgroundJobBoard {
   }
 
   formatForPrompt(parentSessionID: string): string {
-    const jobs = this.listForParent(parentSessionID);
+    const jobs = this.listForParent(parentSessionID).filter(
+      (job) => job.state !== 'reconciled',
+    );
     if (jobs.length === 0) return '';
 
     return [
@@ -226,6 +228,7 @@ export class BackgroundJobBoard {
       ...jobs.map((job) => {
         const flags = [
           job.statusUncertain ? 'uncertain' : undefined,
+          job.terminalUnreconciled ? 'unreconciled' : undefined,
           job.timedOut ? 'timed out' : undefined,
           job.cancellationRequested ? 'cancellation requested' : undefined,
         ].filter(Boolean);

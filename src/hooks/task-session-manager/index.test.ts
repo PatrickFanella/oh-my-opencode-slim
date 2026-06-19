@@ -200,6 +200,48 @@ describe('task-session-manager hook', () => {
     expect(job?.statusUncertain).toBe(false);
   });
 
+  test('idle child status injects unreconciled background job for parent pickup', async () => {
+    const backgroundJobBoard = new BackgroundJobBoard();
+    const { hook } = createHook({ backgroundJobBoard });
+
+    await hook['tool.execute.before'](
+      { tool: 'task', sessionID: 'parent-1', callID: 'call-1' },
+      {
+        args: {
+          subagent_type: 'oracle',
+          description: 'architecture review',
+          prompt: 'review architecture',
+        },
+      },
+    );
+    await hook['tool.execute.after'](
+      { tool: 'task', sessionID: 'parent-1', callID: 'call-1' },
+      {
+        output:
+          'task_id: child-1 (for resuming to continue this task if needed)',
+      },
+    );
+
+    await hook.event({
+      event: {
+        type: 'session.status',
+        properties: { sessionID: 'child-1', status: { type: 'idle' } },
+      },
+    });
+
+    expect(backgroundJobBoard.get('child-1')?.terminalUnreconciled).toBe(true);
+
+    const messages = createMessages('parent-1', 'continue');
+    await hook['experimental.chat.messages.transform']({}, messages);
+
+    const text = messages.messages[0]?.parts[0]?.text ?? '';
+    expect(text).toContain('<background_jobs>');
+    expect(text).toContain('ora-1 [completed] oracle: architecture review');
+    expect(text).toContain('unreconciled');
+    expect(backgroundJobBoard.get('child-1')?.state).toBe('reconciled');
+    expect(backgroundJobBoard.get('child-1')?.terminalUnreconciled).toBe(false);
+  });
+
   test('marks missing resumed tasks uncertain in the background job board', async () => {
     const backgroundJobBoard = new BackgroundJobBoard();
     const { hook } = createHook({ backgroundJobBoard });

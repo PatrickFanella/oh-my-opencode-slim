@@ -63,6 +63,8 @@ interface ChatMessage {
 
 const RESUMABLE_SESSIONS_START = '<resumable_sessions>';
 const RESUMABLE_SESSIONS_END = '</resumable_sessions>';
+const BACKGROUND_JOBS_START = '<background_jobs>';
+const BACKGROUND_JOBS_END = '</background_jobs>';
 
 function isAgentName(value: unknown): value is AgentName {
   return typeof value === 'string' && AGENT_NAME_SET.has(value as AgentName);
@@ -399,7 +401,10 @@ export function createTaskSessionManagerHook(
         }
 
         const reminder = sessionManager.formatForPrompt(message.info.sessionID);
-        if (!reminder) return;
+        const backgroundJobs = options.backgroundJobBoard?.formatForPrompt(
+          message.info.sessionID,
+        );
+        if (!reminder && !backgroundJobs) return;
 
         const textPart = message.parts.find(
           (part) => part.type === 'text' && typeof part.text === 'string',
@@ -408,14 +413,32 @@ export function createTaskSessionManagerHook(
         if (textPart.text?.includes(BLACKTOWER_INTERNAL_INITIATOR_MARKER))
           return;
         if (textPart.text?.includes(RESUMABLE_SESSIONS_START)) return;
+        if (textPart.text?.includes(BACKGROUND_JOBS_START)) return;
 
-        textPart.text = [
-          textPart.text ?? '',
-          '',
-          RESUMABLE_SESSIONS_START,
-          reminder,
-          RESUMABLE_SESSIONS_END,
-        ].join('\n');
+        const sections: string[] = [];
+        if (reminder) {
+          sections.push(
+            [RESUMABLE_SESSIONS_START, reminder, RESUMABLE_SESSIONS_END].join(
+              '\n',
+            ),
+          );
+        }
+        if (backgroundJobs) {
+          sections.push(
+            [BACKGROUND_JOBS_START, backgroundJobs, BACKGROUND_JOBS_END].join(
+              '\n',
+            ),
+          );
+          for (const job of options.backgroundJobBoard?.listForParent(
+            message.info.sessionID,
+          ) ?? []) {
+            if (job.terminalUnreconciled) {
+              options.backgroundJobBoard?.markReconciled(job.taskID);
+            }
+          }
+        }
+
+        textPart.text = [textPart.text ?? '', '', ...sections].join('\n');
         return;
       }
     },
@@ -426,6 +449,7 @@ export function createTaskSessionManagerHook(
         properties?: {
           info?: { id?: string; parentID?: string };
           sessionID?: string;
+          status?: { type?: string };
         };
       };
     }): Promise<void> => {
@@ -437,6 +461,27 @@ export function createTaskSessionManagerHook(
           options.shouldManageSession(info.parentID)
         ) {
           pendingManagedTaskIds.add(info.id);
+        }
+        return;
+      }
+
+      if (input.event.type === 'session.status') {
+        const sessionId =
+          input.event.properties?.info?.id ?? input.event.properties?.sessionID;
+        const status = input.event.properties?.status?.type;
+        if (sessionId && status === 'idle') {
+          const job = options.backgroundJobBoard?.get(sessionId);
+          if (
+            job &&
+            !['cancelled', 'failed', 'reconciled'].includes(job.state)
+          ) {
+            options.backgroundJobBoard?.updateState(sessionId, 'completed', {
+              statusUncertain: false,
+              terminalUnreconciled: true,
+              resultSummary:
+                'Session reported idle after delegated work; review or resume this task if the result was not already integrated.',
+            });
+          }
         }
         return;
       }
