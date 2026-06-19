@@ -190,6 +190,19 @@ describe('orchestrator agent', () => {
     ]);
     expect(orchestrator?.config.model).toBeUndefined();
   });
+
+  test('orchestrator prompt includes cohesive board-routing checkpoint', () => {
+    const agents = createAgents();
+    const orchestrator = agents.find((a) => a.name === 'orchestrator');
+    const prompt = orchestrator?.config.prompt ?? '';
+
+    expect(prompt).toContain('**Board routing checkpoint:**');
+    expect(prompt).toContain('Route by risk, not keywords');
+    expect(prompt).toContain('Keep asks narrow');
+    expect(prompt).toContain('Common escalation pairings');
+    expect(prompt).toContain('final summary for non-trivial work');
+    expect(prompt).toContain('Board: skipped because y');
+  });
 });
 
 describe('per-model variant in array config', () => {

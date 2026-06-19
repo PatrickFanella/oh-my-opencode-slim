@@ -47,6 +47,12 @@ describe('renderBoardPromptSection', () => {
     const section = renderBoardPromptSection(registry);
 
     expect(section).toContain('<Board Runtime>');
+    expect(section).toContain('risk-based consultant routing');
+    expect(section).toContain('before non-trivial implementation');
+    expect(section).toContain('Keep asks narrow');
+    expect(section).toContain('Prefer one advisor');
+    expect(section).toContain('Board: used @agent for reason');
+    expect(section).toContain('missed board opportunity');
     expect(section).toContain('@backend-architect');
     expect(section).toContain('API contract changes');
     expect(section).toContain('</Board Runtime>');
