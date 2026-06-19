@@ -1,135 +1,155 @@
 ---
 name: llama-line-client
 description: >
-  Build, integrate, or debug applications that talk to the llama-line ollama broker.
-  llama-line is a local HTTP gateway that serialises GPU inference requests into a priority queue,
-  streams SSE queue-position status to waiting clients, proxies ollama responses transparently,
-  and provides an admin API, Prometheus metrics, web UI, multi-model routing, and request
-  deduplication/caching. v0.4.0.
-  Use this skill when: writing client code to call llama-line, handling SSE status events,
-  implementing auth (Bearer token), using the admin API, checking broker health via /broker/status,
-  configuring multi-model routing or per-client caching, or understanding how llama-line differs
-  from calling ollama directly.
+  Build, integrate, or debug clients that talk to Switchyard's native model broker
+  through llama-line/Ollama/OpenAI-compatible ingress on port 11434. Use this skill
+  when writing client code for /api/chat, /api/generate, /v1/chat/completions,
+  handling broker status/error events, configuring client identity and priority,
+  checking /broker/status, or migrating from standalone llama-line to Switchyard.
 ---
 
-# llama-line Client Skill
+# Switchyard Model Broker Compatibility Client Skill
 
-llama-line sits in front of ollama at `http://<host>:11434` (default). Clients talk to it exactly
-like ollama, with additions: required `Authorization` header, SSE status events prepended to
-inference responses, per-client priority, and optional deduplication/caching.
+Switchyard now owns the local model-broker runtime. The historical standalone
+`llama-line.service` is legacy and should not run beside Switchyard. Clients that
+previously used llama-line should point at Switchyard's compatibility ingress,
+normally `http://<switchyard-host>:11434`.
+
+Switchyard-compatible ingress preserves the useful llama-line client contract:
+
+- Ollama-compatible endpoints for `/api/generate`, `/api/chat`, `/api/tags`, and
+  embeddings.
+- OpenAI-compatible endpoints for `/v1/chat/completions`, `/v1/completions`,
+  `/v1/models`, and embeddings.
+- Broker status/admin/history surfaces for migration and operations.
+- Client attribution and priority via bearer-key mapping or trusted headers.
 
 ## Quick Reference
 
 | What | Value |
 |------|-------|
-| Default listen port | `11434` (replaces ollama's port) |
-| Auth header | `Authorization: Bearer <key>` |
-| Auth-free endpoints | `GET /broker/status`, `GET /metrics`, `GET /ui/` |
-| Admin endpoints | `/admin/*` — `X-Admin-Key` header |
-| Inference endpoints (queued) | `/api/generate`, `/api/chat`, `/api/embed`, `/v1/chat/completions`, `/v1/completions`, `/v1/embeddings` |
-| All other paths | Proxied immediately, no queue |
-| Web UI | `http://<host>:11434/ui/` |
+| Default broker URL | `http://127.0.0.1:11434` local, or LAN host such as `http://10.0.0.50:11434` |
+| Runtime owner | Switchyard API / native model broker |
+| Legacy service | Standalone `llama-line.service` should be disabled/removed |
+| Client identity | `Authorization: Bearer <key>` mapped by `MODEL_BROKER_CLIENT_KEYS`, or `X-Switchyard-Client` / `X-Llama-Line-Client` |
+| Client priority | `MODEL_BROKER_CLIENT_KEYS=name=token:priority`, `MODEL_BROKER_CLIENT_PRIORITIES`, or priority headers |
+| Health/status | `GET /broker/status`, `GET /api/model-broker/status`, `GET /healthz` |
+| Queue/admin compatibility | `/admin/queue`, `/admin/inflight`, `/api/history`, `/api/search`, `/api/logs`, `/api/config` |
 
-## Authentication
+## Runtime Ownership Rules
 
-Every inference/passthrough request must include:
+Do this:
+
+- Treat Switchyard as the source of truth for local broker behavior.
+- Point clients at Switchyard's `LLAMA_LINE_PORT` compatibility ingress.
+- Point `OLLAMA_BASE_URL` inside Switchyard at the real upstream Ollama server,
+  not back at Switchyard's own `11434` port.
+- Use Switchyard systemd/Compose (`switchyard.service`) for host startup.
+
+Do **not** do this:
+
+- Do not restart or reintroduce standalone `llama-line.service` as the owner of
+  port `11434`.
+- Do not assume every endpoint has the old standalone llama-line implementation
+  details such as runtime key CRUD, per-client cache stats, or a dedicated
+  llama-line database.
+
+## Client Identity and Priority
+
+Switchyard restores llama-line-style caller attribution.
+
+Preferred configuration on the Switchyard API environment:
+
+```env
+MODEL_BROKER_CLIENT_KEYS=subcorp=subcorp-secret:50,ci=ci-secret:10
+```
+
+Then clients send:
 
 ```http
-Authorization: Bearer <key>
+Authorization: Bearer subcorp-secret
 ```
 
-Missing or invalid key → `401 {"error": "unauthorized"}`.
+Switchyard records the request as client `subcorp` with priority `50` in broker
+history, status, logs, audit, and OCQ compatibility surfaces.
 
-Keys have a `name` (for logs/status) and a `priority` (higher = dequeues first). Keys are defined
-in config or created at runtime via `POST /admin/keys`.
-
-Admin endpoints use:
+Trusted fallback headers:
 
 ```http
-X-Admin-Key: <admin_key>
+X-Switchyard-Client: subcorp
+X-Switchyard-Priority: 50
 ```
 
-## Inference Requests — Response Format
+Also accepted for migration compatibility:
 
-All inference responses use `Content-Type: text/event-stream` regardless of `stream:true/false`.
-The stream is structured as:
+```http
+X-Llama-Line-Client: subcorp
+X-Llama-Line-Priority: 50
+```
 
-1. **Zero or more broker status events** (heartbeats while queued)
-2. **The ollama response** — format depends on `stream`:
-   - `stream:false`: one `data: <full JSON>\n\n` event
-   - `stream:true`: ollama's SSE chunks pass through as-is → `data: [DONE]\n\n`
+Last fallback is `X-Forwarded-For`, then the remote address.
 
-### Status event
+Higher priority sorts ahead of lower priority for queued compatibility views.
+Current synchronous compatibility requests start immediately; true scheduling
+priority requires a native broker queue in front of execution.
+
+## Response Modes
+
+Switchyard differs from old standalone llama-line in one important way: not all
+non-streaming compatibility responses are wrapped in SSE.
+
+| Endpoint | Non-stream response | Streaming response |
+| --- | --- | --- |
+| `POST /api/chat` | Plain Ollama JSON | Use request-specific behavior if supported by caller |
+| `POST /api/generate` | Plain Ollama JSON | Ollama-compatible streaming if the route uses streaming |
+| `POST /v1/chat/completions` | Plain OpenAI JSON | `text/event-stream` OpenAI chunks plus Switchyard status/correlation events |
+| `POST /v1/completions` | Plain OpenAI JSON | Compatibility only |
+
+Client parsers should accept plain JSON for non-streaming requests and SSE for
+explicit `stream:true` requests. Do not require SSE for `/api/chat`.
+
+## Tool Calls and Empty Responses
+
+Switchyard preserves structured tool calls:
+
+- Ollama native `message.tool_calls` are preserved internally.
+- Non-streaming `/v1/chat/completions` converts tool calls to OpenAI-compatible
+  `message.tool_calls` with `finish_reason: "tool_calls"`.
+- Empty assistant content with no tool calls is treated as a bad model response
+  rather than a successful empty answer.
+- Streaming tool-call-only OpenAI deltas are rejected by the Switchyard client
+  path; use the non-streaming tool path for structured tool calls.
+
+## Error and Status Events
+
+Streaming compatibility responses can include status/error events before final
+OpenAI chunks:
 
 ```text
-data: {"request_id":"f4d7b7095d8e255cfa8cb53a80493fe7","position":1,"wait_seconds":5,"status":"queued"}
+event: status
+data: {"status":"queued","request_id":"llama-...","backend":"switchyard-native"}
+
+event: status
+data: {"status":"running","request_id":"llama-...","backend":"switchyard-native"}
 ```
 
-**StatusUpdate fields:**
-- `request_id` — correlates all events for a single request; use for logging
-- `position` — 1-based queue position; omitted once in-flight
-- `wait_seconds` — seconds since the request was enqueued
-- `status` — `"queued"` | `"ollama_unavailable"` | `"dropped_by_admin"`
-
-### Error event (terminal — no response follows)
+Terminal errors after SSE headers are committed are emitted as error/status
+payloads rather than HTTP status changes:
 
 ```text
-data: {"request_id":"f4d7b7095d8e255cfa8cb53a80493fe7","status":"ollama_unavailable","message":"connection refused"}
+event: error
+data: {"status":"failed","request_id":"llama-...","error":"...","backend":"switchyard-native"}
+
+data: [DONE]
 ```
 
-`status` is always the normalized string — never a raw Go error string. `message` carries the detail.
+Client parsing strategy:
 
-### Dropped event (terminal — request removed by admin drain/drop)
-
-```text
-data: {"request_id":"f4d7b7095d8e255cfa8cb53a80493fe7","status":"dropped_by_admin"}
-```
-
-### Parsing strategy
-
-```
-for each SSE line:
-  if line starts with "data: ":
-    payload = parse JSON
-    if payload.status == "queued":
-      handle/display queue position, continue
-    if payload.status in ("ollama_unavailable", "dropped_by_admin"):
-      raise error, stop
-    else:
-      # this is the actual response (non-streaming)
-      handle as ollama JSON response, stop
-  elif line == "" or line == "data: [DONE]":
-    continue  # SSE separator or stream end
-```
-
-For **streaming** requests, after stripping broker status events, the remaining `data:` lines are
-standard ollama SSE chunks — hand them to any OpenAI-compatible SSE parser.
-
-## Cache Hits
-
-When response caching is enabled for the client key and a cached result exists:
-
-- Request returns immediately (no queue wait)
-- Response header: `X-Llama-Line-Cache: HIT`
-- Body: same SSE format (`data: <json>\n\n` for non-streaming)
-
-Cache is keyed by SHA256 of `model + messages`. Streaming requests are never cached.
-
-## Error Responses
-
-All broker errors use proper HTTP status codes + `X-Ollama-Broker: true` header:
-
-| HTTP | Body | When |
-|------|------|------|
-| 401 | `{"error":"unauthorized"}` | Bad/missing API key |
-| 403 | `{"error":"forbidden"}` | Bad/missing admin key |
-| 503 | `{"error":"queue full","queue_depth":N,"max_depth":N}` | Queue at capacity |
-| 504 | `{"error":"request timeout"}` | Per-request timeout exceeded |
-| 504 | `{"error":"queue wait timeout"}` | Waited too long in queue |
-| 502 | `{"error":"..."}` | Ollama unreachable after retries |
-
-Mid-stream errors (after SSE headers committed) arrive as terminal SSE events with
-`status:"ollama_unavailable"` — not as HTTP error codes.
+1. If response `Content-Type` is JSON, parse it directly.
+2. If response is SSE, ignore broker `status: queued/running/completed` events.
+3. Treat `status: failed`, `ollama_unavailable`, or OpenAI top-level `error` as
+   terminal failures.
+4. Process the remaining Ollama/OpenAI payloads normally.
 
 ## Broker Status
 
@@ -137,90 +157,61 @@ Mid-stream errors (after SSE headers committed) arrive as terminal SSE events wi
 GET /broker/status
 ```
 
-No auth required. Returns:
+Example shape:
 
 ```json
 {
-  "queue_depth": 2,
-  "max_depth": 10,
-  "in_flight_client": "my-app",
-  "in_flight_id": "f4d7b7...",
-  "connected_clients": 3,
+  "status": "healthy",
+  "backend": "switchyard-native",
+  "queue_depth": 0,
+  "active_request": true,
+  "connected_clients": 1,
   "queue": [
-    {"id":"abc","client":"my-app","priority":5,"position":1,"wait_seconds":3}
+    {"id":"llama-...","client":"subcorp","priority":50,"status":"queued"}
   ],
-  "upstreams": [...],
-  "cache_stats": [{"client":"my-app","hits":14,"misses":3,"size":10}]
+  "inflight": [
+    {"id":"llama-...","client":"subcorp","priority":50,"status":"running"}
+  ],
+  "upstreams": [...]
 }
 ```
 
-Use for health checks, monitoring, and backpressure decisions.
+Use `/broker/status` for health checks, operator dashboards, backpressure hints,
+and verifying client attribution.
 
-## Admin API
+## Admin and History Compatibility
 
-Requires `X-Admin-Key: <admin_key>` or `Authorization: Bearer <admin_key>`.
-
-### Queue endpoints
-
-| Method | Path | Action |
-|--------|------|--------|
-| `GET` | `/admin/queue` | List queued requests |
-| `DELETE` | `/admin/queue` | Drain entire queue |
-| `DELETE` | `/admin/queue/{id}` | Drop single request |
-| `GET` | `/admin/inflight` | Get current in-flight request |
-| `POST` | `/admin/inflight/cancel` | Cancel in-flight request |
-
-### Key management endpoints
+Supported compatibility surfaces include:
 
 | Method | Path | Action |
 |--------|------|--------|
-| `GET` | `/admin/keys` | List keys (no values exposed) |
-| `POST` | `/admin/keys` | Create key — returns value once (201) |
-| `DELETE` | `/admin/keys/{name}` | Revoke key |
-| `PATCH` | `/admin/keys/{name}` | Update name or priority |
+| `GET` | `/admin/queue` | List queued compatibility requests |
+| `DELETE` | `/admin/queue` | Cancel all queued/running compatibility requests |
+| `DELETE` | `/admin/queue/{id}` | Cancel one request |
+| `GET` | `/admin/inflight` | List inflight compatibility requests |
+| `POST` | `/admin/inflight/cancel` | Cancel inflight request(s) |
+| `GET` | `/api/history` | Durable broker request history |
+| `GET` | `/api/search?q=...` | Search broker request ledger |
+| `GET` | `/api/logs` | Log-like broker request view |
+| `GET` | `/admin/audit` | Audit-like broker request view |
 
-Create key body: `{"name":"client","priority":5}`  
-Update key body: `{"name":"new-name","priority":3}` (both fields optional)
-
-## Multi-Model Routing
-
-The broker extracts the `model` field from each request body and routes to the matching upstream.
-Matching is case-insensitive glob (`*` wildcard). First match wins. Unmatched → fallback upstream.
-
-Each upstream has an independent queue with its own depth limit. `/broker/status` reports per-upstream state.
-
-## Web UI
-
-`GET /ui/` — embedded single-page dashboard (htmx + vanilla JS, no build step).
-
-Tabs: Queue (SSE live), History (last 200), Keys (create/revoke), Config (admin key → localStorage).
-
-The UI reads the admin key from localStorage key `llama_line_admin_key` for admin actions.
+Do not assume old standalone llama-line key-management endpoints are available;
+configure Switchyard client keys through environment/configuration instead.
 
 ## Client Implementation Patterns
 
-See `references/patterns.md` for:
-- Python example (requests + SSE parsing)
-- Go example (bufio.Scanner SSE loop)
-- JavaScript/fetch example
-- OpenAI SDK integration (Go/Python)
-- Backpressure: checking `/broker/status` before sending
-- Retry logic for 503/504 responses
-- Streaming vs non-streaming inference
+See `references/patterns.md` for current Python, Go, JavaScript, and OpenAI SDK
+patterns that accept Switchyard's JSON-or-SSE compatibility behavior.
 
-## Key Differences from Direct ollama
+## Key Differences From Direct Ollama
 
-1. **Auth required** — add `Authorization: Bearer <key>` to every request
-2. **Always SSE** — inference responses are always `text/event-stream`; broker status events precede the ollama body
-3. **Consistent format** — non-streaming responses are wrapped in `data: <json>\n\n`; streaming chunks pass through as-is
-4. **Normalized errors** — mid-stream errors use `status:"ollama_unavailable"` + `message`, never raw Go strings
-5. **`request_id`** — every status event includes a `request_id` for correlation
-6. **Priority queue** — higher-priority API keys dequeue first; equal-priority is FIFO
-7. **Queue errors** — may receive 503 (queue full) or 504 (timeout) that ollama never sends
-8. **Port** — broker listens on `11434`; ollama moved to `11435` (or wherever configured)
-9. **`/broker/status`** — broker-only endpoint, not proxied to ollama
-10. **Multi-model routing** — requests routed to different upstream queues by model
-11. **Dedup/cache** — per-client in-flight deduplication and LRU response caching
-12. **Admin API** — runtime key management, queue drain/drop/cancel
-13. **Metrics** — Prometheus at `/metrics`, alerting webhooks
-14. **Web UI** — embedded dashboard at `/ui/`
+1. **Switchyard owns routing** — provider-style models go through OpenCode;
+   local/Ollama models go to `OLLAMA_BASE_URL`.
+2. **Client identity** — bearer keys and trusted headers resolve to client names
+   and priority for observability.
+3. **Correlation** — responses include Switchyard/OCQ/llama-line request headers
+   where possible.
+4. **Tool-call preservation** — tool-call-only non-streaming responses are valid;
+   empty no-tool completions are rejected.
+5. **Compatibility surfaces** — `/broker/status`, admin queue/inflight, history,
+   logs, audit, and OCQ request views are backed by Switchyard's native ledger.

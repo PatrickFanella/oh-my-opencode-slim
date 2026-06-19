@@ -1,300 +1,257 @@
-# llama-line Client Patterns
+# Switchyard Model Broker Client Patterns
 
-All inference responses from llama-line use `Content-Type: text/event-stream`. The stream
-always begins with zero or more broker status events, followed by the ollama response:
+Switchyard exposes llama-line/Ollama/OpenAI-compatible ingress on port `11434`,
+but the current runtime is Switchyard-native. Clients should accept either plain
+JSON or SSE depending on endpoint and `stream` mode.
 
-- **Non-streaming** (`stream:false`): broker heartbeats → one `data: <full JSON>\n\n`
-- **Streaming** (`stream:true`): broker heartbeats → ollama SSE chunks → `data: [DONE]\n\n`
+Use bearer keys when Switchyard is configured with `MODEL_BROKER_CLIENT_KEYS`:
 
-## Python — Non-Streaming with SSE Preamble Stripping
+```env
+MODEL_BROKER_CLIENT_KEYS=subcorp=subcorp-secret:50
+```
+
+Then the client request:
+
+```http
+Authorization: Bearer subcorp-secret
+```
+
+is recorded as client `subcorp` with priority `50`.
+
+## Python — JSON-or-SSE Response Parser
 
 ```python
 import json
 import requests
 
 BROKER = "http://localhost:11434"
-API_KEY = "your-key-here"
+API_KEY = "subcorp-secret"
 
-def call_llama_line(model: str, prompt: str) -> dict:
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {"model": model, "prompt": prompt, "stream": False}
+TERMINAL_STATUSES = {"failed", "ollama_unavailable", "dropped_by_admin"}
+IGNORED_STATUSES = {"queued", "running", "completed"}
 
-    with requests.post(f"{BROKER}/api/generate", json=payload, headers=headers, stream=True) as resp:
-        resp.raise_for_status()
-        for raw_line in resp.iter_lines(decode_unicode=True):
-            if not raw_line:
-                continue
-            if not raw_line.startswith("data: "):
-                continue
-            payload_str = raw_line[6:]
-            data = json.loads(payload_str)
-            status = data.get("status")
-            if status == "queued":
-                print(f"[queue] pos={data.get('position')} wait={data.get('wait_seconds')}s")
-                continue
-            if status == "ollama_unavailable":
-                raise RuntimeError(f"broker error: {data.get('message', status)}")
-            # No status field → this is the actual ollama response
-            return data
+def parse_switchyard_response(resp: requests.Response):
+    content_type = resp.headers.get("content-type", "")
+    resp.raise_for_status()
+
+    if "text/event-stream" not in content_type:
+        return resp.json()
+
+    for raw_line in resp.iter_lines(decode_unicode=True):
+        if not raw_line or raw_line == "data: [DONE]":
+            continue
+        if not raw_line.startswith("data: "):
+            continue
+        payload = json.loads(raw_line[6:])
+        if "error" in payload and isinstance(payload["error"], dict):
+            raise RuntimeError(payload["error"].get("message", "model broker error"))
+        status = payload.get("status")
+        if status in IGNORED_STATUSES:
+            continue
+        if status in TERMINAL_STATUSES:
+            raise RuntimeError(payload.get("message") or payload.get("error") or status)
+        return payload
+    raise RuntimeError("broker stream ended without a model payload")
+
+def generate(model: str, prompt: str) -> str:
+    resp = requests.post(
+        f"{BROKER}/api/generate",
+        json={"model": model, "prompt": prompt, "stream": False},
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        stream=True,
+        timeout=600,
+    )
+    data = parse_switchyard_response(resp)
+    return data.get("response") or data.get("message", {}).get("content", "")
 ```
 
-## Python — Streaming with SSE Preamble Stripping
+## Python — Streaming OpenAI-Compatible Chat
 
 ```python
-def call_llama_line_stream(model: str, prompt: str):
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {"model": model, "prompt": prompt, "stream": True}
+def stream_chat(model: str, messages: list[dict]):
+    resp = requests.post(
+        f"{BROKER}/v1/chat/completions",
+        json={"model": model, "messages": messages, "stream": True},
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        stream=True,
+        timeout=600,
+    )
+    resp.raise_for_status()
 
-    with requests.post(f"{BROKER}/api/generate", json=payload, headers=headers, stream=True) as resp:
-        resp.raise_for_status()
-        broker_done = False
-        for raw_line in resp.iter_lines(decode_unicode=True):
-            if not raw_line or raw_line == "data: [DONE]":
-                continue
-            if not raw_line.startswith("data: "):
-                continue
-            data = json.loads(raw_line[6:])
-            if not broker_done:
-                status = data.get("status")
-                if status == "queued":
-                    print(f"[queue] pos={data.get('position')} wait={data.get('wait_seconds')}s")
-                    continue
-                if status == "ollama_unavailable":
-                    raise RuntimeError(f"broker error: {data.get('message', status)}")
-                broker_done = True
-            # Ollama streaming chunk
-            print(data.get("response", ""), end="", flush=True)
-            if data.get("done"):
-                break
+    for raw_line in resp.iter_lines(decode_unicode=True):
+        if not raw_line or raw_line == "data: [DONE]":
+            continue
+        if not raw_line.startswith("data: "):
+            continue
+        payload = json.loads(raw_line[6:])
+        status = payload.get("status")
+        if status in {"queued", "running", "completed"}:
+            continue
+        if status in {"failed", "ollama_unavailable", "dropped_by_admin"}:
+            raise RuntimeError(payload.get("error") or payload.get("message") or status)
+        if "error" in payload:
+            raise RuntimeError(payload["error"].get("message", "model broker error"))
+        for choice in payload.get("choices", []):
+            delta = choice.get("delta", {})
+            text = delta.get("content") or choice.get("text") or ""
+            if text:
+                yield text
 ```
 
-## Go — SSE Loop with bufio.Scanner
+## Go — JSON-or-SSE Parser
 
 ```go
-package main
+package switchyardbroker
 
 import (
     "bufio"
     "bytes"
     "encoding/json"
     "fmt"
+    "io"
     "net/http"
     "strings"
 )
 
-const broker = "http://localhost:11434"
-const apiKey = "your-key-here"
+const Broker = "http://localhost:11434"
+const APIKey = "subcorp-secret"
 
-type StatusUpdate struct {
-    RequestID   string `json:"request_id"`
-    Position    int    `json:"position"`
-    WaitSeconds int    `json:"wait_seconds"`
-    Status      string `json:"status"`
-    Message     string `json:"message"`
-}
-
-func callLlamaLine(model, prompt string) error {
-    body, _ := json.Marshal(map[string]any{
-        "model":  model,
-        "prompt": prompt,
-        "stream": true,
-    })
-    req, _ := http.NewRequest("POST", broker+"/api/generate", bytes.NewReader(body))
-    req.Header.Set("Authorization", "Bearer "+apiKey)
+func DoGenerate(model, prompt string) (map[string]any, error) {
+    body, _ := json.Marshal(map[string]any{"model": model, "prompt": prompt, "stream": false})
+    req, _ := http.NewRequest("POST", Broker+"/api/generate", bytes.NewReader(body))
+    req.Header.Set("Authorization", "Bearer "+APIKey)
     req.Header.Set("Content-Type", "application/json")
 
     resp, err := http.DefaultClient.Do(req)
     if err != nil {
-        return err
+        return nil, err
     }
     defer resp.Body.Close()
+    if resp.StatusCode >= 400 {
+        b, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("broker status %s: %s", resp.Status, string(b))
+    }
+    return parseBrokerBody(resp)
+}
+
+func parseBrokerBody(resp *http.Response) (map[string]any, error) {
+    if !strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
+        var out map[string]any
+        return out, json.NewDecoder(resp.Body).Decode(&out)
+    }
 
     scanner := bufio.NewScanner(resp.Body)
-    brokerDone := false
     for scanner.Scan() {
         line := scanner.Text()
-        if line == "" || line == "data: [DONE]" {
+        if line == "" || line == "data: [DONE]" || !strings.HasPrefix(line, "data: ") {
             continue
         }
-        if !strings.HasPrefix(line, "data: ") {
-            continue
+        var payload map[string]any
+        if err := json.Unmarshal([]byte(strings.TrimPrefix(line, "data: ")), &payload); err != nil {
+            return nil, err
         }
-        payload := line[6:]
-        if !brokerDone {
-            var u StatusUpdate
-            if err := json.Unmarshal([]byte(payload), &u); err == nil && u.Status != "" {
-                if u.Status == "queued" {
-                    fmt.Printf("[queue] pos=%d wait=%ds id=%s\n", u.Position, u.WaitSeconds, u.RequestID)
-                    continue
-                }
-                if u.Status == "ollama_unavailable" {
-                    return fmt.Errorf("broker error: %s", u.Message)
-                }
+        if status, _ := payload["status"].(string); status != "" {
+            switch status {
+            case "queued", "running", "completed":
+                continue
+            case "failed", "ollama_unavailable", "dropped_by_admin":
+                return nil, fmt.Errorf("broker terminal status: %s", status)
             }
-            brokerDone = true
         }
-        // Ollama chunk (streaming) or full response (non-streaming)
-        var chunk map[string]any
-        json.Unmarshal([]byte(payload), &chunk)
-        fmt.Print(chunk["response"])
-        if done, _ := chunk["done"].(bool); done {
-            break
+        if errPayload, ok := payload["error"].(map[string]any); ok {
+            return nil, fmt.Errorf("broker error: %v", errPayload["message"])
         }
+        return payload, nil
     }
-    return scanner.Err()
+    if err := scanner.Err(); err != nil {
+        return nil, err
+    }
+    return nil, fmt.Errorf("broker stream ended without model payload")
 }
 ```
 
-## JavaScript — fetch with SSE Parsing
+## JavaScript — fetch with JSON-or-SSE Handling
 
 ```javascript
 const BROKER = 'http://localhost:11434';
-const API_KEY = 'your-key-here';
+const API_KEY = 'subcorp-secret';
 
-async function callLlamaLine(model, prompt, stream = true) {
+async function callGenerate(model, prompt) {
   const resp = await fetch(`${BROKER}/api/generate`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ model, prompt, stream }),
+    body: JSON.stringify({ model, prompt, stream: false }),
   });
+  if (!resp.ok) throw new Error(`broker status ${resp.status}: ${await resp.text()}`);
+
+  const contentType = resp.headers.get('content-type') || '';
+  if (!contentType.includes('text/event-stream')) return await resp.json();
 
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
-  let brokerDone = false;
   let buf = '';
-
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buf += decoder.decode(value, { stream: true });
     const lines = buf.split('\n');
-    buf = lines.pop(); // keep incomplete line
-
+    buf = lines.pop();
     for (const line of lines) {
-      if (!line || line === 'data: [DONE]') continue;
-      if (!line.startsWith('data: ')) continue;
-      const data = JSON.parse(line.slice(6));
-      if (!brokerDone) {
-        if (data.status === 'queued') {
-          console.log('[queue]', data);
-          continue;
-        }
-        if (data.status === 'ollama_unavailable') {
-          throw new Error(`broker error: ${data.message}`);
-        }
-        brokerDone = true;
+      if (!line || line === 'data: [DONE]' || !line.startsWith('data: ')) continue;
+      const payload = JSON.parse(line.slice(6));
+      if (['queued', 'running', 'completed'].includes(payload.status)) continue;
+      if (['failed', 'ollama_unavailable', 'dropped_by_admin'].includes(payload.status)) {
+        throw new Error(payload.error || payload.message || payload.status);
       }
-      // Ollama chunk or full response
-      process.stdout.write(data.response ?? '');
-      if (data.done) return;
+      if (payload.error) throw new Error(payload.error.message || 'broker error');
+      return payload;
     }
   }
+  throw new Error('broker stream ended without model payload');
 }
 ```
 
-## OpenAI SDK Integration (Python)
+## OpenAI SDK Integration
 
-The OpenAI Python client handles the SSE preamble transparently for **streaming** requests
-because it reads `data:` lines natively. For **non-streaming**, the broker wraps the response
-in a `data:` line — the SDK handles this correctly too since it parses the SSE stream.
+For OpenAI-compatible clients, use Switchyard's `/v1` base URL. Non-streaming
+SDK calls receive standard JSON. Streaming calls receive standard SSE chunks,
+with possible Switchyard status/error events that robust clients should ignore
+or handle.
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
     base_url="http://localhost:11434/v1",
-    api_key="your-key-here",  # llama-line key, not OpenAI
+    api_key="subcorp-secret",  # Switchyard model broker key, not OpenAI
 )
 
-# Non-streaming — SDK strips SSE preamble automatically
 response = client.chat.completions.create(
-    model="qwen3.5:latest",
+    model="qwen3:14b",
     messages=[{"role": "user", "content": "Hello"}],
 )
 print(response.choices[0].message.content)
-
-# Streaming — broker heartbeats are discarded; ollama chunks stream through
-for chunk in client.chat.completions.create(
-    model="qwen3.5:latest",
-    messages=[{"role": "user", "content": "Hello"}],
-    stream=True,
-):
-    print(chunk.choices[0].delta.content or "", end="", flush=True)
 ```
 
-## OpenAI SDK Integration (Go)
+For tool calls, prefer non-streaming `/v1/chat/completions`; Switchyard preserves
+`message.tool_calls` and rejects empty no-tool responses.
 
-For Go, use a custom `http.RoundTripper` to strip broker heartbeats before the SDK sees the body.
-See `augr/internal/llm/llamabroker` for a production-ready implementation:
-
-- `StripSSEPreamble` — strips broker events, unwraps the final `data:` line for non-streaming
-- `StripBrokerHeartbeats` — strips broker events, passes remaining SSE chunks through for streaming
-- Detect streaming by peeking `"stream":true` in the request body via `req.GetBody()`
-
-## Backpressure — Check Before Sending
-
-For batch jobs or high-throughput clients, poll `/broker/status` before sending to avoid 503s:
+## Backpressure and Health
 
 ```python
-def wait_for_queue_space(max_depth_fraction=0.8, poll_interval=2.0):
-    import time
-    while True:
-        r = requests.get(f"{BROKER}/broker/status")
-        s = r.json()
-        if s["queue_depth"] < s["max_depth"] * max_depth_fraction:
-            return
-        print(f"Queue {s['queue_depth']}/{s['max_depth']}, waiting...")
-        time.sleep(poll_interval)
-```
+def broker_status():
+    return requests.get(f"{BROKER}/broker/status", timeout=2).json()
 
-## Error Handling
-
-```python
-def safe_call(model, prompt):
-    try:
-        resp = requests.post(
-            f"{BROKER}/api/generate",
-            json={"model": model, "prompt": prompt, "stream": False},
-            headers={"Authorization": f"Bearer {API_KEY}"},
-            stream=True,
-        )
-        if resp.status_code == 503:
-            err = resp.json()
-            raise Exception(f"Queue full ({err['queue_depth']}/{err['max_depth']})")
-        if resp.status_code == 504:
-            raise Exception(f"Timeout: {resp.json()['error']}")
-        if resp.status_code == 401:
-            raise Exception("Invalid API key")
-        resp.raise_for_status()
-        # Strip broker SSE preamble; final response is in a data: line
-        for raw_line in resp.iter_lines(decode_unicode=True):
-            if not raw_line or not raw_line.startswith("data: "):
-                continue
-            data = json.loads(raw_line[6:])
-            if data.get("status") == "ollama_unavailable":
-                raise Exception(f"Broker error: {data.get('message')}")
-            if "status" not in data:
-                return data["response"]
-    except requests.RequestException as e:
-        raise Exception(f"Broker unreachable: {e}")
-```
-
-## Health Check
-
-```python
 def broker_healthy() -> bool:
     try:
-        r = requests.get(f"{BROKER}/broker/status", timeout=2)
-        return r.status_code == 200
+        status = broker_status()
+        return status.get("status") == "healthy" or status.get("backend") == "switchyard-native"
     except Exception:
         return False
 ```
+
+Use the `client` and `priority` fields in `/broker/status`, `/api/history`,
+`/api/logs`, and `/admin/audit` to confirm attribution.
