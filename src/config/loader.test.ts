@@ -950,6 +950,30 @@ describe('preset resolution', () => {
     expect(config.agents?.explorer?.model).toBe('explorer-model');
   });
 
+  test('root agent aliases override canonical preset agents', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'blacktower.json'),
+      JSON.stringify({
+        preset: 'fast',
+        presets: {
+          fast: {
+            explorer: { model: 'fast-model' },
+          },
+        },
+        agents: {
+          explore: { model: 'root-model' },
+        },
+      }),
+    );
+
+    const config = loadPluginConfig(projectDir);
+    expect(config.agents?.explorer?.model).toBe('root-model');
+    expect(config.agents?.explore).toBeUndefined();
+  });
+
   test('missing preset: preset set but not in presets -> returns empty/root agents', () => {
     const projectDir = path.join(tempDir, 'project');
     const projectConfigDir = path.join(projectDir, '.opencode');

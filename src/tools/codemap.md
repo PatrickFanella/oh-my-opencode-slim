@@ -8,7 +8,8 @@
 - Remote fetch/transform utility via `smartfetch` (`webfetch` tool).
 - Council orchestration via `createCouncilTool` (`council.ts`).
 - Child-session subtasks via `subtask` and `/subtask` (`subtask/`).
-- Runtime preset switching via `/preset` hook via `createPresetManager` (`preset-manager.ts`).
+- Runtime preset switching via `/preset` hook via `createPresetManager`
+  (`preset-manager.ts`) backed by config-owned switch planning.
 
 It is the bridge between plugin runtime integration (`src/index.ts`) and the lower-level
 implementations in feature folders.
@@ -54,11 +55,12 @@ implementations in feature folders.
   - no args → clear output and list available presets (`active` marker supported),
   - single token arg → switch preset through `client.config.update(...)` with mapped agent overrides,
   - multi-word arg → suggestion + no update.
-- Mapping logic converts plugin preset override format (`AgentOverrideConfig`) into runtime
-  SDK `agent` config (`model`, `temperature`, `variant`, `options`) and skips fields not
-  supported in runtime updates (`prompt`, `orchestratorPrompt`, `skills`, `mcps`,
-  `displayName`).
-- In-memory `activePreset` supports immediate status display and updates after successful switches.
+- Switch planning in `src/config/runtime-preset-switching.ts` converts plugin
+  preset override format into runtime SDK `agent` updates, validates that
+  plugin-scoped fields do not change at runtime, resets stale model/scalar
+  fields to baseline/defaults, and supplies rollback context.
+- In-memory runtime preset state supports immediate status display and updates
+  after successful switches.
 
 ### Subtask path
 
@@ -77,6 +79,7 @@ implementations in feature folders.
 - `createWebfetchTool` owns fetch orchestration, permission prompts, cache checks,
   llms.txt probing, binary/text branching, and optional secondary-model post-processing.
 - `smartfetch` modules split work into:
+  - request planning (`pipeline.ts`),
   - transport/policy (`network.ts`),
   - cache + TTL semantics (`cache.ts`),
   - output shaping (`utils.ts`),

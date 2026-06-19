@@ -6,20 +6,16 @@ import {
   createBoardCommandManager,
   createBoardRuntime,
 } from './board';
-import {
-  type AgentOverrideConfig,
-  deepMerge,
-  loadPluginConfig,
-  type MultiplexerConfig,
-  type Preset,
-} from './config';
+import { loadPluginConfig, type MultiplexerConfig } from './config';
 import { parseList } from './config/agent-mcps';
-import { AGENT_ALIASES, ALL_AGENT_NAMES } from './config/constants';
+import { ALL_AGENT_NAMES } from './config/constants';
+import { createRuntimeConfig } from './config/runtime-config';
+import { getActiveRuntimePreset } from './config/runtime-preset';
 import {
-  getActiveRuntimePreset,
-  getPreviousRuntimePreset,
-  setActiveRuntimePreset,
-} from './config/runtime-preset';
+  applyRuntimePresetConfigHook,
+  createRuntimePresetEffectiveConfig,
+  syncRuntimePresetFromConfig,
+} from './config/runtime-preset-switching';
 import { CouncilManager } from './council';
 import {
   createApplyPatchHook,
@@ -41,6 +37,7 @@ import {
   MultiplexerSessionManager,
   startAvailabilityCheck,
 } from './multiplexer';
+import { ensureManagedSkillsPath } from './plugin/assembly';
 import { materializeCuratedSkills } from './skills/managed';
 import {
   createCavemanToolkit,
@@ -130,65 +127,6 @@ async function runEventStep(
   }
 }
 
-function ensureManagedSkillsPath(
-  opencodeConfig: Record<string, unknown>,
-  managedSkillsPath: string,
-): void {
-  const skills =
-    opencodeConfig.skills &&
-    typeof opencodeConfig.skills === 'object' &&
-    !Array.isArray(opencodeConfig.skills)
-      ? { ...(opencodeConfig.skills as Record<string, unknown>) }
-      : {};
-  const existingPaths = Array.isArray(skills.paths) ? skills.paths : [];
-  const paths = existingPaths.filter(
-    (path): path is string => typeof path === 'string',
-  );
-
-  if (!paths.includes(managedSkillsPath)) {
-    paths.push(managedSkillsPath);
-  }
-
-  skills.paths = paths;
-  opencodeConfig.skills = skills;
-}
-
-function getPresetOverrideForResolvedAgent(
-  preset: Preset,
-  resolvedName: string,
-): AgentOverrideConfig | undefined {
-  for (const [agentName, override] of Object.entries(preset)) {
-    if ((AGENT_ALIASES[agentName] ?? agentName) === resolvedName) {
-      return override;
-    }
-  }
-
-  return undefined;
-}
-
-function applyRuntimePresetScalarField(
-  entry: Record<string, unknown>,
-  override: AgentOverrideConfig,
-  previousOverride: AgentOverrideConfig | undefined,
-  baseline: AgentOverrideConfig | undefined,
-  field: 'variant' | 'temperature',
-  expectedType: 'string' | 'number',
-): void {
-  if (typeof override[field] === expectedType) {
-    entry[field] = override[field];
-    return;
-  }
-
-  if (field in override || previousOverride?.[field] !== undefined) {
-    const baselineValue = baseline?.[field];
-    if (typeof baselineValue === expectedType) {
-      entry[field] = baselineValue;
-    } else {
-      delete entry[field];
-    }
-  }
-}
-
 /**
  * Probe jsdom at init time so the first webfetch call doesn't fail
  * silently. Logs a warning if jsdom can't be imported or instantiated,
@@ -273,18 +211,8 @@ const Blacktower: Plugin = async (ctx) => {
     // config() hook), override config.preset so agents are created with
     // the correct models. Currently only the config() hook re-runs after
     // Instance.dispose(), so this is a defensive guard.
-    const runtimePreset = getActiveRuntimePreset();
-    if (runtimePreset && config.presets?.[runtimePreset]) {
-      config.preset = runtimePreset;
-      // Re-merge runtime preset into config.agents (loadPluginConfig
-      // already merged the config-file preset, not the runtime one).
-      // Runtime preset is override so it wins over config-file preset.
-      const presetAgents = config.presets[runtimePreset];
-      config.agents = deepMerge(config.agents, presetAgents);
-    } else if (runtimePreset) {
-      // Preset was deleted from config since last switch — clear stale state
-      setActiveRuntimePreset(null);
-    }
+    syncRuntimePresetFromConfig(config);
+    const effectiveConfig = createRuntimePresetEffectiveConfig(config);
 
     if (config.toolkits?.pluginHealth) {
       pluginHealthToolkit = createPluginHealthToolkit({
@@ -325,12 +253,16 @@ const Blacktower: Plugin = async (ctx) => {
       });
     }
 
-    disabledAgents = getDisabledAgents(config);
-    _boardRuntime = createBoardRuntime(config.board);
+    const runtimeConfig = createRuntimeConfig(effectiveConfig);
+
+    disabledAgents = getDisabledAgents(runtimeConfig.config);
+    _boardRuntime = createBoardRuntime(effectiveConfig.board);
     boardCommandManager = createBoardCommandManager(_boardRuntime);
-    rewriteDisplayNameMentions = createDisplayNameMentionRewriter(config);
-    agentDefs = createAgents(config);
-    agents = getAgentConfigs(config);
+    rewriteDisplayNameMentions = createDisplayNameMentionRewriter(
+      runtimeConfig.config,
+    );
+    agentDefs = createAgents(runtimeConfig.config);
+    agents = getAgentConfigs(runtimeConfig.config);
 
     // Build a map of agent name → priority model array for runtime
     // fallback. Populated when the user configures model as an array in
@@ -354,9 +286,11 @@ const Blacktower: Plugin = async (ctx) => {
         runtimeChains[agentDef.name] = agentDef._modelArray.map((m) => m.id);
       }
     }
-    if (config.fallback?.enabled !== false) {
+    if (effectiveConfig.fallback?.enabled !== false) {
       const chains =
-        (config.fallback?.chains as Record<string, string[] | undefined>) ?? {};
+        (effectiveConfig.fallback?.chains as
+          | Record<string, string[] | undefined>
+          | undefined) ?? {};
       for (const [agentName, chainModels] of Object.entries(chains)) {
         if (!chainModels?.length) continue;
         const existing = runtimeChains[agentName] ?? [];
@@ -372,11 +306,7 @@ const Blacktower: Plugin = async (ctx) => {
     }
 
     // Parse multiplexer config with defaults
-    multiplexerConfig = {
-      type: config.multiplexer?.type ?? 'none',
-      layout: config.multiplexer?.layout ?? 'main-vertical',
-      main_pane_size: config.multiplexer?.main_pane_size ?? 60,
-    };
+    multiplexerConfig = runtimeConfig.multiplexer;
 
     // Get multiplexer instance for capability checks
     const multiplexer = getMultiplexer(multiplexerConfig);
@@ -402,7 +332,12 @@ const Blacktower: Plugin = async (ctx) => {
     councilTools = config.council
       ? createCouncilTool(
           ctx,
-          new CouncilManager(ctx, config, depthTracker, multiplexerEnabled),
+          new CouncilManager(
+            ctx,
+            effectiveConfig,
+            depthTracker,
+            multiplexerEnabled,
+          ),
         )
       : {};
 
@@ -424,7 +359,10 @@ const Blacktower: Plugin = async (ctx) => {
     phaseReminderHook = createPhaseReminderHook();
 
     // Initialize available skills filter hook
-    filterAvailableSkillsHook = createFilterAvailableSkillsHook(ctx, config);
+    filterAvailableSkillsHook = createFilterAvailableSkillsHook(
+      ctx,
+      effectiveConfig,
+    );
 
     // Track session → agent mapping for serve-mode system prompt injection
     sessionAgentMap = new Map<string, string>();
@@ -448,7 +386,7 @@ const Blacktower: Plugin = async (ctx) => {
     foregroundFallback = new ForegroundFallbackManager(
       ctx.client,
       runtimeChains,
-      config.fallback?.enabled !== false &&
+      effectiveConfig.fallback?.enabled !== false &&
         Object.keys(runtimeChains).length > 0,
     );
 
@@ -469,7 +407,7 @@ const Blacktower: Plugin = async (ctx) => {
         sessionAgentMap.get(sessionID) === 'orchestrator',
       backgroundJobBoard,
     });
-    interviewManager = createInterviewManager(ctx, config);
+    interviewManager = createInterviewManager(ctx, effectiveConfig);
     presetManager = createPresetManager(ctx, config);
     subtaskState = createSubtaskState();
     subtaskCommandManager = createSubtaskCommandManager(ctx, subtaskState);
@@ -689,138 +627,10 @@ const Blacktower: Plugin = async (ctx) => {
       // config. This runs after the normal model resolution because the
       // config() hook re-runs with stale modelArrayMap after dispose(),
       // but the runtime preset data is in the captured `config` closure.
-      const runtimePresetName = getActiveRuntimePreset();
-      if (runtimePresetName && config.presets?.[runtimePresetName]) {
-        const runtimePreset = config.presets[runtimePresetName];
-        const prevPresetName = getPreviousRuntimePreset();
-        const prevPreset = prevPresetName
-          ? config.presets?.[prevPresetName]
-          : undefined;
-        for (const [agentName, override] of Object.entries(runtimePreset)) {
-          // Resolve legacy alias keys (e.g. "explore" → "explorer")
-          // so presets using aliases work in this path.
-          const resolvedName = AGENT_ALIASES[agentName] ?? agentName;
-          const entry = configAgent[resolvedName] as
-            | Record<string, unknown>
-            | undefined;
-          if (!entry) continue;
-          const baseline = config.agents?.[resolvedName];
-          const previousOverride = prevPreset
-            ? getPresetOverrideForResolvedAgent(prevPreset, resolvedName)
-            : undefined;
-          let inlineModelVariant: string | undefined;
-
-          if (typeof override.model === 'string') {
-            entry.model = override.model;
-          } else if (
-            Array.isArray(override.model) &&
-            override.model.length > 0
-          ) {
-            const first = override.model[0];
-            entry.model = typeof first === 'string' ? first : first.id;
-            // Extract inline variant from array-form model entry
-            if (typeof first !== 'string' && first.variant) {
-              inlineModelVariant = first.variant;
-              entry.variant = inlineModelVariant;
-            }
-          }
-          // Explicitly set or clear scalar fields so switching from
-          // Preset A (which sets a field) to Preset B (which doesn't)
-          // doesn't leave stale values behind.
-          applyRuntimePresetScalarField(
-            entry,
-            override,
-            previousOverride,
-            baseline,
-            'variant',
-            'string',
-          );
-          if (override.variant === undefined && inlineModelVariant) {
-            entry.variant = inlineModelVariant;
-          }
-          applyRuntimePresetScalarField(
-            entry,
-            override,
-            previousOverride,
-            baseline,
-            'temperature',
-            'number',
-          );
-          if (
-            override.options &&
-            typeof override.options === 'object' &&
-            !Array.isArray(override.options)
-          ) {
-            entry.options = override.options;
-          } else if ('options' in override || previousOverride?.options) {
-            if (baseline?.options) {
-              entry.options = baseline.options;
-            } else {
-              delete entry.options;
-            }
-          }
-          log('[plugin] runtime preset override', {
-            preset: runtimePresetName,
-            agent: agentName,
-            model: entry.model as string,
-          });
-        }
-
-        // Reset agents from the previous preset that aren't in the new one.
-        // The stale model resolution above overwrites the reset values sent
-        // by preset-manager, so we re-apply them here from config-file
-        // baseline.
-        if (prevPresetName && config.presets?.[prevPresetName]) {
-          const prevPreset = config.presets[prevPresetName];
-          // Build resolved key set from new preset for correct comparison
-          // (handles alias keys like "explore" → "explorer")
-          const newPresetResolved = new Set(
-            Object.keys(runtimePreset).map((k) => AGENT_ALIASES[k] ?? k),
-          );
-          for (const agentName of Object.keys(prevPreset)) {
-            const resolvedName = AGENT_ALIASES[agentName] ?? agentName;
-            if (newPresetResolved.has(resolvedName)) continue; // new preset handles it
-            const entry = configAgent[resolvedName] as
-              | Record<string, unknown>
-              | undefined;
-            if (!entry) continue;
-            // Reset to config-file baseline. Use the previous preset's
-            // override to identify which fields to clear even when the
-            // baseline doesn't define them.
-            const baseline = config.agents?.[resolvedName];
-            const prevOverride = prevPreset[agentName] as
-              | AgentOverrideConfig
-              | undefined;
-            if (typeof baseline?.model === 'string') {
-              entry.model = baseline.model;
-            }
-            if (typeof baseline?.variant === 'string') {
-              entry.variant = baseline.variant;
-            } else if (prevOverride && 'variant' in prevOverride) {
-              delete entry.variant;
-            }
-            if (typeof baseline?.temperature === 'number') {
-              entry.temperature = baseline.temperature;
-            } else if (prevOverride && 'temperature' in prevOverride) {
-              delete entry.temperature;
-            }
-            if (
-              baseline?.options &&
-              typeof baseline.options === 'object' &&
-              !Array.isArray(baseline.options)
-            ) {
-              entry.options = baseline.options;
-            } else if (prevOverride && 'options' in prevOverride) {
-              delete entry.options;
-            }
-            log('[plugin] runtime preset reset from previous', {
-              previousPreset: prevPresetName,
-              agent: resolvedName,
-              model: entry.model as string,
-            });
-          }
-        }
-      }
+      applyRuntimePresetConfigHook(
+        config,
+        configAgent as Record<string, Record<string, unknown>>,
+      );
 
       const tuiAgentModels: Record<string, string> = {};
       const tuiAgents: TuiAgentSnapshot[] = [];
@@ -864,7 +674,7 @@ const Blacktower: Plugin = async (ctx) => {
       recordTuiAgentModels({
         agentModels: tuiAgentModels,
         agents: tuiAgents,
-        preset: config.preset,
+        preset: getActiveRuntimePreset() ?? config.preset,
       });
 
       // Get all MCP names from host OpenCode config. MCP definitions are

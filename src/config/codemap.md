@@ -33,12 +33,27 @@ resolution, and helper APIs used by agents, council, and runtime subsystems.
    nested merges for `agents`, `tmux`, `multiplexer`, `interview`, `sessionManager`,
    `fallback`, `council`.
    top-level arrays/values are overridden.
-5. If `tmux` is enabled and no explicit `multiplexer` is configured,
-   migrate to `multiplexer` (`tmux` compatibility path).
+5. Normalize runtime-ready artifacts such as legacy `tmux` → `multiplexer`
+   compatibility through `runtime-config.ts`.
 6. Apply env override `BLACKTOWER_PRESET` over config file preset.
-7. If preset exists, merge preset agents into `agents` so explicit root agents
-   still win (`deepMerge(preset, config.agents)`).
+7. If preset exists, snapshot the pre-preset root/package agent baseline in
+   `runtime-preset-baseline.ts`, then merge preset agents into `agents` with
+   alias-aware resolved-agent precedence so explicit root agents still win.
 8. Return merged config object.
+
+### Runtime config and presets
+
+- `runtime-config.ts` builds normalized runtime artifacts from a loaded
+  `PluginConfig`, including effective `multiplexer` and MCP policy values.
+- `runtime-preset-baseline.ts` stores a non-enumerable baseline snapshot so
+  runtime preset switching can reset to root/package agent values instead of a
+  config-file preset overlay.
+- `runtime-preset-switching.ts` owns `/preset` switch planning, runtime preset
+  state sync/rollback, SDK update shapes, config-hook reapplication, stale
+  model/scalar cleanup, plugin-scoped switch validation, and alias-aware
+  effective runtime config construction.
+- `loader.ts` exports `mergeAgentOverridesByResolvedName` so config-file preset
+  load and runtime preset effective config use the same alias resolution rules.
 
 ### Prompt discovery
 
@@ -88,7 +103,11 @@ src/index.ts
 - `utils.ts`
   - alias resolution and custom-agent key discovery.
 - `loader.ts`
-  - config IO, deep merge, preset composition, env override, prompt loading.
+  - config IO, deep merge, alias-aware preset composition, env override, prompt loading.
+- `runtime-config.ts`
+  - normalized runtime artifacts for plugin assembly.
+- `runtime-preset-baseline.ts`, `runtime-preset-switching.ts`
+  - runtime preset baseline snapshots, state, switch plans, and config-hook reapplication.
 - `schema.ts`, `council-schema.ts`
   - type/shape validation + transformation.
 

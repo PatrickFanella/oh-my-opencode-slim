@@ -314,7 +314,10 @@ describe('MultiplexerSessionManager', () => {
       });
 
       setMockSessionStatuses({ 'child-startup-idle': { type: 'idle' } });
-      (manager as any).sessions.get('child-startup-idle').idleSince = 1;
+      const trackedStartupIdle = (manager as any).lifecycle.trackedSessions.get(
+        'child-startup-idle',
+      );
+      trackedStartupIdle.idleSince = 1;
 
       await (manager as any).pollSessions();
 
@@ -341,12 +344,15 @@ describe('MultiplexerSessionManager', () => {
       });
 
       // Mark the session as having been busy at some point.
-      (manager as any).markSessionBusy('child-busy-idle');
+      const trackedBusyIdle = (manager as any).lifecycle.trackedSessions.get(
+        'child-busy-idle',
+      );
+      trackedBusyIdle.hasBeenBusy = true;
 
       setMockSessionStatuses({ 'child-busy-idle': { type: 'idle' } });
 
       // Force idleSince well past the grace window so the close fires.
-      (manager as any).sessions.get('child-busy-idle').idleSince = 1;
+      trackedBusyIdle.idleSince = 1;
 
       await (manager as any).pollSessions();
 
@@ -372,8 +378,9 @@ describe('MultiplexerSessionManager', () => {
       });
 
       setMockSessionStatuses({ c1: { type: 'idle' } });
-      (manager as any).sessions.get('c1').hasBeenBusy = true;
-      (manager as any).sessions.get('c1').idleSince = 1;
+      const tracked = (manager as any).lifecycle.trackedSessions.get('c1');
+      tracked.hasBeenBusy = true;
+      tracked.idleSince = 1;
 
       await (manager as any).pollSessions();
 
@@ -495,8 +502,11 @@ describe('MultiplexerSessionManager', () => {
       });
 
       setMockSessionStatuses({ 'child-789': { type: 'idle' } });
-      (manager as any).sessions.get('child-789').hasBeenBusy = true;
-      (manager as any).sessions.get('child-789').idleSince = 1;
+      const tracked789 = (manager as any).lifecycle.trackedSessions.get(
+        'child-789',
+      );
+      tracked789.hasBeenBusy = true;
+      tracked789.idleSince = 1;
       await (manager as any).pollSessions();
 
       await manager.onSessionStatus({
@@ -518,7 +528,10 @@ describe('MultiplexerSessionManager', () => {
       expect(mockMultiplexer.closePane).toHaveBeenCalledTimes(1);
 
       setMockSessionStatuses({ 'child-789': { type: 'idle' } });
-      (manager as any).sessions.get('child-789').idleSince = 1;
+      const respawned789 = (manager as any).lifecycle.trackedSessions.get(
+        'child-789',
+      );
+      respawned789.idleSince = 1;
       await (manager as any).pollSessions();
 
       expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-2');
@@ -558,8 +571,11 @@ describe('MultiplexerSessionManager', () => {
       });
 
       setMockSessionStatuses({ 'child-close-race': { type: 'idle' } });
-      (manager as any).sessions.get('child-close-race').hasBeenBusy = true;
-      (manager as any).sessions.get('child-close-race').idleSince = 1;
+      const trackedCloseRace = (manager as any).lifecycle.trackedSessions.get(
+        'child-close-race',
+      );
+      trackedCloseRace.hasBeenBusy = true;
+      trackedCloseRace.idleSince = 1;
       const idlePromise = (manager as any).pollSessions();
 
       await Promise.resolve();
@@ -732,6 +748,50 @@ describe('MultiplexerSessionManager', () => {
       expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-stale-spawn');
     });
 
+    test('spawns pane for recreate after delete during in-flight spawn', async () => {
+      const ctx = createMockContext();
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+      const staleSpawn = createDeferred<{ success: true; paneId: string }>();
+
+      mockMultiplexer.spawnPane
+        .mockImplementationOnce(() => staleSpawn.promise)
+        .mockResolvedValueOnce({ success: true, paneId: 'p-recreated' });
+
+      const event = {
+        type: 'session.created',
+        properties: {
+          info: {
+            id: 'child-recreate-spawn',
+            parentID: 'parent-recreate-spawn',
+          },
+        },
+      };
+
+      const staleCreate = manager.onSessionCreated(event);
+      await Promise.resolve();
+
+      await manager.onSessionDeleted({
+        type: 'session.deleted',
+        properties: { info: { id: 'child-recreate-spawn' } },
+      });
+      await manager.onSessionCreated(event);
+
+      staleSpawn.resolve({ success: true, paneId: 'p-stale-recreate' });
+      await staleCreate;
+
+      expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(2);
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith(
+        'p-stale-recreate',
+      );
+
+      await manager.cleanup();
+
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-recreated');
+    });
+
     test('does nothing on busy for unknown session', async () => {
       const ctx = createMockContext();
       const manager = new MultiplexerSessionManager(
@@ -789,7 +849,10 @@ describe('MultiplexerSessionManager', () => {
       expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(1);
 
       setMockSessionStatuses({ 'child-busy-race': { type: 'idle' } });
-      (manager as any).sessions.get('child-busy-race').idleSince = 1;
+      const trackedBusyRace = (manager as any).lifecycle.trackedSessions.get(
+        'child-busy-race',
+      );
+      trackedBusyRace.idleSince = 1;
       await (manager as any).pollSessions();
 
       expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-busy-race');
@@ -848,14 +911,131 @@ describe('MultiplexerSessionManager', () => {
 
       await Promise.resolve();
 
+      deferred.resolve({ success: true, paneId: 'p-cleanup' });
+      await createPromise;
+
       await manager.cleanup();
 
       await manager.onSessionCreated(event);
 
-      deferred.resolve({ success: true, paneId: 'p-cleanup' });
+      expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(2);
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-cleanup');
+
+      await manager.cleanup();
+
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith('%mock-pane');
+    });
+
+    test('closes stale spawn that resolves while cleanup is closing panes', async () => {
+      const ctx = createMockContext();
+      const spawnDeferred = createDeferred<{ success: true; paneId: string }>();
+      mockMultiplexer.spawnPane
+        .mockResolvedValueOnce({ success: true, paneId: 'p-existing' })
+        .mockImplementationOnce(() => spawnDeferred.promise);
+
+      const closeDeferred = createDeferred<boolean>();
+      mockMultiplexer.closePane.mockImplementation((paneId: string) => {
+        if (paneId === 'p-existing') return closeDeferred.promise;
+        return Promise.resolve(true);
+      });
+
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: { info: { id: 'existing', parentID: 'parent-existing' } },
+      });
+
+      const createPromise = manager.onSessionCreated({
+        type: 'session.created',
+        properties: { info: { id: 'during-cleanup', parentID: 'parent' } },
+      });
+
+      await Promise.resolve();
+      const cleanupPromise = manager.cleanup();
+      await Promise.resolve();
+
+      spawnDeferred.resolve({ success: true, paneId: 'p-during-cleanup' });
       await createPromise;
 
+      closeDeferred.resolve(true);
+      await cleanupPromise;
+
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-existing');
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith(
+        'p-during-cleanup',
+      );
+    });
+
+    test('does not spawn new panes while cleanup is in progress', async () => {
+      const ctx = createMockContext();
+      mockMultiplexer.spawnPane.mockResolvedValueOnce({
+        success: true,
+        paneId: 'p-existing-cleanup',
+      });
+
+      const closeDeferred = createDeferred<boolean>();
+      mockMultiplexer.closePane.mockImplementation((paneId: string) => {
+        if (paneId === 'p-existing-cleanup') return closeDeferred.promise;
+        return Promise.resolve(true);
+      });
+
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: { info: { id: 'existing-cleanup', parentID: 'parent' } },
+      });
+
+      const cleanupPromise = manager.cleanup();
+      await Promise.resolve();
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: { info: { id: 'blocked-cleanup', parentID: 'parent' } },
+      });
+
+      expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(1);
+
+      closeDeferred.resolve(true);
+      await cleanupPromise;
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: { info: { id: 'after-cleanup', parentID: 'parent' } },
+      });
+
       expect(mockMultiplexer.spawnPane).toHaveBeenCalledTimes(2);
+    });
+
+    test('cleanup is idempotent after tracked panes are closed', async () => {
+      const ctx = createMockContext();
+      mockMultiplexer.spawnPane.mockResolvedValueOnce({
+        success: true,
+        paneId: 'p-idempotent',
+      });
+
+      const manager = new MultiplexerSessionManager(
+        ctx,
+        defaultMultiplexerConfig,
+      );
+
+      await manager.onSessionCreated({
+        type: 'session.created',
+        properties: { info: { id: 's-idempotent', parentID: 'p-idem' } },
+      });
+
+      await manager.cleanup();
+      await manager.cleanup();
+
+      expect(mockMultiplexer.closePane).toHaveBeenCalledTimes(1);
+      expect(mockMultiplexer.closePane).toHaveBeenCalledWith('p-idempotent');
     });
   });
 });

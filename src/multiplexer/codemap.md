@@ -40,22 +40,19 @@
     from tmux).
 
 - `session-manager.ts` (`MultiplexerSessionManager`)
-  - Initialized once from plugin context and config.
-  - Subscribes to lifecycle events:
-    - `session.created`: spawn pane if enabled and not already tracked,
-    - `session.status`: mark `idle` and close after busy-seen grace, respawn on
-      `busy` when known,
-    - `session.deleted`: close pane and clear tracking.
-  - Tracks:
-    - active panes (`sessions` map),
-    - known sessions (`knownSessions`),
-    - in-flight spawns (`spawningSessions`).
-  - `respawnIfKnown` handles busy sessions that reappear after being closed.
-  - Polling fallback (`pollSessions`) is enabled when event coverage is incomplete.
-    It handles:
-    - idle detection,
-    - missing status grace period,
-    - max session lifetime timeout.
+  - Thin OpenCode-event/timer adapter initialized once from plugin context and
+    config.
+  - Delegates pane lifecycle policy to `SessionLifecycle` and owns polling timer
+    start/stop/update plus backend availability setup.
+
+- `session-lifecycle.ts` (`SessionLifecycle`)
+  - Owns mirrored session state, known-session tracking, in-flight spawn tokens,
+    close promises, respawn policy, polling fallback decisions, and cleanup.
+  - Handles `session.created`, `session.status`, and `session.deleted` with
+    stale-spawn protection so panes returned after deletion/cleanup are closed
+    instead of orphaned.
+  - `cleanup()` quiesces creation/respawn, waits in-flight spawn and close paths,
+    then closes all tracked panes before returning.
 
 - `index.ts`
   - Re-exports factory, manager, and implementations for external import.
@@ -67,16 +64,18 @@
 - On startup `getMultiplexer(config)` determines backend and whether manager is
   enabled (`type != none`, multiplexer present, running inside session).
 - On `session.created`:
-  - checks backend health via `isServerRunning(serverUrl)`,
-  - spawns a new pane,
-  - starts background polling.
+  - `MultiplexerSessionManager` forwards the event to `SessionLifecycle`,
+  - lifecycle checks backend health via `isServerRunning(serverUrl)`,
+  - spawns a new pane with token-based stale-spawn protection,
+  - manager starts background polling when lifecycle reports tracked/closing work.
 - On `session.status`:
   - `idle` → mark idle; close only after the session has been observed `busy`
     and idle persists past the grace window,
   - `busy` → mark busy and `respawnIfKnown` if session was previously known.
 - On `session.deleted`:
   - close and remove pane, clear known-session mapping.
-- `cleanup()` closes all panes and clears tracking maps.
+- `cleanup()` stops polling, asks lifecycle to quiesce spawn/close work, closes
+  all panes, and clears tracking maps.
 
 ## Integration
 

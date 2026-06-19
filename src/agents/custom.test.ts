@@ -205,15 +205,18 @@ describe('custom-agent creation', () => {
 
   test('loads custom agents from JSON definition directory', () => {
     const previousConfigDir = process.env.OPENCODE_CONFIG_DIR;
+    const previousXdgConfigHome = process.env.XDG_CONFIG_HOME;
     const previousEnable =
       process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST;
     const root = mkdtempSync(join(tmpdir(), 'blacktower-agent-defs-'));
     const configDir = join(root, 'opencode');
+    const xdgConfigHome = join(root, 'xdg');
     const agentDir = join(configDir, 'blacktower', 'agents');
 
     try {
       mkdirSync(agentDir, { recursive: true });
       process.env.OPENCODE_CONFIG_DIR = configDir;
+      process.env.XDG_CONFIG_HOME = xdgConfigHome;
       process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST = '1';
       writeFileSync(
         join(agentDir, 'researcher.json'),
@@ -250,6 +253,11 @@ describe('custom-agent creation', () => {
         delete process.env.OPENCODE_CONFIG_DIR;
       } else {
         process.env.OPENCODE_CONFIG_DIR = previousConfigDir;
+      }
+      if (previousXdgConfigHome === undefined) {
+        delete process.env.XDG_CONFIG_HOME;
+      } else {
+        process.env.XDG_CONFIG_HOME = previousXdgConfigHome;
       }
       if (previousEnable === undefined) {
         delete process.env.OPENCODE_ENABLE_CUSTOM_AGENT_DEFINITIONS_IN_TEST;

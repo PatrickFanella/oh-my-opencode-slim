@@ -1,19 +1,12 @@
 import type { PluginInput } from '@opencode-ai/plugin';
+import type { ModelEntry, PluginConfig, Preset } from '../config';
 import {
-  type AgentOverrideConfig,
-  type ModelEntry,
-  type PluginConfig,
-  type Preset,
-  resolveAgentSkills,
-} from '../config';
-import { DEFAULT_AGENT_MCPS } from '../config/agent-mcps';
-import { AGENT_ALIASES } from '../config/constants';
-import {
-  getActiveRuntimePreset,
-  rollbackRuntimePreset,
-  setActiveRuntimePreset,
-  setActiveRuntimePresetWithPrevious,
-} from '../config/runtime-preset';
+  buildRuntimePresetSwitchPlan,
+  commitRuntimePresetSwitch,
+  getRuntimePresetState,
+  rollbackRuntimePresetSwitch,
+  syncRuntimePresetFromConfig,
+} from '../config/runtime-preset-switching';
 import { readTuiSnapshot, recordTuiAgentModels } from '../tui-state';
 import { createInternalAgentTextPart } from '../utils';
 
@@ -33,11 +26,8 @@ const COMMAND_NAME = 'preset';
 export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
   // Sync from module-level state in case of plugin re-init — the runtime
   // preset persists across dispose()/re-init cycles.
-  let activePreset: string | null =
-    getActiveRuntimePreset() ?? config.preset ?? null;
-  if (!getActiveRuntimePreset() && config.preset) {
-    setActiveRuntimePreset(config.preset);
-  }
+  syncRuntimePresetFromConfig(config);
+  let activePreset: string | null = getRuntimePresetState(config);
 
   /**
    * Handle the /preset command from command.execute.before hook.
@@ -81,7 +71,7 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
     }
 
     // Switch to named preset
-    await switchPreset(arg, presets, output);
+    await switchPreset(arg, output);
   }
 
   /**
@@ -108,103 +98,19 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
    */
   async function switchPreset(
     presetName: string,
-    presets: Record<string, Preset>,
     output: { parts: Array<{ type: string; text?: string }> },
   ): Promise<void> {
-    const preset = presets[presetName];
-    if (!preset) {
-      const available = Object.keys(presets);
-      const hint =
-        available.length > 0
-          ? `Available presets: ${available.join(', ')}`
-          : 'No presets configured. Define presets in blacktower.jsonc.';
-      output.parts.push(
-        createInternalAgentTextPart(
-          `Preset "${presetName}" not found. ${hint}`,
-        ),
-      );
+    const plan = buildRuntimePresetSwitchPlan(config, presetName);
+    if ('error' in plan) {
+      output.parts.push(createInternalAgentTextPart(plan.error));
       return;
     }
 
-    const pluginScopedFields = getRestartRequiredPresetFields(
-      presets,
-      activePreset,
-      presetName,
-    );
-    if (pluginScopedFields.length > 0) {
-      output.parts.push(
-        createInternalAgentTextPart(
-          `Preset "${presetName}" changes plugin-scoped fields (${pluginScopedFields.join(', ')}). ` +
-            'Edit the active preset in config and restart OpenCode to apply skills, display names, or prompt changes.',
-        ),
-      );
-      return;
-    }
-
-    // Build the agent config overrides from the preset.
-    // Each preset value is { agentName: AgentOverrideConfig }.
-    // We need to convert to SDK AgentConfig format:
-    // { agent: { agentName: { model, temperature, ... } } }
-    const agentUpdates: Record<
-      string,
-      {
-        model?: string;
-        temperature?: number;
-        variant?: string;
-        options?: Record<string, unknown>;
-      }
-    > = {};
-    for (const [agentName, override] of Object.entries(preset)) {
-      const resolvedName = AGENT_ALIASES[agentName] ?? agentName;
-      const agentConfig = mapOverrideToAgentConfig(override);
-      if (Object.keys(agentConfig).length > 0) {
-        agentUpdates[resolvedName] = agentConfig;
-      }
-    }
-
-    // Build reset updates for agents in the old preset but not the new one.
-    // The SDK accumulates client.config.update() calls, so switching from
-    // Preset A to Preset B leaks A's variant/temperature/options on agents
-    // that aren't in B. Reset them to the config-file baseline values.
-    const currentRuntimePreset = getActiveRuntimePreset() ?? activePreset;
-    const resetUpdates: Record<
-      string,
-      {
-        model?: string;
-        temperature?: number;
-        variant?: string;
-        options?: Record<string, unknown>;
-      }
-    > = {};
-    if (currentRuntimePreset && config.presets?.[currentRuntimePreset]) {
-      const oldPreset = config.presets[currentRuntimePreset];
-      for (const rawName of Object.keys(oldPreset)) {
-        const resolvedOld = AGENT_ALIASES[rawName] ?? rawName;
-        if (resolvedOld in agentUpdates) continue; // new preset handles this agent
-        const baseline = config.agents?.[resolvedOld];
-        if (baseline) {
-          // Note: mapOverrideToAgentConfig(baseline) only emits fields
-          // the baseline defines. Scalar fields (variant/temperature/options)
-          // not in baseline are NOT cleared here. The config() hook in
-          // src/index.ts handles complete cleanup using the previous
-          // preset's override keys to drive deletion.
-          resetUpdates[resolvedOld] = mapOverrideToAgentConfig(baseline);
-        }
-      }
-    }
-
-    const allUpdates = { ...resetUpdates, ...agentUpdates };
-    if (Object.keys(allUpdates).length === 0) {
-      output.parts.push(
-        createInternalAgentTextPart(
-          `Preset "${presetName}" is empty (no agent overrides defined).`,
-        ),
-      );
-      return;
-    }
+    const agentUpdates = plan.presetUpdates;
+    const allUpdates = plan.updates;
 
     const previousPreset = activePreset;
-    setActiveRuntimePresetWithPrevious(presetName);
+    commitRuntimePresetSwitch(presetName);
 
     try {
       await ctx.client.config.update({
@@ -232,9 +138,9 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
         if (cfg.options) parts.push('options: yes');
         summaryParts.push(parts.join(' → '));
       }
-      if (Object.keys(resetUpdates).length > 0) {
+      if (plan.resetAgentNames.length > 0) {
         summaryParts.push(
-          `Reset to baseline: ${Object.keys(resetUpdates).join(', ')}`,
+          `Reset to baseline: ${plan.resetAgentNames.join(', ')}`,
         );
       }
       output.parts.push(
@@ -243,180 +149,13 @@ export function createPresetManager(ctx: PluginInput, config: PluginConfig) {
         ),
       );
     } catch (err) {
-      rollbackRuntimePreset(previousPreset);
+      rollbackRuntimePresetSwitch(previousPreset);
       output.parts.push(
         createInternalAgentTextPart(
           `Failed to switch preset "${presetName}": ${String(err)}`,
         ),
       );
     }
-  }
-
-  /**
-   * Map an AgentOverrideConfig (from plugin config) to the subset of
-   * SDK AgentConfig fields that client.config.update() can apply at runtime.
-   *
-   * Excluded fields and why:
-   * - prompt, orchestratorPrompt: require restart (resolved at init by config() hook)
-   * - skills, mcps: plugin-level concern, not part of SDK AgentConfig
-   * - displayName: plugin-level concern, not part of SDK AgentConfig
-   */
-  function mapOverrideToAgentConfig(override: AgentOverrideConfig): {
-    model?: string;
-    temperature?: number;
-    variant?: string;
-    options?: Record<string, unknown>;
-  } {
-    const agentConfig: {
-      model?: string;
-      temperature?: number;
-      variant?: string;
-      options?: Record<string, unknown>;
-    } = {};
-
-    if (typeof override.model === 'string') {
-      agentConfig.model = override.model;
-    } else if (Array.isArray(override.model) && override.model.length > 0) {
-      // Array-form model (fallback chain): pick the first entry.
-      // The full chain resolution only happens at init time via config() hook,
-      // so at runtime we use the primary model from the array.
-      const first = override.model[0];
-      agentConfig.model = typeof first === 'string' ? first : first.id;
-      if (typeof first !== 'string' && first.variant) {
-        agentConfig.variant = first.variant;
-      }
-    }
-
-    if (typeof override.temperature === 'number') {
-      agentConfig.temperature = override.temperature;
-    }
-
-    if (typeof override.variant === 'string') {
-      agentConfig.variant = override.variant;
-    }
-
-    if (
-      override.options &&
-      typeof override.options === 'object' &&
-      !Array.isArray(override.options)
-    ) {
-      agentConfig.options = override.options;
-    }
-
-    return agentConfig;
-  }
-
-  function getRestartRequiredPresetFields(
-    presets: Record<string, Preset>,
-    fromPresetName: string | null,
-    toPresetName: string,
-  ): string[] {
-    const toPreset = presets[toPresetName];
-    const fromPreset = fromPresetName ? presets[fromPresetName] : undefined;
-    const fields = new Set<string>();
-
-    if (hasChangedMcps(fromPreset, toPreset)) {
-      fields.add('mcps');
-    }
-    if (hasChangedSkills(fromPreset, toPreset)) {
-      fields.add('skills');
-    }
-    for (const field of [
-      'displayName',
-      'prompt',
-      'orchestratorPrompt',
-    ] as const) {
-      if (hasChangedScalarField(fromPreset, toPreset, field)) {
-        fields.add(field);
-      }
-    }
-
-    return Array.from(fields).sort();
-  }
-
-  function hasChangedMcps(fromPreset: Preset | undefined, toPreset: Preset) {
-    const agentNames = new Set([
-      ...Object.keys(fromPreset ?? {}),
-      ...Object.keys(toPreset),
-    ]);
-    for (const agentName of agentNames) {
-      const fromMcps = getEffectivePresetMcps(fromPreset, agentName);
-      const toMcps = getEffectivePresetMcps(toPreset, agentName);
-      if (JSON.stringify(fromMcps) !== JSON.stringify(toMcps)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  function hasChangedSkills(fromPreset: Preset | undefined, toPreset: Preset) {
-    const agentNames = getPresetAgentNames(fromPreset, toPreset);
-    for (const agentName of agentNames) {
-      const fromSkills = getEffectivePresetSkills(fromPreset, agentName);
-      const toSkills = getEffectivePresetSkills(toPreset, agentName);
-      if (JSON.stringify(fromSkills) !== JSON.stringify(toSkills)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  function hasChangedScalarField(
-    fromPreset: Preset | undefined,
-    toPreset: Preset,
-    field: 'displayName' | 'prompt' | 'orchestratorPrompt',
-  ) {
-    const agentNames = getPresetAgentNames(fromPreset, toPreset);
-    for (const agentName of agentNames) {
-      if (fromPreset?.[agentName]?.[field] !== toPreset[agentName]?.[field]) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  function getPresetAgentNames(
-    fromPreset: Preset | undefined,
-    toPreset: Preset,
-  ): Set<string> {
-    return new Set([
-      ...Object.keys(fromPreset ?? {}),
-      ...Object.keys(toPreset),
-    ]);
-  }
-
-  function getEffectivePresetMcps(
-    preset: Preset | undefined,
-    agentName: string,
-  ): string[] {
-    const explicitMcps = preset?.[agentName]?.mcps;
-    if (explicitMcps !== undefined) {
-      return explicitMcps;
-    }
-
-    const resolvedName = AGENT_ALIASES[agentName] ?? agentName;
-    return (
-      DEFAULT_AGENT_MCPS[resolvedName as keyof typeof DEFAULT_AGENT_MCPS] ?? []
-    );
-  }
-
-  function getEffectivePresetSkills(
-    preset: Preset | undefined,
-    agentName: string,
-  ): string[] {
-    const explicitSkills = preset?.[agentName]?.skills;
-    if (explicitSkills !== undefined) {
-      return explicitSkills;
-    }
-
-    const resolvedName = AGENT_ALIASES[agentName] ?? agentName;
-    return resolveAgentSkills(
-      { skillProfiles: config.skillProfiles },
-      resolvedName,
-    );
   }
 
   /**

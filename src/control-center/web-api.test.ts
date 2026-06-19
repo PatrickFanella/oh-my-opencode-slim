@@ -30,6 +30,12 @@ const task: TaskSummary = {
   warnings: [],
 };
 
+const otherTask: TaskSummary = {
+  name: 'audit',
+  badges: ['enabled'],
+  warnings: [],
+};
+
 const detail: TaskDetail = {
   ...task,
   runs: [run],
@@ -37,6 +43,11 @@ const detail: TaskDetail = {
     path: '/tmp/report.md',
     content: 'report line',
   },
+};
+
+const otherDetail: TaskDetail = {
+  ...otherTask,
+  runs: [],
 };
 
 const health: SchedulerHealth = {
@@ -68,12 +79,12 @@ describe('control-center web API', () => {
     const api = createControlCenterWebApi({ services: fakeServices() });
 
     const response = await api.fetch(
-      new Request('http://127.0.0.1/api/snapshot?selectedTask=observe'),
+      new Request('http://127.0.0.1/api/snapshot?selectedTask=audit'),
     );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
-      selectedTask: { name: 'observe' },
+      selectedTask: { name: 'audit' },
       health: { status: 'ok' },
     });
   });
@@ -170,6 +181,57 @@ describe('control-center web API', () => {
 });
 
 function fakeServices(): ControlCenterServices {
+  const tasks = {
+    async listTasks() {
+      return [task, otherTask];
+    },
+    async getTask(taskName: string) {
+      if (taskName === 'audit') return otherDetail;
+      return detail;
+    },
+    async listRuns() {
+      return [run];
+    },
+    validateRecurringTask() {
+      return { ok: true, diagnostics: [] };
+    },
+    async createRecurringTask(_input: RecurringTaskDraft) {
+      throw new Error('not exposed');
+    },
+    async updateRecurringTask(_input: RecurringTaskUpdate) {
+      throw new Error('not exposed');
+    },
+  };
+  const streams = {
+    async *streamSchedulerLogs() {
+      yield schedulerEvent;
+    },
+    async *streamTaskSession() {},
+    async *streamReport() {},
+    async listRecentSchedulerEvents() {
+      return [schedulerEvent];
+    },
+  };
+  const healthService = {
+    async getSchedulerHealth() {
+      return health;
+    },
+    async *watchSchedulerHealth() {
+      yield health;
+    },
+  };
+  const dashboard = {
+    async snapshot(selectedTaskName?: string) {
+      const selectedTask = selectedTaskName === 'audit' ? otherDetail : detail;
+      return { ...snapshot, tasks: [task, otherTask], selectedTask };
+    },
+    listTasks: tasks.listTasks,
+    getTask: tasks.getTask,
+    listRuns: tasks.listRuns,
+    getSchedulerHealth: healthService.getSchedulerHealth,
+    listSchedulerEvents: streams.listRecentSchedulerEvents,
+  };
+
   return {
     paths: {
       configDir: '/tmp/opencode',
@@ -177,46 +239,12 @@ function fakeServices(): ControlCenterServices {
       taskReportsDir: '/tmp/opencode/task-reports',
       tasksDbPath: '/tmp/opencode/.tasks.db',
     },
-    tasks: {
-      async listTasks() {
-        return [task];
-      },
-      async getTask() {
-        return detail;
-      },
-      async listRuns() {
-        return [run];
-      },
-      validateRecurringTask() {
-        return { ok: true, diagnostics: [] };
-      },
-      async createRecurringTask(_input: RecurringTaskDraft) {
-        throw new Error('not exposed');
-      },
-      async updateRecurringTask(_input: RecurringTaskUpdate) {
-        throw new Error('not exposed');
-      },
-    },
-    streams: {
-      async *streamSchedulerLogs() {
-        yield schedulerEvent;
-      },
-      async *streamTaskSession() {},
-      async *streamReport() {},
-      async listRecentSchedulerEvents() {
-        return [schedulerEvent];
-      },
-    },
-    health: {
-      async getSchedulerHealth() {
-        return health;
-      },
-      async *watchSchedulerHealth() {
-        yield health;
-      },
-    },
-    async snapshot() {
-      return snapshot;
+    tasks,
+    streams,
+    health: healthService,
+    dashboard,
+    async snapshot(selectedTaskName?: string) {
+      return dashboard.snapshot(selectedTaskName);
     },
   };
 }

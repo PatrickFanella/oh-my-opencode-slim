@@ -6,12 +6,7 @@ import {
   tool,
 } from '@opencode-ai/plugin';
 import { buildBinaryResultMessage, saveBinary } from './binary';
-import {
-  buildCacheKey,
-  CACHE,
-  cacheFetchResult,
-  isInvalidLlmsResult,
-} from './cache';
+import { CACHE, cacheFetchResult, isInvalidLlmsResult } from './cache';
 import {
   DEFAULT_TIMEOUT_SECONDS,
   MAX_BINARY_DOWNLOAD_BYTES,
@@ -21,15 +16,12 @@ import {
   WEBFETCH_DESCRIPTION,
 } from './constants';
 import {
-  buildAllowedOrigins,
   buildConditionalHeaders,
-  buildPermissionPatterns,
   decodeBody,
   extractHeaderMetadata,
   fetchWithUpgradeFallback,
   getBinaryKind,
   isBinaryContentType,
-  isDocsLikeUrl,
   isGenericBinaryMime,
   isHtmlLikeContentType,
   looksLikeHtmlText,
@@ -39,6 +31,7 @@ import {
   readBodyLimited,
   runWithScopedTimeout,
 } from './network';
+import { createSmartfetchRequestPlan } from './pipeline';
 import {
   decideSecondaryModelUse,
   readSecondaryModelFromConfig,
@@ -105,20 +98,17 @@ export function createWebfetchTool(
       );
       const normalized = normalizeUrl(args.url);
       const url = new URL(normalized.url);
-      const cacheKey = buildCacheKey(
-        args.url,
-        args.extract_main,
-        args.prefer_llms_txt,
-        args.save_binary,
-      );
-      const shouldProbeLlmsTxt =
-        args.prefer_llms_txt === 'always' ||
-        (args.prefer_llms_txt === 'auto' && isDocsLikeUrl(url));
-      const permissionPatterns = buildPermissionPatterns(
+      const requestPlan = createSmartfetchRequestPlan({
+        url: args.url,
+        extractMain: args.extract_main,
+        preferLlmsTxt: args.prefer_llms_txt,
+        saveBinary: args.save_binary,
         normalized,
-        shouldProbeLlmsTxt,
-      );
-      const allowedOrigins = buildAllowedOrigins(permissionPatterns);
+      });
+      const cacheKey = requestPlan.cacheKey;
+      const shouldProbeLlmsTxt = requestPlan.shouldProbeLlmsTxt;
+      const permissionPatterns = requestPlan.permissionPatterns;
+      const allowedOrigins = requestPlan.allowedOrigins;
 
       await ctx.ask({
         permission: 'webfetch',
@@ -328,9 +318,7 @@ export function createWebfetchTool(
               const genericBinaryMime = isGenericBinaryMime(
                 headerMetadata.contentType || '',
               );
-              const binaryDownloadLimit = args.save_binary
-                ? MAX_RESPONSE_BYTES
-                : MAX_BINARY_DOWNLOAD_BYTES;
+              const { binaryDownloadLimit } = requestPlan;
               if (
                 explicitBinary &&
                 !genericBinaryMime &&

@@ -23,6 +23,53 @@ function createSnapshot(): ControlCenterSnapshot {
 
 function createServices(): ControlCenterServices {
   const snapshot = createSnapshot();
+  const tasks = {
+    async listTasks() {
+      return [];
+    },
+    async getTask() {
+      throw new Error('No tasks');
+    },
+    async listRuns() {
+      return [];
+    },
+    validateRecurringTask() {
+      return { ok: true, diagnostics: [] };
+    },
+    async createRecurringTask() {
+      throw new Error('Not used');
+    },
+    async updateRecurringTask() {
+      throw new Error('Not used');
+    },
+  };
+  const streams = {
+    async *streamSchedulerLogs() {},
+    async *streamTaskSession() {},
+    async *streamReport() {},
+    async listRecentSchedulerEvents() {
+      return [];
+    },
+  };
+  const health = {
+    async getSchedulerHealth() {
+      return snapshot.health;
+    },
+    async *watchSchedulerHealth() {
+      yield snapshot.health;
+    },
+  };
+  const dashboard = {
+    async snapshot(_selectedTaskName?: string) {
+      return snapshot;
+    },
+    listTasks: tasks.listTasks,
+    getTask: tasks.getTask,
+    listRuns: tasks.listRuns,
+    getSchedulerHealth: health.getSchedulerHealth,
+    listSchedulerEvents: streams.listRecentSchedulerEvents,
+  };
+
   return {
     paths: {
       configDir: '/tmp/opencode',
@@ -30,44 +77,12 @@ function createServices(): ControlCenterServices {
       taskReportsDir: '/tmp/opencode/task-reports',
       tasksDbPath: '/tmp/opencode/.tasks.db',
     },
-    tasks: {
-      async listTasks() {
-        return [];
-      },
-      async getTask() {
-        throw new Error('No tasks');
-      },
-      async listRuns() {
-        return [];
-      },
-      validateRecurringTask() {
-        return { ok: true, diagnostics: [] };
-      },
-      async createRecurringTask() {
-        throw new Error('Not used');
-      },
-      async updateRecurringTask() {
-        throw new Error('Not used');
-      },
-    },
-    streams: {
-      async *streamSchedulerLogs() {},
-      async *streamTaskSession() {},
-      async *streamReport() {},
-      async listRecentSchedulerEvents() {
-        return [];
-      },
-    },
-    health: {
-      async getSchedulerHealth() {
-        return snapshot.health;
-      },
-      async *watchSchedulerHealth() {
-        yield snapshot.health;
-      },
-    },
-    async snapshot() {
-      return snapshot;
+    tasks,
+    streams,
+    health,
+    dashboard,
+    async snapshot(selectedTaskName?: string) {
+      return dashboard.snapshot(selectedTaskName);
     },
   };
 }

@@ -13,8 +13,9 @@ of raw child session IDs.
   - `tool.execute.after`
   - `experimental.chat.system.transform`
   - `event`
-- Internally uses `SessionManager` from `src/utils/session-manager.ts` to store
-  remembered task sessions with bounded per-agent history.
+- Internally uses `session-memory.ts`, a delegated session memory Module over
+  `SessionManager` from `src/utils/session-manager.ts`, to remember, resolve,
+  enrich, purge, and format resumable task state with bounded per-agent history.
 - Task labels are derived from `description`/`prompt` via
   `deriveTaskSessionLabel` and converted to compact aliases by `SessionManager`.
 - In-flight calls are tracked by `callID` in a capped ordered map (`MAX_PENDING_TASK_CALLS`)
@@ -52,9 +53,10 @@ of raw child session IDs.
   - invoked in `tool.execute.after`
   - injected into `experimental.chat.system.transform`
   - cleaned up in `event` on `session.deleted`
-- Exposes no side effects outside hook handling and `SessionManager`.
+- Exposes no side effects outside hook handling and delegated session memory.
 - Depends on:
   - `SessionManager` and `deriveTaskSessionLabel` (from `src/utils/session-manager.ts`)
+  - `createDelegatedSessionMemory` (from `session-memory.ts`)
   - `parseTaskIdFromTaskOutput` (from `src/utils/task.ts`)
   - plugin configuration (`maxSessionsPerAgent`) and runtime session filtering from
     `src/index.ts` (`shouldManageSession`).

@@ -5,10 +5,9 @@ import {
   type BackgroundJobBoard,
   BLACKTOWER_INTERNAL_INITIATOR_MARKER,
   type ContextFile,
-  deriveTaskSessionLabel,
   parseTaskIdFromTaskOutput,
-  SessionManager,
 } from '../../utils';
+import { createDelegatedSessionMemory } from './session-memory';
 
 interface TaskArgs {
   description?: unknown;
@@ -123,7 +122,8 @@ export function createTaskSessionManagerHook(
     backgroundJobBoard?: BackgroundJobBoard;
   },
 ) {
-  const sessionManager = new SessionManager(options.maxSessionsPerAgent, {
+  const sessionMemory = createDelegatedSessionMemory({
+    maxSessionsPerAgent: options.maxSessionsPerAgent,
     readContextMinLines: options.readContextMinLines,
     readContextMaxFiles: options.readContextMaxFiles,
   });
@@ -154,7 +154,7 @@ export function createTaskSessionManagerHook(
       context.set(file.path, pending);
     }
 
-    sessionManager.addContext(taskId, contextFilesForPrompt(context));
+    sessionMemory.addContext(taskId, contextFilesForPrompt(context));
     options.backgroundJobBoard?.updateState(taskId, 'running', {
       contextFiles: files.map((file) => file.path),
     });
@@ -173,12 +173,12 @@ export function createTaskSessionManagerHook(
 
   function canTrackTaskContext(taskId: string): boolean {
     return (
-      pendingManagedTaskIds.has(taskId) || sessionManager.taskIds().has(taskId)
+      pendingManagedTaskIds.has(taskId) || sessionMemory.taskIds().has(taskId)
     );
   }
 
   function pruneContext(): void {
-    const remembered = sessionManager.taskIds();
+    const remembered = sessionMemory.taskIds();
     for (const taskId of contextByTask.keys()) {
       if (!pendingManagedTaskIds.has(taskId) && !remembered.has(taskId)) {
         contextByTask.delete(taskId);
@@ -264,13 +264,17 @@ export function createTaskSessionManagerHook(
       const args = output.args as TaskArgs;
       if (!isAgentName(args.subagent_type)) return;
 
-      const label = deriveTaskSessionLabel({
-        description:
-          typeof args.description === 'string' ? args.description : undefined,
-        prompt: typeof args.prompt === 'string' ? args.prompt : undefined,
-        agentType: args.subagent_type,
+      const enriched = sessionMemory.enrich({
+        sessionID: input.sessionID,
+        tool: input.tool,
+        callID: input.callID,
+        args,
       });
-      const prompt = typeof args.prompt === 'string' ? args.prompt : label;
+      if (!enriched) return;
+
+      const pendingMeta = enriched.pending;
+      if (!pendingMeta) return;
+      const { label, prompt } = pendingMeta;
 
       const pendingCall: PendingTaskCall = {
         callId: pendingCallId({
@@ -289,11 +293,11 @@ export function createTaskSessionManagerHook(
       }
 
       const requested = args.task_id.trim();
-      const remembered = sessionManager.resolve(
-        input.sessionID,
-        args.subagent_type,
-        requested,
-      );
+      const remembered = sessionMemory.resolve({
+        parentSessionId: input.sessionID,
+        agentType: args.subagent_type,
+        taskId: requested,
+      });
 
       if (!remembered) {
         delete args.task_id;
@@ -302,11 +306,6 @@ export function createTaskSessionManagerHook(
 
       args.task_id = remembered.taskId;
       pendingManagedTaskIds.add(remembered.taskId);
-      sessionManager.markUsed(
-        input.sessionID,
-        args.subagent_type,
-        remembered.taskId,
-      );
       pendingCall.resumedTaskId = remembered.taskId;
       rememberPendingCall(pendingCall);
     },
@@ -336,11 +335,7 @@ export function createTaskSessionManagerHook(
           pending.resumedTaskId &&
           isMissingRememberedSessionError(output.output)
         ) {
-          sessionManager.drop(
-            pending.parentSessionId,
-            pending.agentType,
-            pending.resumedTaskId,
-          );
+          sessionMemory.dropTask(pending.resumedTaskId);
           options.backgroundJobBoard?.updateState(
             pending.resumedTaskId,
             'unknown',
@@ -354,14 +349,10 @@ export function createTaskSessionManagerHook(
       }
 
       if (pending.resumedTaskId && pending.resumedTaskId !== taskId) {
-        sessionManager.drop(
-          pending.parentSessionId,
-          pending.agentType,
-          pending.resumedTaskId,
-        );
+        sessionMemory.dropTask(pending.resumedTaskId);
       }
 
-      sessionManager.remember({
+      sessionMemory.remember({
         parentSessionId: pending.parentSessionId,
         taskId,
         agentType: pending.agentType,
@@ -369,7 +360,7 @@ export function createTaskSessionManagerHook(
       });
       pendingManagedTaskIds.delete(taskId);
       const contextFiles = contextFilesForPrompt(contextByTask.get(taskId));
-      sessionManager.addContext(taskId, contextFiles);
+      sessionMemory.addContext(taskId, contextFiles);
       options.backgroundJobBoard?.recordLaunch({
         parentSessionID: pending.parentSessionId,
         taskID: taskId,
@@ -400,7 +391,7 @@ export function createTaskSessionManagerHook(
           return;
         }
 
-        const reminder = sessionManager.formatForPrompt(message.info.sessionID);
+        const reminder = sessionMemory.formatForPrompt(message.info.sessionID);
         const backgroundJobs = options.backgroundJobBoard?.formatForPrompt(
           message.info.sessionID,
         );
@@ -508,8 +499,7 @@ export function createTaskSessionManagerHook(
         });
       }
 
-      sessionManager.dropTask(sessionId);
-      sessionManager.clearParent(sessionId);
+      sessionMemory.purge({ sessionID: sessionId, status: 'deleted' });
       if (options.shouldManageSession(sessionId)) {
         options.backgroundJobBoard?.removeForParent(sessionId);
       }

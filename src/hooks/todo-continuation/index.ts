@@ -7,6 +7,7 @@ import {
   messagesWithTimeout,
   withTimeout,
 } from '../../utils';
+import { decideTodoContinuation } from './continuation-policy';
 import { createTodoHygiene } from './todo-hygiene';
 
 const HOOK_NAME = 'todo-continuation';
@@ -571,8 +572,22 @@ export function createTodoContinuationHook(
         return;
       }
 
-      if (!hasIncompleteTodos) {
-        log(`[${HOOK_NAME}] Skipped: no incomplete todos`, { sessionID });
+      const now = Date.now();
+      const continuationDecision = decideTodoContinuation({
+        isOrchestrator: isOrchestratorSession(sessionID),
+        incompleteTodoCount: incompleteCount,
+        cooldownActive: now < state.suppressUntil,
+        maxContinuationsReached:
+          state.consecutiveContinuations >= maxContinuations,
+        explicitStopRequested: false,
+        pendingTimerActive: state.pendingTimer !== null,
+        injectionInFlight: state.isAutoInjecting,
+      });
+
+      if (continuationDecision.action !== 'continue') {
+        log(`[${HOOK_NAME}] Skipped: ${continuationDecision.reason}`, {
+          sessionID,
+        });
         return;
       }
 
@@ -612,29 +627,19 @@ export function createTodoContinuationHook(
         return;
       }
 
-      // Safety gate 4: below max continuations
-      if (state.consecutiveContinuations >= maxContinuations) {
-        log(`[${HOOK_NAME}] Skipped: max continuations reached`, {
-          sessionID,
-          consecutive: state.consecutiveContinuations,
-          max: maxContinuations,
-        });
-        return;
-      }
+      const postMessageDecision = decideTodoContinuation({
+        isOrchestrator: isOrchestratorSession(sessionID),
+        incompleteTodoCount: incompleteCount,
+        cooldownActive: now < state.suppressUntil,
+        maxContinuationsReached:
+          state.consecutiveContinuations >= maxContinuations,
+        explicitStopRequested: false,
+        pendingTimerActive: state.pendingTimer !== null,
+        injectionInFlight: state.isAutoInjecting,
+      });
 
-      // Safety gate 5: not in suppress window
-      const now = Date.now();
-      if (now < state.suppressUntil) {
-        log(`[${HOOK_NAME}] Skipped: in suppress window`, {
-          sessionID,
-          suppressUntil: state.suppressUntil,
-        });
-        return;
-      }
-
-      // Safety gate 6: no pending timer AND no injection in flight
-      if (state.pendingTimer !== null || state.isAutoInjecting) {
-        log(`[${HOOK_NAME}] Skipped: timer pending or injection in flight`, {
+      if (postMessageDecision.action !== 'continue') {
+        log(`[${HOOK_NAME}] Skipped: ${postMessageDecision.reason}`, {
           sessionID,
         });
         return;
@@ -862,7 +867,17 @@ export function createTodoContinuationHook(
       });
     }
 
-    if (hasIncompleteTodos) {
+    const commandDecision = decideTodoContinuation({
+      isOrchestrator: true,
+      incompleteTodoCount: hasIncompleteTodos ? 1 : 0,
+      cooldownActive: false,
+      maxContinuationsReached: false,
+      explicitStopRequested: false,
+      pendingTimerActive: false,
+      injectionInFlight: false,
+    });
+
+    if (commandDecision.action === 'continue') {
       output.parts.push(
         createInternalAgentTextPart(
           `${CONTINUATION_PROMPT} [Auto-continue enabled: up to ${maxContinuations} continuations.]`,

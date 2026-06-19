@@ -20,6 +20,11 @@ hosts todo-state hygiene reminders after relevant tool actions.
   - enabled flag, consecutive continuation count, cooldown timer
   - suppression window after abort, orchestrator session IDs
   - in-flight notification and injection guards
+- `continuation-policy.ts` owns the pure continuation decision: orchestrator
+  gating, incomplete todo count, cooldown/suppression, max continuation count,
+  explicit stop requests, pending timers, and in-flight injection. The hook uses
+  the returned action/reason while keeping all prompt/timer/message side effects
+  in `index.ts`.
 - `todo-hygiene.ts` owns lightweight reminder arming/injection using
   todo-queue transitions and message-context signals.
 - Request signatures are used in `handleMessagesTransform` to avoid duplicate

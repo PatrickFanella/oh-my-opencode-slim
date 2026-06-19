@@ -224,7 +224,10 @@ filtering enforce those code-owned allow lists per agent.
 
 ### Runtime Preset Switching
 
-Presets can also be switched at runtime without restarting using the `/preset` command. See [Preset Switching](preset-switching.md) for details.
+Presets can also be switched at runtime without restarting using the `/preset`
+command. During startup, preset agent entries are merged by resolved agent name,
+so root-level aliases such as `explore` still override canonical preset entries
+such as `explorer`. See [Preset Switching](preset-switching.md) for details.
 
 ### Toolkit Gates
 

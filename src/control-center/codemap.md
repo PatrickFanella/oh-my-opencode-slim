@@ -16,8 +16,10 @@ web HTTP/SSE transport.
 - `adapters.ts`: local filesystem readers for `tasks/` and `task-reports/`, a
   tolerant read-only SQLite adapter for `.tasks.db`, and scheduler status/log
   adapters around `bunx opencode-tasks`, `systemctl`, and `journalctl`.
+- `dashboard.ts`: renderer-neutral task dashboard read model for snapshot,
+  task detail, and task list access.
 - `services.ts`: composes adapters into `TaskService`, `HealthService`,
-  `StreamService`, and a single dashboard snapshot function.
+  `StreamService`, and dashboard-backed service wiring.
 - `tui-render.ts`: pure text rendering and view-state helpers for task lists,
   detail panels, stream tabs, filters, and health summaries.
 - `tui-app.ts`: OpenTUI lifecycle, keyboard handling, refresh polling, and

@@ -1,12 +1,13 @@
 import { existsSync, statSync } from 'node:fs';
 import { hostname } from 'node:os';
 import { extname, isAbsolute, join, relative, resolve } from 'node:path';
+import type { ControlCenterDashboard } from './dashboard';
 import { createSchedulerStatusSnapshot } from './scheduler-status';
 import {
   type ControlCenterServices,
   createControlCenterServices,
 } from './services';
-import type { StreamEvent } from './types';
+import type { StreamEvent, StreamService } from './types';
 
 export interface ControlCenterWebApiOptions {
   assetRoot?: string;
@@ -58,7 +59,11 @@ export function createControlCenterWebApi(
             { status: 405, headers: { allow: 'GET' } },
           );
         }
-        return handleApiRoute(request, services, pollIntervalMs);
+        return handleApiRoute(
+          request,
+          { dashboard: services.dashboard, streams: services.streams },
+          pollIntervalMs,
+        );
       }
 
       if (options.assetRoot) {
@@ -98,7 +103,10 @@ export function startControlCenterWebServer(
 
 async function handleApiRoute(
   request: Request,
-  services: ControlCenterServices,
+  services: {
+    dashboard: ControlCenterDashboard;
+    streams: StreamService;
+  },
   pollIntervalMs: number,
 ): Promise<Response> {
   const url = new URL(request.url);
@@ -110,13 +118,13 @@ async function handleApiRoute(
       if (selectedTask && !isSafeTaskName(selectedTask)) {
         return invalidTaskNameResponse();
       }
-      return jsonResponse(await services.snapshot(selectedTask));
+      return jsonResponse(await services.dashboard.snapshot(selectedTask));
     }
 
     if (segments.length === 2 && segments[1] === 'scheduler-status') {
       const [tasks, health] = await Promise.all([
-        services.tasks.listTasks(),
-        services.health.getSchedulerHealth(),
+        services.dashboard.listTasks(),
+        services.dashboard.getSchedulerHealth(),
       ]);
       return jsonResponse(
         createSchedulerStatusSnapshot([
@@ -131,12 +139,12 @@ async function handleApiRoute(
     }
 
     if (segments.length === 2 && segments[1] === 'tasks') {
-      return jsonResponse(await services.tasks.listTasks());
+      return jsonResponse(await services.dashboard.listTasks());
     }
 
     if (segments.length === 3 && segments[1] === 'tasks') {
       if (!isSafeTaskName(segments[2])) return invalidTaskNameResponse();
-      return jsonResponse(await services.tasks.getTask(segments[2]));
+      return jsonResponse(await services.dashboard.getTask(segments[2]));
     }
 
     if (
@@ -146,7 +154,9 @@ async function handleApiRoute(
     ) {
       if (!isSafeTaskName(segments[2])) return invalidTaskNameResponse();
       const limit = numberParam(url.searchParams.get('limit'), 25, 1, 100);
-      return jsonResponse(await services.tasks.listRuns(segments[2], limit));
+      return jsonResponse(
+        await services.dashboard.listRuns(segments[2], limit),
+      );
     }
 
     if (
@@ -154,7 +164,7 @@ async function handleApiRoute(
       segments[1] === 'health' &&
       segments[2] === 'scheduler'
     ) {
-      return jsonResponse(await services.health.getSchedulerHealth());
+      return jsonResponse(await services.dashboard.getSchedulerHealth());
     }
 
     if (
@@ -186,7 +196,7 @@ async function handleApiRoute(
 
 function schedulerEventsResponse(
   request: Request,
-  services: ControlCenterServices,
+  services: { streams: StreamService },
   limit: number,
   pollIntervalMs: number,
   once: boolean,

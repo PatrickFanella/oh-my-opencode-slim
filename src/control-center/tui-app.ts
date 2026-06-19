@@ -3,6 +3,7 @@ import {
   createCliRenderer,
   TextRenderable,
 } from '@opentui/core';
+import type { ControlCenterDashboard } from './dashboard';
 import {
   type ControlCenterServices,
   createControlCenterServices,
@@ -26,6 +27,7 @@ export interface ControlCenterTuiOptions {
     renderer: CliRenderer,
     content: string,
   ) => ControlCenterScreen;
+  dashboard?: ControlCenterDashboard;
   services?: ControlCenterServices;
 }
 
@@ -39,11 +41,14 @@ export async function runControlCenterTui(
       targetFps: 12,
       openConsoleOnError: false,
     }));
-  const services =
-    options.services ??
-    createControlCenterServices({ configDir: options.configDir });
+  const services = options.dashboard
+    ? undefined
+    : (options.services ??
+      createControlCenterServices({ configDir: options.configDir }));
+  const dashboard = options.dashboard ?? services?.dashboard;
+  if (!dashboard) throw new Error('Control center dashboard unavailable');
   const state = createDefaultViewState();
-  let snapshot = await services.snapshot();
+  let snapshot = await dashboard.snapshot();
   const screen = options.createScreen
     ? options.createScreen(renderer, render(renderer, snapshot, state))
     : new TextRenderable(renderer, {
@@ -56,7 +61,7 @@ export async function runControlCenterTui(
   const refresh = async (message?: string) => {
     const visible = getVisibleTasks(snapshot.tasks, state.filter);
     const selected = visible[Math.min(state.selectedIndex, visible.length - 1)];
-    snapshot = await services.snapshot(selected?.name);
+    snapshot = await dashboard.snapshot(selected?.name);
     state.selectedIndex = clampIndex(
       state.selectedIndex,
       getVisibleTasks(snapshot.tasks, state.filter).length,

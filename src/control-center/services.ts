@@ -8,6 +8,10 @@ import {
   SqliteTaskRunRepository,
   TaskDefinitionFileRepository,
 } from './adapters';
+import {
+  type ControlCenterDashboard,
+  createControlCenterDashboard,
+} from './dashboard';
 import { summarizeTask, validateRecurringTaskDraft } from './domain';
 import type {
   ControlCenterSnapshot,
@@ -36,6 +40,7 @@ export interface ControlCenterServices {
   tasks: TaskService;
   streams: StreamService;
   health: HealthService;
+  dashboard: ControlCenterDashboard;
   snapshot(selectedTaskName?: string): Promise<ControlCenterSnapshot>;
 }
 
@@ -55,28 +60,23 @@ export function createControlCenterServices(
   const taskService = new LocalTaskService(definitions, runs, reports, now);
   const streamService = new LocalStreamService(scheduler, reports);
   const healthService = new LocalHealthService(definitions, runs, scheduler);
+  const dashboard = createControlCenterDashboard(
+    {
+      tasks: taskService,
+      streams: streamService,
+      health: healthService,
+    },
+    { now },
+  );
 
   return {
     paths,
     tasks: taskService,
     streams: streamService,
     health: healthService,
+    dashboard,
     async snapshot(selectedTaskName?: string) {
-      const [tasks, health, schedulerEvents] = await Promise.all([
-        taskService.listTasks(),
-        healthService.getSchedulerHealth(),
-        streamService.listRecentSchedulerEvents(50),
-      ]);
-      const selectedName = selectedTaskName ?? tasks[0]?.name;
-      return {
-        tasks,
-        selectedTask: selectedName
-          ? await taskService.getTask(selectedName)
-          : undefined,
-        health,
-        schedulerEvents,
-        generatedAt: now().toISOString(),
-      };
+      return dashboard.snapshot(selectedTaskName);
     },
   };
 }

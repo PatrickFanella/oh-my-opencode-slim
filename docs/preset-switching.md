@@ -14,7 +14,7 @@ Switch agent model presets at runtime without restarting OpenCode using the `/pr
 1. Define named presets in `blacktower.jsonc` under the `presets` field
 2. Run `/preset <name>` to switch. The plugin calls the OpenCode SDK's `config.update()` method, which triggers a server-side cache invalidation
 3. Agents covered by the new preset get the preset's values
-4. Agents that were in the *previous* preset but are *not* in the new one are reset to their config-file baseline values
+4. Agents that were in the *previous* preset but are *not* in the new one are reset to their root-agent baseline when configured, or to the built-in plugin default model for built-in agents
 5. The next LLM call uses the new models and settings
 
 ## Example Configuration
@@ -103,7 +103,8 @@ Reset to baseline: explorer
 ```
 
 The "Reset to baseline" line appears when agents from the previous preset
-are not present in the new one. Those agents are reverted to their
-config-file defaults.
+are not present in the new one. Those agents are reverted to explicit root
+agent settings when present; otherwise built-in agents fall back to the
+plugin default model.
 
 > See [Configuration](configuration.md) for the full preset option reference.

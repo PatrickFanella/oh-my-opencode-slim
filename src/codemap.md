@@ -2,8 +2,8 @@
 
 ## Responsibility
 
-- `src/index.ts` delivers the plugin assembly layer: it loads configuration, resolves agent definitions, precomputes runtime model fallback chains, wires multiplexer/session orchestration, registers tools/hooks, materializes the curated managed skills path, and returns the OpenCode plugin registration object.
-- `config/`, `agents/`, `tools/`, `multiplexer/`, `hooks/`, and `utils/` contain the reusable building blocks (loader/schema/constants, agent factories/permission helpers, tool factories, session mirroring managers, hook implementations, and runtime utilities) that power that entry point.
+- `src/index.ts` delivers the plugin assembly layer: it loads configuration, resolves effective runtime config, resolves agent definitions, precomputes runtime model fallback chains, wires multiplexer/session orchestration, registers tools/hooks, materializes the curated managed skills path, and returns the OpenCode plugin registration object.
+- `config/`, `agents/`, `tools/`, `multiplexer/`, `hooks/`, `plugin/`, and `utils/` contain the reusable building blocks (loader/schema/constants, agent factories/permission helpers, tool factories, session mirroring managers, hook implementations, plugin assembly helpers, and runtime utilities) that power that entry point.
 - `hooks/task-session-manager` is now part of the core plugin flow to support resumable child task sessions with concise aliases and reminder injection for orchestrator calls.
 - `cli/` remains the installer surface (argument parsing, interactive prompts,
   config edits, skill/provider installation) and exposes the local
@@ -17,7 +17,7 @@
 ## Design
 
 - Agent creation follows explicit factories (`agents/index.ts`, per-agent creators under `agents/`) with override/permission helpers (`config/schema.ts`, `cli/skills.ts`, `config/agent-mcps.ts`) so defaults live in `config/constants.ts`, prompts can be swapped via `config/loader.ts`, and variant labels propagate through `utils/agent-variant.ts`.
-- Session orchestration combines `SubagentDepthTracker`, `MultiplexerSessionManager`, `CouncilManager`, and `ForegroundFallbackManager`; these coordinate subagent depth limits, pane lifecycle, council session creation, and foreground model failover.
+- Session orchestration combines `SubagentDepthTracker`, `MultiplexerSessionManager`, `SessionLifecycle`, `CouncilManager`, and `ForegroundFallbackManager`; these coordinate subagent depth limits, pane lifecycle, council session creation, and foreground model failover.
 - Hook composition is centralized in `src/index.ts`: lifecycle event handlers and tool transform handlers fan out to specialized hooks, then some hooks post-process system messages in-place for provider compatibility.
 - Supplemental tools bundle AST-grep search/replace, council orchestration, and web fetching behind the OpenCode `tool` interface and are mounted in `index.ts` alongside hooks and MCP helpers.
 - The control-center module keeps task monitoring out of the OpenCode sidebar
@@ -28,7 +28,10 @@
 ## Flow
 
 - Startup:
-  - `loadPluginConfig` builds effective config from user/project presets.
+  - `loadPluginConfig` builds baseline config from user/project inputs and
+    applies config-file presets with alias-aware root precedence.
+  - Runtime preset state can derive a separate effective config for active
+    `/preset` switches without contaminating the config-file baseline.
   - `createAgents` + `getAgentConfigs` construct final agent registry and resolved prompts.
   - Runtime model chains are built from configured arrays plus fallback chains.
   - `SubagentDepthTracker`, `MultiplexerSessionManager`, `CouncilManager`, `ForegroundFallbackManager`, and hook factories are initialized before registration.

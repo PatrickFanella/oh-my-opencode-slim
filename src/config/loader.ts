@@ -2,11 +2,15 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { stripJsonComments } from '../cli/config-io';
 import { getConfigSearchDirs } from '../cli/paths';
+import { AGENT_ALIASES } from './constants';
+import { normalizeMultiplexerConfig } from './runtime-config';
+import { setRuntimePresetBaselineAgents } from './runtime-preset-baseline';
 import {
-  DEFAULT_MULTIPLEXER_CONFIG,
+  type AgentOverrideConfig,
   type PackageDefinition,
   type PluginConfig,
   PluginConfigSchema,
+  type Preset,
 } from './schema';
 
 /**
@@ -376,6 +380,34 @@ export function deepMerge<T extends Record<string, unknown>>(
   return result;
 }
 
+function mergePresetAgentsWithRoot(
+  preset: Preset,
+  rootAgents: PluginConfig['agents'],
+): Record<string, AgentOverrideConfig> {
+  return mergeAgentOverridesByResolvedName(preset, rootAgents);
+}
+
+export function mergeAgentOverridesByResolvedName(
+  base?: Record<string, AgentOverrideConfig>,
+  override?: Record<string, AgentOverrideConfig>,
+): Record<string, AgentOverrideConfig> {
+  const merged: Record<string, AgentOverrideConfig> = {};
+  mergeResolvedAgentOverridesInto(merged, base ?? {});
+  mergeResolvedAgentOverridesInto(merged, override ?? {});
+  return merged;
+}
+
+function mergeResolvedAgentOverridesInto(
+  target: Record<string, AgentOverrideConfig>,
+  source: Record<string, AgentOverrideConfig>,
+): void {
+  for (const [agentName, override] of Object.entries(source)) {
+    const resolvedName = AGENT_ALIASES[agentName] ?? agentName;
+    target[resolvedName] =
+      deepMerge(target[resolvedName], override) ?? override;
+  }
+}
+
 /**
  * Load plugin configuration from user and project config files, merging them appropriately.
  *
@@ -411,7 +443,10 @@ export function loadPluginConfig(
   }
 
   // Normalize multiplexer config before environment/package/preset overlays.
-  config = normalizeMultiplexerConfig(config);
+  config = {
+    ...config,
+    multiplexer: normalizeMultiplexerConfig(config),
+  };
 
   // Override preset from environment variable if set
   const envPreset = process.env.BLACKTOWER_PRESET;
@@ -429,8 +464,9 @@ export function loadPluginConfig(
   if (config.preset) {
     const preset = config.presets?.[config.preset];
     if (preset) {
+      setRuntimePresetBaselineAgents(config, config.agents);
       // Merge preset agents with root agents (root overrides)
-      config.agents = deepMerge(preset, config.agents);
+      config.agents = mergePresetAgentsWithRoot(preset, config.agents);
     } else {
       // Preset name specified but doesn't exist - warn user
       const presetSource =
@@ -516,36 +552,4 @@ export function loadAgentPrompt(
   );
 
   return result;
-}
-
-/**
- * Normalize multiplexer config. Explicit `multiplexer` config wins; otherwise
- * legacy `tmux` config maps to the unified multiplexer shape. If neither is
- * present, the code-owned default is tmux/main-vertical/60.
- *
- * @param config - Plugin config to migrate
- * @returns Config with multiplexer settings applied
- */
-function normalizeMultiplexerConfig(config: PluginConfig): PluginConfig {
-  if (config.multiplexer) {
-    return config;
-  }
-
-  if (config.tmux) {
-    return {
-      ...config,
-      multiplexer: {
-        type: config.tmux.enabled ? 'tmux' : 'none',
-        layout: config.tmux.layout ?? DEFAULT_MULTIPLEXER_CONFIG.layout,
-        main_pane_size:
-          config.tmux.main_pane_size ??
-          DEFAULT_MULTIPLEXER_CONFIG.main_pane_size,
-      },
-    };
-  }
-
-  return {
-    ...config,
-    multiplexer: { ...DEFAULT_MULTIPLEXER_CONFIG },
-  };
 }
