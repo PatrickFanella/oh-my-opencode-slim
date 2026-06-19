@@ -37,7 +37,11 @@ import {
   MultiplexerSessionManager,
   startAvailabilityCheck,
 } from './multiplexer';
-import { ensureManagedSkillsPath } from './plugin/assembly';
+import {
+  ensureManagedSkillsPath,
+  omitGeneratedPermission,
+  shouldInheritGlobalPermission,
+} from './plugin/assembly';
 import { materializeCuratedSkills } from './skills/managed';
 import {
   createCavemanToolkit,
@@ -513,22 +517,34 @@ const Blacktower: Plugin = async (ctx) => {
 
       // Merge Agent configs — per-agent shallow merge to preserve
       // user-supplied fields (e.g. tools, permission) from opencode.json
+      const inheritGlobalPermission =
+        shouldInheritGlobalPermission(opencodeConfig);
       if (!opencodeConfig.agent) {
-        opencodeConfig.agent = { ...agents };
+        opencodeConfig.agent = Object.fromEntries(
+          Object.entries(agents).map(([name, pluginAgent]) => [
+            name,
+            inheritGlobalPermission
+              ? omitGeneratedPermission(pluginAgent as Record<string, unknown>)
+              : pluginAgent,
+          ]),
+        );
       } else {
         for (const [name, pluginAgent] of Object.entries(agents)) {
           const existing = (opencodeConfig.agent as Record<string, unknown>)[
             name
           ] as Record<string, unknown> | undefined;
+          const pluginAgentDefaults = inheritGlobalPermission
+            ? omitGeneratedPermission(pluginAgent as Record<string, unknown>)
+            : pluginAgent;
           if (existing) {
             // Shallow merge: plugin defaults first, user overrides win
             (opencodeConfig.agent as Record<string, unknown>)[name] = {
-              ...pluginAgent,
+              ...pluginAgentDefaults,
               ...existing,
             };
           } else {
             (opencodeConfig.agent as Record<string, unknown>)[name] = {
-              ...pluginAgent,
+              ...pluginAgentDefaults,
             };
           }
         }
@@ -707,42 +723,47 @@ const Blacktower: Plugin = async (ctx) => {
         (mcpName) => !disabledMcpNames.has(mcpName),
       );
 
-      // For each agent, create permission rules based on their mcps list
-      for (const [agentName, agentConfig] of Object.entries(agents)) {
-        const agentMcps = (agentConfig as { mcps?: string[] })?.mcps;
-        if (!agentMcps) continue;
+      if (!inheritGlobalPermission) {
+        // For each agent, create permission rules based on their mcps list.
+        // When top-level permission is "allow", avoid adding per-agent
+        // permission maps so the user's global approval policy remains the
+        // effective default.
+        for (const [agentName, agentConfig] of Object.entries(agents)) {
+          const agentMcps = (agentConfig as { mcps?: string[] })?.mcps;
+          if (!agentMcps) continue;
 
-        // Get or create agent permission config
-        if (!configAgent[agentName]) {
-          configAgent[agentName] = { ...agentConfig };
-        }
-        const agentConfigEntry = configAgent[agentName] as Record<
-          string,
-          unknown
-        >;
-        const agentPermission = (agentConfigEntry.permission ?? {}) as Record<
-          string,
-          unknown
-        >;
-
-        // Parse mcps list with wildcard and exclusion support
-        const allowedMcps = parseList(agentMcps, allMcpNames);
-
-        // Create permission rules for each MCP
-        // MCP tools are named as <server>_<tool>, so we use <server>_*
-        for (const mcpName of allMcpNames) {
-          const sanitizedMcpName = mcpName.replace(/[^a-zA-Z0-9_-]/g, '_');
-          const permissionKey = `${sanitizedMcpName}_*`;
-          const action = allowedMcps.includes(mcpName) ? 'allow' : 'deny';
-
-          // Only set if not already defined by user
-          if (!(permissionKey in agentPermission)) {
-            agentPermission[permissionKey] = action;
+          // Get or create agent permission config
+          if (!configAgent[agentName]) {
+            configAgent[agentName] = { ...agentConfig };
           }
-        }
+          const agentConfigEntry = configAgent[agentName] as Record<
+            string,
+            unknown
+          >;
+          const agentPermission = (agentConfigEntry.permission ?? {}) as Record<
+            string,
+            unknown
+          >;
 
-        // Update agent config with permissions
-        agentConfigEntry.permission = agentPermission;
+          // Parse mcps list with wildcard and exclusion support
+          const allowedMcps = parseList(agentMcps, allMcpNames);
+
+          // Create permission rules for each MCP
+          // MCP tools are named as <server>_<tool>, so we use <server>_*
+          for (const mcpName of allMcpNames) {
+            const sanitizedMcpName = mcpName.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const permissionKey = `${sanitizedMcpName}_*`;
+            const action = allowedMcps.includes(mcpName) ? 'allow' : 'deny';
+
+            // Only set if not already defined by user
+            if (!(permissionKey in agentPermission)) {
+              agentPermission[permissionKey] = action;
+            }
+          }
+
+          // Update agent config with permissions
+          agentConfigEntry.permission = agentPermission;
+        }
       }
 
       // Register /auto-continue command so OpenCode recognizes it.

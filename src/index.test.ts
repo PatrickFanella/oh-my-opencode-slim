@@ -24,3 +24,44 @@ test('plugin exposes config and event hook surfaces', async () => {
     'webfetch',
   ]);
 });
+
+test('global permission allow is inherited by generated agents', async () => {
+  const registration = await plugin.server({
+    directory: process.cwd(),
+  } as never);
+  const opencodeConfig: Record<string, unknown> = {
+    permission: 'allow',
+    mcp: {
+      example: { type: 'local', command: ['example'], enabled: true },
+    },
+  };
+
+  await registration.config?.(opencodeConfig);
+
+  const agents = opencodeConfig.agent as Record<
+    string,
+    Record<string, unknown>
+  >;
+  expect(agents.orchestrator?.permission).toBeUndefined();
+  expect(agents.explorer?.permission).toBeUndefined();
+});
+
+test('explicit agent permission survives global permission allow', async () => {
+  const registration = await plugin.server({
+    directory: process.cwd(),
+  } as never);
+  const opencodeConfig: Record<string, unknown> = {
+    permission: 'allow',
+    agent: {
+      explorer: { permission: { bash: 'ask' } },
+    },
+  };
+
+  await registration.config?.(opencodeConfig);
+
+  const agents = opencodeConfig.agent as Record<
+    string,
+    Record<string, unknown>
+  >;
+  expect(agents.explorer?.permission).toEqual({ bash: 'ask' });
+});

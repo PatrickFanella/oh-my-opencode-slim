@@ -4,6 +4,8 @@ import {
   applyRuntimePresetScalarField,
   ensureManagedSkillsPath,
   getPresetOverrideForResolvedAgent,
+  omitGeneratedPermission,
+  shouldInheritGlobalPermission,
 } from './assembly';
 
 describe('ensureManagedSkillsPath', () => {
@@ -23,6 +25,29 @@ describe('ensureManagedSkillsPath', () => {
     ensureManagedSkillsPath(config, 'managed');
 
     expect(config.skills).toEqual({ paths: ['managed'] });
+  });
+});
+
+describe('global permission inheritance', () => {
+  test('detects global permission allow shorthand', () => {
+    expect(shouldInheritGlobalPermission({ permission: 'allow' })).toBe(true);
+    expect(shouldInheritGlobalPermission({ permission: 'ask' })).toBe(false);
+    expect(
+      shouldInheritGlobalPermission({ permission: { bash: 'allow' } }),
+    ).toBe(false);
+  });
+
+  test('omits generated permission while preserving other agent fields', () => {
+    expect(
+      omitGeneratedPermission({
+        model: 'test/model',
+        permission: { bash: 'deny' },
+        description: 'Test agent',
+      }),
+    ).toEqual({
+      model: 'test/model',
+      description: 'Test agent',
+    });
   });
 });
 

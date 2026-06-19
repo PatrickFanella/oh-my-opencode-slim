@@ -24,6 +24,19 @@ export function ensureManagedSkillsPath(
   opencodeConfig.skills = skills;
 }
 
+export function shouldInheritGlobalPermission(
+  opencodeConfig: Record<string, unknown>,
+): boolean {
+  return opencodeConfig.permission === 'allow';
+}
+
+export function omitGeneratedPermission<T extends Record<string, unknown>>(
+  agentConfig: T,
+): Omit<T, 'permission'> {
+  const { permission: _permission, ...rest } = agentConfig;
+  return rest;
+}
+
 export function getPresetOverrideForResolvedAgent(
   preset: Preset,
   resolvedName: string,
