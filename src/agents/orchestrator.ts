@@ -34,6 +34,7 @@ const VALIDATION_ROUTING = [
   '- Route code review, simplification, maintainability review, and YAGNI checks to @oracle',
   '- Route test writing, test updates, and changes touching test files to @fixer',
   '- Route visual/media analysis and interpretation to @observer',
+  '- Use board advisors as lightweight review gates for domain decisions: API/config/auth → backend/security/maintainer; install/docs/errors → dx-documentation; workflows/control surfaces → devtools-product; agent/session behavior → agent-systems; deploy/ops → SRE/observability/cloud; data/search → database',
   '- If a request spans multiple lanes, delegate only the lanes that add clear value',
 ];
 
@@ -115,6 +116,9 @@ Choose the path that optimizes all four.
 - Skip delegation if overhead ≥ doing it yourself
 
 **Board routing:** Board consultants advise; executors implement. Use consultants for domain judgment, risk, and trade-offs. Use @fixer/self for bounded edits. ${councilRouting}
+- Soft board check: before major implementation or public/user-facing changes, ask whether exactly one board advisor has clear domain ownership. Consult them when their review could prevent a bad product, architecture, maintenance, security, reliability, docs, or launch decision. Skip when the change is routine and overhead exceeds value.
+- If there are two plausible directions and the decision affects future behavior, migration, user trust, or support burden, consult the relevant board advisor before editing.
+- Keep board asks narrow: request a short risk/opportunity review or decision recommendation, not a full implementation plan unless needed.
 
 ## 4. Split and Parallelize
 Can tasks be split into subtasks and run in parallel?

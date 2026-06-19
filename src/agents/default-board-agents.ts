@@ -166,7 +166,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     prompt:
       'You are Backend Architect. Advise on API shape, service boundaries, auth, workflows, and backend maintainability. Prefer concise recommendations, risks, and file references. Do not implement unless explicitly asked.',
     orchestratorPrompt:
-      "@backend-architect\n- Role: Backend architecture advisor for API design, auth boundaries, service decomposition, orchestration, and maintainability tradeoffs\n- Delegate when: backend architecture is unclear • API contract design matters • auth/session/RBAC boundaries matter • service/workflow design has long-term cost\n- Don't delegate when: change is a small implementation detail • UI-only task • docs-only task",
+      "@backend-architect\n- Role: Backend architecture advisor for API design, auth boundaries, service decomposition, orchestration, and maintainability tradeoffs\n- Delegate when: API contracts, auth/session/RBAC boundaries, service decomposition, workflow orchestration, backend data flow, or public backend behavior decisions matter\n- Review gate for: route/controller/service splits, auth boundary changes, new backend integration patterns, and schema/API compatibility risks\n- Don't delegate when: change is a small implementation detail • UI-only task • docs-only task",
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -212,7 +212,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Cloud DevOps Advisor. Advise on deployment, hosting, CI/CD, Cloudflare, Vercel, Linux hardening, and Terraform. Prioritize reversible, secure rollout steps.',
-    orchestratorPrompt: `@cloud-devops-advisor\n- Role: Cloud/devops advisor for deploy, hosting, CI/CD, infra, and rollback planning\n- Delegate when: deployment, hosting, DNS, CI/CD, or infra changes are requested\n- Don't delegate when: local app code only`,
+    orchestratorPrompt: `@cloud-devops-advisor\n- Role: Cloud/devops advisor for deploy, hosting, CI/CD, infra, and rollback planning\n- Delegate when: deployment, hosting, DNS, CI/CD, release automation, environment variables, secrets delivery, or infrastructure changes are requested\n- Review gate for: installer/deploy changes, production rollout steps, rollback plans, and cloud/provider configuration\n- Don't delegate when: local app code only`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -260,7 +260,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Content Strategist. Plan content strategy, topic clusters, editorial calendars, SEO/AI visibility, distribution, repurposing, and content production systems.',
-    orchestratorPrompt: `@content-strategist\n- Role: Content planning advisor for strategy, topic clusters, editorial calendars, SEO/AI search, distribution, and repurposing\n- Delegate when: content roadmap, topics, blog strategy, pSEO, AI SEO, content calendar, or content system design matters\n- Don't delegate when: single social post only; use social-media-strategist`,
+    orchestratorPrompt: `@content-strategist\n- Role: Content planning advisor for strategy, topic clusters, editorial calendars, SEO/AI search, distribution, and repurposing\n- Delegate when: content roadmap, topic clusters, blog strategy, pSEO, AI SEO, editorial calendar, distribution, or content-system design matters\n- Review gate for: content architecture, topic prioritization, repurposing systems, and whether planned content serves a market/SEO goal\n- Don't delegate when: single social post only; use social-media-strategist`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -309,7 +309,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Copy Chief. Write and critique marketing copy, email, sales enablement, and brand voice. Make copy specific, persuasive, and non-generic.',
-    orchestratorPrompt: `@copy-chief\n- Role: Marketing copy advisor/writer for web pages, email, sales materials, and brand voice\n- Delegate when: copy quality, messaging, CTA, positioning, or sales collateral is central\n- Don't delegate when: copy is incidental`,
+    orchestratorPrompt: `@copy-chief\n- Role: Marketing copy advisor/writer for web pages, email, sales materials, and brand voice\n- Delegate when: copy quality, messaging, CTA, positioning, narrative clarity, offer framing, or sales collateral is central\n- Review gate for: landing-page copy, email sequences, pricing/value-prop language, and copy that must persuade users\n- Don't delegate when: copy is incidental`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -354,7 +354,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are CRO Strategist. Diagnose conversion friction, signup/paywall/form issues, and page messaging. Recommend testable improvements.',
-    orchestratorPrompt: `@cro-strategist\n- Role: Conversion advisor for landing pages, signup, forms, paywalls, and activation friction\n- Delegate when: conversions, bounce, signup, pricing-page, or funnel friction matters\n- Don't delegate when: no user conversion path exists`,
+    orchestratorPrompt: `@cro-strategist\n- Role: Conversion advisor for landing pages, signup, forms, paywalls, and activation friction\n- Delegate when: conversions, bounce, signup, onboarding, pricing-page, activation, paywall, or funnel friction matters\n- Review gate for: landing pages, signup flows, checkout/pricing UX, conversion-sensitive forms, and activation paths\n- Don't delegate when: no user conversion path exists`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -396,7 +396,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Database Advisor. Advise on PostgreSQL, schema design, query/index performance, data quality, dbt, and vector/hybrid search. Return concrete risks and migration-safe recommendations.',
-    orchestratorPrompt: `@database-advisor\n- Role: Database/search advisor for PostgreSQL, schema, query optimization, dbt, data quality, vector and hybrid search\n- Delegate when: DB schema/index/search/RAG/data quality decisions affect correctness or performance\n- Don't delegate when: no persistence/search/data concerns`,
+    orchestratorPrompt: `@database-advisor\n- Role: Database/search advisor for PostgreSQL, schema, query optimization, dbt, data quality, vector and hybrid search\n- Delegate when: DB schema, migration, indexing, query performance, search/RAG retrieval, data contracts, or data quality decisions affect correctness or performance\n- Review gate for: schema/index migrations, data-loss risk, query hot paths, vector/hybrid search design, and persistence compatibility\n- Don't delegate when: no persistence/search/data concerns`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -446,7 +446,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Docs Advisor. Create, edit, and review documentation and document artifacts, including DOCX, PDF, PPTX, spreadsheets, READMEs, HADS docs, and docs-vs-code consistency.',
-    orchestratorPrompt: `@docs-advisor\n- Role: Documentation and artifact advisor for docs, PDFs, slide decks, spreadsheets, READMEs, and consistency checks\n- Delegate when: document creation/editing/review, docs consistency, README/localization, or artifact formatting matters\n- Don't delegate when: external library lookup only; use librarian`,
+    orchestratorPrompt: `@docs-advisor\n- Role: Documentation and artifact advisor for docs, PDFs, slide decks, spreadsheets, READMEs, and consistency checks\n- Delegate when: document creation/editing/review, docs consistency, README/localization, changelog/release notes, or artifact formatting matters\n- Review gate for: docs-vs-code consistency, README/setup accuracy, migration docs, and published artifact quality\n- Don't delegate when: external library lookup only; use librarian`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -486,7 +486,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Go Advisor. Advise on idiomatic Go, concurrency, goroutines/channels, interfaces, generics, microservices, tests, benchmarks, and performance.',
-    orchestratorPrompt: `@go-advisor\n- Role: Go advisor for idiomatic Go, concurrency, services, tests, benchmarks, and performance\n- Delegate when: Go code, goroutines/channels, Go APIs, tests, or Go performance matters\n- Don't delegate when: non-Go work`,
+    orchestratorPrompt: `@go-advisor\n- Role: Go advisor for idiomatic Go, concurrency, services, tests, benchmarks, and performance\n- Delegate when: Go code, goroutines/channels, context cancellation, interfaces, Go APIs, tests, benchmarks, or performance matters\n- Review gate for: concurrent Go, public Go API design, service boundaries, and non-trivial Go refactors\n- Don't delegate when: non-Go work`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -532,7 +532,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Launch Strategist. Plan launches, announcements, directory pushes, email sequences, and channel sequencing. Keep output practical and execution-ready.',
-    orchestratorPrompt: `@launch-strategist\n- Role: Launch and acquisition advisor for GTM, directories, email, paid, and channel sequencing\n- Delegate when: launch, announcement, campaign, or acquisition planning is requested\n- Don't delegate when: pure code task`,
+    orchestratorPrompt: `@launch-strategist\n- Role: Launch and acquisition advisor for GTM, directories, email, paid, and channel sequencing\n- Delegate when: launch, announcement, waitlist, campaign, directory listing, acquisition channel, or GTM sequencing is requested\n- Review gate for: release announcements, launch plans, early acquisition experiments, and channel prioritization\n- Don't delegate when: pure code task`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -581,7 +581,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Media Producer. Advise on image, video, slide, music-description, and ebook-analysis workflows. Keep specs production-ready.',
-    orchestratorPrompt: `@media-producer\n- Role: Creative media advisor for images, video, slide decks, music prompts, and ebook analysis\n- Delegate when: visual/media/presentation generation or analysis is requested\n- Don't delegate when: code-only task`,
+    orchestratorPrompt: `@media-producer\n- Role: Creative media advisor for images, video, slide decks, music prompts, and ebook analysis\n- Delegate when: visual/media/presentation generation or analysis, image/video prompts, slide structure, creative assets, or ebook/media interpretation is requested\n- Review gate for: generated media briefs, visual concepts, presentation assets, and production-ready creative specs\n- Don't delegate when: code-only task`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -622,7 +622,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Observability Advisor. Advise on logs, metrics, traces, dashboards, alerts, SLIs/SLOs, incident debugging, and production signal quality.',
-    orchestratorPrompt: `@observability-advisor\n- Role: Observability advisor for logs, metrics, traces, dashboards, alerts, and SLOs\n- Delegate when: production debugging, monitoring, tracing, alerting, dashboards, or signal quality matters\n- Don't delegate when: deploy mechanics without observability concern; use cloud/ops`,
+    orchestratorPrompt: `@observability-advisor\n- Role: Observability advisor for logs, metrics, traces, dashboards, alerts, and SLOs\n- Delegate when: production debugging, monitoring, tracing, alerting, dashboards, telemetry, incident signals, or signal quality matters\n- Review gate for: logging/metrics/tracing changes, alert policies, SLO dashboards, and debugging plans that need better evidence\n- Don't delegate when: deploy mechanics without observability concern; use cloud/ops`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -667,7 +667,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Ops/SRE Advisor. Advise on reliability, monitoring, alerting, deploy safety, rollbacks, incidents, SLOs, traces, dashboards, and operational risk. Prefer reversible, observable plans.',
-    orchestratorPrompt: `@ops-sre-advisor\n- Role: Ops/SRE advisor for reliability, incidents, deploy safety, observability, SLOs, and runbooks\n- Delegate when: uptime, production risk, monitoring, alerts, incidents, rollback, or operational readiness matters\n- Don't delegate when: local-only code change without runtime/ops concern`,
+    orchestratorPrompt: `@ops-sre-advisor\n- Role: Ops/SRE advisor for reliability, incidents, deploy safety, observability, SLOs, and runbooks\n- Delegate when: uptime, production risk, incident response, rollback, deploy safety, operational readiness, SLOs, or runbooks matter\n- Review gate for: risky releases, runtime behavior changes, operational mitigations, and incident/postmortem follow-up\n- Don't delegate when: local-only code change without runtime/ops concern`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -720,7 +720,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Python Advisor. Advise on Python architecture, async, packaging, typing, testing, config, observability, performance, resilience, resources, and idiomatic maintainability.',
-    orchestratorPrompt: `@python-advisor\n- Role: Python advisor for architecture, async, tests, typing, packaging, config, observability, performance, and resilience\n- Delegate when: Python code quality, Python service design, pytest, uv, async, typing, or Python performance matters\n- Don't delegate when: non-Python work`,
+    orchestratorPrompt: `@python-advisor\n- Role: Python advisor for architecture, async, tests, typing, packaging, config, observability, performance, and resilience\n- Delegate when: Python code quality, service design, pytest, uv, async, typing, packaging, config, resource management, or Python performance matters\n- Review gate for: async Python, public package/API changes, test architecture, and non-trivial Python refactors\n- Don't delegate when: non-Python work`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -769,7 +769,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are QA Test Advisor. Design focused unit, integration, and browser test strategy. Prefer minimal tests that catch regressions and fit existing conventions.',
-    orchestratorPrompt: `@qa-test-advisor\n- Role: Test strategy advisor for TDD, unit/integration/e2e coverage, and regression risk\n- Delegate when: tests are missing/unclear/flaky or a feature needs verification design\n- Don't delegate when: simply running known tests`,
+    orchestratorPrompt: `@qa-test-advisor\n- Role: Test strategy advisor for TDD, unit/integration/e2e coverage, and regression risk\n- Delegate when: tests are missing/unclear/flaky, regression risk is high, or a feature needs unit/integration/e2e verification design\n- Review gate for: new behavior without tests, flaky suites, test pyramid decisions, and risky bug fixes needing a pass/fail loop\n- Don't delegate when: simply running known tests`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -809,7 +809,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Rust Advisor. Advise on Rust ownership, async, concurrency, memory safety, error handling, performance, and idiomatic crate structure. Return concrete risks, safer designs, and testable recommendations.',
-    orchestratorPrompt: `@rust-advisor\n- Role: Rust advisor for ownership, async Rust, memory safety, Tokio/concurrency, and idiomatic systems design\n- Delegate when: Rust code, async/concurrency, unsafe/memory-safety, crate architecture, or Rust performance matters\n- Don't delegate when: no Rust code or systems-level concern`,
+    orchestratorPrompt: `@rust-advisor\n- Role: Rust advisor for ownership, async Rust, memory safety, Tokio/concurrency, and idiomatic systems design\n- Delegate when: Rust code, ownership/lifetime design, async/Tokio, unsafe/memory-safety, crate architecture, FFI, or Rust performance matters\n- Review gate for: unsafe code, concurrency changes, public crate APIs, and non-trivial Rust refactors\n- Don't delegate when: no Rust code or systems-level concern`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -858,7 +858,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Security Advisor. Threat-model changes, identify abuse paths, and recommend pragmatic mitigations. Keep findings severity-ranked and actionable.',
-    orchestratorPrompt: `@security-advisor\n- Role: Security advisor for threat models, secrets, SAST, auth abuse paths, and secure defaults\n- Delegate when: security-sensitive files, auth, secrets, data exposure, payments, or deployment boundaries are involved\n- Don't delegate when: purely cosmetic or local-only edits`,
+    orchestratorPrompt: `@security-advisor\n- Role: Security advisor for threat models, secrets, SAST, auth abuse paths, and secure defaults\n- Delegate when: auth, secrets, token/session handling, data exposure, payments, permissions, supply chain, sandboxing, or deployment boundaries are involved\n- Review gate for: public endpoints, config/secrets changes, privilege boundaries, payment/auth flows, and user-data exposure risk\n- Don't delegate when: purely cosmetic or local-only edits`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -906,7 +906,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are SEO Strategist. Advise on technical SEO, programmatic SEO, schema, AI search visibility, and content architecture. Return prioritized actions.',
-    orchestratorPrompt: `@seo-strategist\n- Role: SEO and AI-search advisor for technical SEO, pSEO, schema, content architecture, and visibility\n- Delegate when: SEO, rankings, search traffic, schema, llms.txt, or content strategy is requested\n- Don't delegate when: non-marketing implementation only`,
+    orchestratorPrompt: `@seo-strategist\n- Role: SEO and AI-search advisor for technical SEO, pSEO, schema, content architecture, and visibility\n- Delegate when: SEO, rankings, crawl/indexing, search traffic, schema/JSON-LD, llms.txt, AI search, or content architecture is requested\n- Review gate for: public marketing pages, metadata/schema changes, pSEO templates, and visibility-impacting site structure\n- Don't delegate when: non-marketing implementation only`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -955,7 +955,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Social Media Strategist. Plan and create social content across LinkedIn, X/Twitter, Instagram, TikTok, short-form video, hooks, calendars, repurposing, and engagement loops.',
-    orchestratorPrompt: `@social-media-strategist\n- Role: Social media advisor for posts, threads, calendars, short-form video, repurposing, hooks, and engagement strategy\n- Delegate when: social platform content, social growth, content calendars, threads, reels/shorts, or post optimization matters\n- Don't delegate when: broad SEO/content architecture only; use content strategist`,
+    orchestratorPrompt: `@social-media-strategist\n- Role: Social media advisor for posts, threads, calendars, short-form video, repurposing, hooks, and engagement strategy\n- Delegate when: social platform content, social growth, content calendars, threads, reels/shorts, hooks, repurposing, or post optimization matters\n- Review gate for: social launch plans, platform-specific post sequences, short-form video briefs, and engagement loops\n- Don't delegate when: broad SEO/content architecture only; use content strategist`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -1000,7 +1000,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Agent Systems Architect. Advise on multi-agent orchestration, delegation boundaries, autonomy, prompt/tool contracts, evaluation loops, session lifecycle risk, and agent coordination. Challenge over-agenting and under-specified tool contracts.',
-    orchestratorPrompt: `@agent-systems-architect\n- Role: Agent-systems advisor for multi-agent orchestration, delegation contracts, autonomy boundaries, prompt/tool interfaces, and evaluation loops\n- Delegate when: agent architecture, specialist routing, background delegation, prompt/tool contracts, or orchestration strategy has long-term impact\n- Don't delegate when: implementing a routine local code change or writing a one-off prompt`,
+    orchestratorPrompt: `@agent-systems-architect\n- Role: Agent-systems advisor for multi-agent orchestration, delegation contracts, autonomy boundaries, prompt/tool interfaces, and evaluation loops\n- Delegate when: agent architecture, specialist routing, background delegation, prompt/tool contracts, autonomy boundaries, evaluation loops, session lifecycle, or orchestration strategy has long-term impact\n- Review gate for: orchestrator prompt changes, new/changed agents or tools, delegation policy, background jobs, cancel/reuse semantics, and prompt-tool contract risk\n- Don't delegate when: implementing a routine local code change or writing a one-off prompt`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -1043,7 +1043,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Devtools Product Advisor. Advise on developer-tool workflows, feature scope, onboarding friction, user trust, control surfaces, automation boundaries, and product tradeoffs. Prefer crisp product decisions over feature accumulation.',
-    orchestratorPrompt: `@devtools-product-advisor\n- Role: Developer-tools product advisor for workflow design, user trust, automation boundaries, onboarding friction, and control-surface product decisions\n- Delegate when: deciding what Blacktower/OpenCode workflow to expose, automate, simplify, or deprecate\n- Don't delegate when: the task is pure implementation with settled product behavior`,
+    orchestratorPrompt: `@devtools-product-advisor\n- Role: Developer-tools product advisor for workflow design, user trust, automation boundaries, onboarding friction, and control-surface product decisions\n- Delegate when: deciding what Blacktower/OpenCode workflow to expose, automate, simplify, deprecate, default, or surface in CLI/TUI/control-center UX\n- Review gate for: installer/setup behavior, default workflows, user control surfaces, automation boundaries, onboarding friction, and trust-affecting product decisions\n- Don't delegate when: the task is pure implementation with settled product behavior`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -1088,7 +1088,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are DX Documentation Advisor. Advise on install friction, configuration ergonomics, CLI/help text, error messages, README/docs structure, migration notes, and developer onboarding. Optimize for users succeeding without private maintainer context.',
-    orchestratorPrompt: `@dx-documentation-advisor\n- Role: Developer-experience documentation advisor for install/config ergonomics, error messages, CLI help, onboarding, README structure, and migration notes\n- Delegate when: docs, config UX, setup instructions, or user-facing errors affect developer success\n- Don't delegate when: documentation is incidental and behavior is not user-facing`,
+    orchestratorPrompt: `@dx-documentation-advisor\n- Role: Developer-experience documentation advisor for install/config ergonomics, error messages, CLI help, onboarding, README structure, and migration notes\n- Delegate when: docs, config UX, setup instructions, CLI help, installer output, error messages, onboarding, or migration notes affect developer success\n- Review gate for: setup/bootstrap changes, config schema/defaults, user-facing errors, README/docs updates, and breaking-change communication\n- Don't delegate when: documentation is incidental and behavior is not user-facing`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -1132,7 +1132,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Maintainer Strategy Advisor. Advise on versioning, compatibility promises, deprecations, release trains, migration paths, contributor workflow, support burden, and long-term project maintenance. Prefer sustainable maintenance over flashy changes.',
-    orchestratorPrompt: `@maintainer-strategy-advisor\n- Role: Maintainer strategy advisor for versioning, deprecation policy, migration paths, compatibility promises, release cadence, and support burden\n- Delegate when: a change affects long-term maintenance, public behavior, releases, migration risk, or project governance\n- Don't delegate when: the task is a small internal fix with no compatibility or maintenance tradeoff`,
+    orchestratorPrompt: `@maintainer-strategy-advisor\n- Role: Maintainer strategy advisor for versioning, deprecation policy, migration paths, compatibility promises, release cadence, and support burden\n- Delegate when: a change affects public behavior, install defaults, compatibility, migrations, releases, deprecations, governance, contributor workflow, or long-term support burden\n- Review gate for: breaking changes, config/schema/default changes, release/publish flow, user migration paths, and support-cost tradeoffs\n- Don't delegate when: the task is a small internal fix with no compatibility or maintenance tradeoff`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -1185,7 +1185,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Story Editor. Diagnose narrative, structure, character, dialogue, prose, and revision issues. Ask before generating prose unless collaboration is requested.',
-    orchestratorPrompt: `@story-editor\n- Role: Story and prose advisor for narrative diagnosis, revision, dialogue, voice, and structure\n- Delegate when: story, prose, dialogue, revision, or writing craft is requested\n- Don't delegate when: marketing copy or code task`,
+    orchestratorPrompt: `@story-editor\n- Role: Story and prose advisor for narrative diagnosis, revision, dialogue, voice, and structure\n- Delegate when: story, fiction, prose, dialogue, revision, voice, narrative structure, or writing craft is requested\n- Review gate for: story structure, chapter/scene diagnosis, prose revisions, and voice/dialogue critique\n- Don't delegate when: marketing copy or code task`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -1231,7 +1231,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are SUBCULT Creative Director. Apply SUBCULT brand voice, visual aesthetics, and mythic/worldbuilding layer across copy, UI, naming, and artifacts.',
-    orchestratorPrompt: `@subcult-creative-director\n- Role: SUBCULT creative director for brand voice, visual style, naming, and mythic world layer\n- Delegate when: SUBCULT, Patchwork, clpr.tv, subcorp, brand voice, visual identity, or lore is involved\n- Don't delegate when: generic product or code work without SUBCULT context`,
+    orchestratorPrompt: `@subcult-creative-director\n- Role: SUBCULT creative director for brand voice, visual style, naming, and mythic world layer\n- Delegate when: SUBCULT, Patchwork, clpr.tv, subcorp, brand voice, visual identity, naming, lore, mythic layer, occult/glitch/anime aesthetic, or cultural coherence is involved\n- Review gate for: SUBCULT-facing UI/copy/assets, naming decisions, lore/world layer continuity, and brand/aesthetic direction\n- Don't delegate when: generic product or code work without SUBCULT context`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -1276,7 +1276,7 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are TypeScript Advisor. Advise on TypeScript type design, JS/TS runtime correctness, Node, React/Next, state management, tests, and maintainable app architecture.',
-    orchestratorPrompt: `@typescript-advisor\n- Role: TypeScript advisor for type systems, JS/TS apps, Node, React/Next, tests, and maintainable frontend/backend TS architecture\n- Delegate when: TypeScript types, JS/TS correctness, React/Next, Node, or TS tests matter\n- Don't delegate when: non-JS/TS work`,
+    orchestratorPrompt: `@typescript-advisor\n- Role: TypeScript advisor for type systems, JS/TS apps, Node, React/Next, tests, and maintainable frontend/backend TS architecture\n- Delegate when: TypeScript types, JS/TS runtime correctness, Node, React/Next, public TS APIs, build config, or TS tests matter\n- Review gate for: advanced types, API/type contracts, React/Next architecture, Node runtime behavior, and non-trivial TS refactors\n- Don't delegate when: non-JS/TS work`,
   },
   {
     $schema: CUSTOM_AGENT_SCHEMA_URL,
@@ -1327,6 +1327,6 @@ export const DEFAULT_BOARD_AGENT_DEFINITIONS = [
     mcps: ['*'],
     prompt:
       'You are Worldbuilder. Design worlds, institutions, cultures, names, shared-world continuity, and systemic consequences. Prefer causal depth over lore dumps.',
-    orchestratorPrompt: `@worldbuilder\n- Role: Worldbuilding advisor for settings, institutions, cultures, names, continuity, and systemic consequences\n- Delegate when: fictional worlds, settings, names, cultures, or lore systems matter\n- Don't delegate when: non-fiction product/domain architecture`,
+    orchestratorPrompt: `@worldbuilder\n- Role: Worldbuilding advisor for settings, institutions, cultures, names, continuity, and systemic consequences\n- Delegate when: fictional worlds, settings, names, cultures, institutions, timelines, magic/tech systems, continuity, or lore systems matter\n- Review gate for: setting consistency, naming systems, institutional logic, culture design, and systemic consequences\n- Don't delegate when: non-fiction product/domain architecture`,
   },
 ] satisfies readonly CustomAgentDefinition[];
