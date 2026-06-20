@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { DEFAULT_BOARD_AGENT_DEFINITIONS } from '../agents/default-board-agents';
 import { CUSTOM_SKILLS } from '../cli/custom-skills';
 import {
   DEFAULT_AGENT_SKILL_PROFILES,
@@ -24,6 +25,16 @@ describe('skill profiles', () => {
     expect(orchestratorSkills).toContain('cartography');
     expect(orchestratorSkills).toContain('customize-opencode');
     expect(orchestratorSkills).toContain('team-composition-patterns');
+    expect(orchestratorSkills).toContain('imagegen');
+    expect(orchestratorSkills).toContain('skill-installer');
+    expect(orchestratorSkills).toContain('switchyard-runtime');
+
+    for (const skill of CUSTOM_SKILLS) {
+      expect(
+        orchestratorSkills,
+        `orchestrator includes bundled skill ${skill.name}`,
+      ).toContain(skill.name);
+    }
 
     expect(getDefaultSkillProfileForAgent('designer')).toContain(
       'agent-browser',
@@ -34,6 +45,7 @@ describe('skill profiles', () => {
     expect(getDefaultSkillProfileForAgent('designer')).toContain(
       'wcag-audit-patterns',
     );
+    expect(getDefaultSkillProfileForAgent('designer')).toContain('imagegen');
     expect(getDefaultSkillProfileForAgent('oracle')).toContain(
       'review-quality',
     );
@@ -46,6 +58,25 @@ describe('skill profiles', () => {
     );
     expect(getDefaultSkillProfileForAgent('oracle')).toContain('homelab');
     expect(getDefaultSkillProfileForAgent('oracle')).toContain('nuc');
+    expect(getDefaultSkillProfileForAgent('oracle')).toContain(
+      'switchyard-runtime',
+    );
+  });
+
+  test('default global, built-in, and board profiles assign every bundled skill', () => {
+    const assignedSkills = new Set<string>([
+      ...DEFAULT_GLOBAL_SKILLS,
+      ...Object.values(DEFAULT_AGENT_SKILL_PROFILES).flat(),
+      ...DEFAULT_BOARD_AGENT_DEFINITIONS.flatMap(
+        (definition) => definition.skills ?? [],
+      ),
+    ]);
+
+    const unassignedSkills = CUSTOM_SKILLS.map((skill) => skill.name).filter(
+      (skill) => !assignedSkills.has(skill),
+    );
+
+    expect(unassignedSkills).toEqual([]);
   });
 
   test('explicit agent skills override profile resolution', () => {

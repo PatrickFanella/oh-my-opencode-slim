@@ -2,9 +2,12 @@
 
 Skills are specialized capabilities you can assign to agents. Unlike MCPs (which are running servers), skills are **prompt-based tool configurations** — instructions injected into an agent's system prompt that describe how to use a particular tool.
 
-Blacktower ships its own skill catalog, but it does not expose the whole catalog at
-once. At startup it materializes only the curated union of skills referenced by
-enabled agents. You do not need `~/.agents/skills` for Blacktower skills.
+Blacktower ships its own skill catalog, but it does not expose the whole catalog
+to every agent at once. At startup it materializes the curated union of skills
+referenced by enabled agents. The Orchestrator receives the full bundled catalog
+by default so it can route or use niche workflows, while specialists receive
+focused additive assignments. You do not need `~/.agents/skills` for Blacktower
+skills.
 
 ---
 
@@ -44,7 +47,7 @@ as the in-repo catalog grows.
 | Skill | Description | Built-in fallback assignment |
 |-------|-------------|-----------------------------|
 | [`simplify`](#simplify) | Behavior-preserving code simplification | `oracle` |
-| [`codemap`](#codemap) | Repository codemap generation | `orchestrator` |
+| [`codemap`](#codemap) | Repository codemap generation | all agents |
 | [`clonedeps`](#clonedeps) | Local dependency source cloning | `orchestrator` |
 | [`almaz`](#almaz-homelab-and-nuc) | Almaz homelab operations and documentation | `orchestrator`, `oracle` |
 | [`homelab`](#almaz-homelab-and-nuc) | Cross-host NUC/Almaz coordination | `orchestrator`, `oracle` |
@@ -70,8 +73,10 @@ Top-level catalog docs are also preserved in `src/skills/` (`README.md`,
 
 Skill assignment is controlled by skill profiles and explicit agent `skills`
 arrays. The installer-generated config omits `skillProfiles` by default, so the
-code-owned built-in profiles are active. If you run with `--skills=no`, the
-generated config writes explicit empty profiles for every built-in agent.
+code-owned built-in profiles are active. By default, every bundled skill is
+assigned to at least one global, built-in, or board profile, and the Orchestrator
+can access the full bundled catalog. If you run with `--skills=no`, the generated
+config writes explicit empty profiles for every built-in agent.
 
 Generated configs use deny-by-default skill permissions. Niche skills stay
 invisible unless code-owned profiles or explicit agent `skills` arrays allow

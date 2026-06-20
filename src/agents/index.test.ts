@@ -262,13 +262,13 @@ describe('skill permissions', () => {
     expect(skillPerm?.clonedeps).toBe('allow');
   });
 
-  test('fixer gets global skills but not removed codemap skill', () => {
+  test('fixer gets global utility skills', () => {
     const agents = createAgents();
     const fixer = agents.find((a) => a.name === 'fixer');
     expect(fixer).toBeDefined();
     const skillPerm = (fixer?.config.permission as Record<string, unknown>)
       ?.skill as Record<string, string>;
-    expect(skillPerm?.codemap).not.toBe('allow');
+    expect(skillPerm?.codemap).toBe('allow');
     expect(skillPerm?.clonedeps).toBe('allow');
   });
 

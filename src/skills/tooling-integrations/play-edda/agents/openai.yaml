@@ -1,0 +1,4 @@
+interface:
+  display_name: "Play Edda"
+  short_description: "Autonomous Edda campaign play loop"
+  default_prompt: "Play one Edda campaign turn from the supplied campaign state."

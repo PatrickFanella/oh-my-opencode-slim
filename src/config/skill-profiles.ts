@@ -1,4 +1,5 @@
 import { getDefaultAgentSkillMap } from '../agents/registry';
+import { CUSTOM_SKILLS } from '../cli/custom-skills';
 import type { PluginConfig } from './schema';
 import { getAgentOverride } from './utils';
 
@@ -6,10 +7,12 @@ export const DEFAULT_GLOBAL_SKILLS = [
   'agent-browser',
   'cartography',
   'caveman',
+  'codemap',
   'clonedeps',
   'context-engineer',
   'deep-research',
   'github-pro',
+  'gentle-teaching',
   'grill-me',
   'grill-with-docs',
   'humanizer',
@@ -43,14 +46,26 @@ export const DEFAULT_AGENT_SKILL_PROFILES: Record<string, readonly string[]> =
 
 const INTERNAL_AGENTS_WITH_NO_DEFAULT_SKILLS = new Set(['councillor']);
 
+const ALL_BUNDLED_SKILLS = CUSTOM_SKILLS.map((skill) => skill.name);
+
 function uniqueSkills(skills: readonly string[]): string[] {
   return Array.from(new Set(skills));
+}
+
+function getDefaultAgentSkills(agentName: string): string[] {
+  const agentSkills = DEFAULT_AGENT_SKILL_PROFILES[agentName] ?? [];
+
+  if (agentName === 'orchestrator') {
+    return uniqueSkills([...agentSkills, ...ALL_BUNDLED_SKILLS]);
+  }
+
+  return [...agentSkills];
 }
 
 export function getDefaultSkillProfileForAgent(agentName: string): string[] {
   return uniqueSkills([
     ...DEFAULT_GLOBAL_SKILLS,
-    ...(DEFAULT_AGENT_SKILL_PROFILES[agentName] ?? []),
+    ...getDefaultAgentSkills(agentName),
   ]);
 }
 
@@ -62,7 +77,12 @@ export function getDefaultSkillProfilesConfig(): {
     global: [...DEFAULT_GLOBAL_SKILLS],
     agents: Object.fromEntries(
       Object.entries(DEFAULT_AGENT_SKILL_PROFILES).map(
-        ([agentName, skills]) => [agentName, [...skills]],
+        ([agentName, skills]) => [
+          agentName,
+          agentName === 'orchestrator'
+            ? uniqueSkills([...skills, ...ALL_BUNDLED_SKILLS])
+            : [...skills],
+        ],
       ),
     ),
   };
@@ -82,10 +102,11 @@ export function resolveAgentSkills(
   }
 
   const globalSkills = config?.skillProfiles?.global ?? DEFAULT_GLOBAL_SKILLS;
+  const configuredAgentSkills = config?.skillProfiles?.agents?.[agentName];
   const agentSkills =
-    config?.skillProfiles?.agents?.[agentName] ??
-    DEFAULT_AGENT_SKILL_PROFILES[agentName] ??
-    [];
+    configuredAgentSkills !== undefined
+      ? configuredAgentSkills
+      : getDefaultAgentSkills(agentName);
 
   return uniqueSkills([...globalSkills, ...agentSkills]);
 }

@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/generate_skill_index.py",
   "summary": {
-    "total_skills": 216,
+    "total_skills": 218,
     "categories": {
       "agent-ecosystem": 13,
       "analytics-observability": 3,
@@ -25,7 +25,7 @@
       "quality-review": 6,
       "security": 12,
       "testing": 6,
-      "tooling-integrations": 18,
+      "tooling-integrations": 20,
       "worldbuilding-fiction": 14,
       "writing-craft": 28
     }
@@ -852,6 +852,11 @@
       "category": "tooling-integrations"
     },
     {
+      "name": "play-edda",
+      "path": "skills/tooling-integrations/play-edda/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
       "name": "scheduled-tasks",
       "path": "skills/tooling-integrations/scheduled-tasks/SKILL.md",
       "category": "tooling-integrations"
@@ -879,6 +884,11 @@
     {
       "name": "super-productivity-planning",
       "path": "skills/tooling-integrations/super-productivity-planning/SKILL.md",
+      "category": "tooling-integrations"
+    },
+    {
+      "name": "switchyard-runtime",
+      "path": "skills/tooling-integrations/switchyard-runtime/SKILL.md",
       "category": "tooling-integrations"
     },
     {
