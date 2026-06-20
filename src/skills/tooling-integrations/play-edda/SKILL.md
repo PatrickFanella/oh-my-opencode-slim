@@ -25,6 +25,47 @@ Before choosing an action, obtain or ask for enough current Campaign state:
 
 If the loop only provides partial state, still act if a safe, reasonable action is possible. Ask for missing state only when it would change the decision or avoid harmful blind play.
 
+## Hosted API Communication
+
+The public Edda host is:
+
+```text
+https://edda.subcult.tv
+```
+
+Use the bundled helper when authenticated HTTP access is available:
+
+```bash
+export EDDA_BASE_URL="https://edda.subcult.tv"
+~/.config/opencode/skills/play-edda/scripts/edda_api.py login --email "$EDDA_EMAIL" --password "$EDDA_PASSWORD" --export
+export EDDA_TOKEN="<jwt from login>"
+~/.config/opencode/skills/play-edda/scripts/edda_api.py turn-context "$CAMPAIGN_ID"
+~/.config/opencode/skills/play-edda/scripts/edda_api.py action "$CAMPAIGN_ID" "I look around for immediate threats and useful clues."
+```
+
+Read `references/api.md` when you need exact curl routes, payloads, or WebSocket message shapes. Use `templates/env.example` as a safe environment template; never write real credentials or tokens into skill files, repo files, logs, or prompts unless the user explicitly asks and understands the risk.
+
+### Curl quick path
+
+Login:
+
+```bash
+curl -sS https://edda.subcult.tv/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"..."}'
+```
+
+Submit one turn:
+
+```bash
+curl -sS -X POST "https://edda.subcult.tv/api/v1/campaigns/$CAMPAIGN_ID/action" \
+  -H "Authorization: Bearer $EDDA_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"input":"I examine the old gate and listen for movement beyond it."}'
+```
+
+For REST, prefer `Authorization: Bearer <token>`. Do not put JWTs in URLs. Browser WebSocket auth may use the `gm_token` HttpOnly cookie, but unattended skill loops should default to HTTP `/action` unless streaming is required.
+
 ## Turn Protocol
 
 ### 1. Read the Campaign state
@@ -36,6 +77,12 @@ Identify:
 - Available verbs: explicit choices first, then plausible free-form actions.
 
 Prefer the game’s generated choices when they are present unless a better free-form action is clearly justified.
+
+If a `CAMPAIGN_ID` and `EDDA_TOKEN` are available, fetch state with:
+
+```bash
+~/.config/opencode/skills/play-edda/scripts/edda_api.py turn-context "$CAMPAIGN_ID"
+```
 
 ### 2. Choose player intent
 
@@ -52,6 +99,12 @@ Do not meta-game with hidden implementation knowledge unless the user explicitly
 ### 3. Submit or emit the action
 
 If a submission tool/API/CLI/browser is available, submit the action and then read the result.
+
+For the hosted HTTP API, submit with:
+
+```bash
+~/.config/opencode/skills/play-edda/scripts/edda_api.py action "$CAMPAIGN_ID" "<player action>"
+```
 
 If no submission mechanism is available, output only the next action in a form the loop can submit:
 
@@ -101,3 +154,10 @@ Use these defaults unless the user supplies a persona:
 - If stuck, choose an information-gathering action: look around, ask an NPC, check quest log, inspect exits.
 - Track cumulative intent across turns if the loop provides prior reports; otherwise infer from current state only.
 - Separate play from tuning: flag issues, but do not edit code/config unless the user asks to fix the game.
+
+## Bundled Resources
+
+- `scripts/edda_api.py` — stdlib Python helper for login, campaign listing, turn context fetches, and HTTP action submission.
+- `references/api.md` — exact hosted API routes, curl examples, response shapes, and WebSocket message shape.
+- `templates/env.example` — safe shell environment template for `EDDA_BASE_URL`, `EDDA_EMAIL`, `EDDA_PASSWORD`, and `EDDA_TOKEN`.
+- `examples/turn-loop-prompt.md` — example prompt for a loop that fetches state, asks for a turn, submits it, and reports outcome.
