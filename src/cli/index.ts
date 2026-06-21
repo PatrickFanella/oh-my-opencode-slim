@@ -128,6 +128,16 @@ Bootstrap options:
                          Add plugin but skip launchd/systemd daemon install
   --skip-scheduled-tasks-commands
                          Add plugin/daemon but skip /loop command install
+  --opencode-source-repo=<url>
+                         Use an OpenCode source checkout instead of installer
+  --opencode-source-branch=<branch>
+                         Checkout/pull this source branch before wrapping
+  --opencode-source-dir=<path>
+                         Source checkout dir (default ~/.local/share/blacktower/opencode)
+  --opencode-wrapper-path=<path>
+                         Wrapper path (default ~/.local/bin/opencode)
+  --opencode-wrapper-command=<cmd>
+                         Wrapper command from source dir (default bun run dev)
   --opencode-install-cmd=<cmd>
                          Override OpenCode install/update command
   --rtk-install-cmd=<cmd>
@@ -175,6 +185,7 @@ Examples:
   bunx blacktower install --preset=opencode-go
   bunx blacktower install --reset
   bunx blacktower bootstrap --with-dcp --with-quota --with-rtk
+  bunx blacktower setup --opencode-source-repo=https://github.com/PatrickFanella/opencode.git --opencode-source-branch=pr-29398
   bunx blacktower setup
   bunx blacktower preview
   bunx blacktower update

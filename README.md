@@ -78,6 +78,20 @@ Bootstrap installs `opencode-tasks` daemon/commands by default and writes
 disabled recurring-task examples under `~/.config/opencode/task-templates/`.
 Use `--no-scheduled-tasks` to skip that integration.
 
+To run Blacktower against an OpenCode fork branch instead of the standard
+OpenCode installer, pass source-wrapper flags to setup:
+
+```bash
+bun run setup -- \
+  --opencode-source-repo=https://github.com/PatrickFanella/opencode.git \
+  --opencode-source-branch=pr-29398
+```
+
+This clones or updates the source checkout under
+`~/.local/share/blacktower/opencode`, runs `bun install`, and writes a managed
+`~/.local/bin/opencode` wrapper that runs `bun run dev` from that checkout.
+Keep `~/.local/bin` before other OpenCode install paths in `PATH`.
+
 Use `bun run control-center` after scheduler setup to open a read-only OpenTUI
 dashboard for scheduled tasks, recent runs, scheduler health, and task reports.
 For scripts or support captures, `bun run control-center -- --no-tui` prints the

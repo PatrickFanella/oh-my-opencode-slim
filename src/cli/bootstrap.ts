@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -151,6 +152,11 @@ export interface BootstrapArgs {
   withQuota?: boolean;
   withRtk?: boolean;
   withScheduledTasks?: boolean;
+  opencodeSourceRepo?: string;
+  opencodeSourceBranch?: string;
+  opencodeSourceDir?: string;
+  opencodeWrapperPath?: string;
+  opencodeWrapperCommand?: string;
   opencodeInstallCommand?: string;
   rtkInstallCommand?: string;
   scheduledTasksDaemonCommand?: string;
@@ -194,6 +200,20 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
       result.skills = arg.split('=')[1] as BooleanArg;
     } else if (arg.startsWith('--preset=')) {
       result.preset = arg.split('=')[1];
+    } else if (arg.startsWith('--opencode-source-repo=')) {
+      result.opencodeSourceRepo = arg.slice('--opencode-source-repo='.length);
+    } else if (arg.startsWith('--opencode-source-branch=')) {
+      result.opencodeSourceBranch = arg.slice(
+        '--opencode-source-branch='.length,
+      );
+    } else if (arg.startsWith('--opencode-source-dir=')) {
+      result.opencodeSourceDir = arg.slice('--opencode-source-dir='.length);
+    } else if (arg.startsWith('--opencode-wrapper-path=')) {
+      result.opencodeWrapperPath = arg.slice('--opencode-wrapper-path='.length);
+    } else if (arg.startsWith('--opencode-wrapper-command=')) {
+      result.opencodeWrapperCommand = arg.slice(
+        '--opencode-wrapper-command='.length,
+      );
     } else if (arg.startsWith('--opencode-install-cmd=')) {
       result.opencodeInstallCommand = arg.slice(
         '--opencode-install-cmd='.length,
@@ -455,6 +475,30 @@ async function runCommand(
     : { ok: false, message: `${command} exited with code ${proc.exitCode}` };
 }
 
+async function runProcess(
+  command: readonly string[],
+  options: { cwd?: string; dryRun?: boolean } = {},
+): Promise<StepResult> {
+  const display = command.map(shellQuote).join(' ');
+  const message = options.cwd ? `(cd ${options.cwd} && ${display})` : display;
+  if (options.dryRun) return { ok: true, message: `Would run: ${message}` };
+
+  const proc = crossSpawn([...command], {
+    cwd: options.cwd,
+    stdout: 'inherit',
+    stderr: 'inherit',
+  });
+  await proc.exited;
+  return proc.exitCode === 0
+    ? { ok: true, message }
+    : { ok: false, message: `${message} exited with code ${proc.exitCode}` };
+}
+
+function shellQuote(value: string): string {
+  if (/^[A-Za-z0-9_./:@%+=,-]+$/.test(value)) return value;
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
 async function isCommandAvailable(command: string): Promise<boolean> {
   const proc = crossSpawn(['bash', '-lc', `command -v ${command}`], {
     stdout: 'ignore',
@@ -464,9 +508,180 @@ async function isCommandAvailable(command: string): Promise<boolean> {
   return proc.exitCode === 0;
 }
 
+function isOpenCodeSourceSelected(args: BootstrapArgs): boolean {
+  return !!(
+    args.opencodeSourceRepo ||
+    args.opencodeSourceBranch ||
+    args.opencodeSourceDir ||
+    args.opencodeWrapperPath ||
+    args.opencodeWrapperCommand
+  );
+}
+
+function getDefaultOpenCodeSourceDir(): string {
+  return join(homedir(), '.local', 'share', 'blacktower', 'opencode');
+}
+
+function getDefaultOpenCodeWrapperPath(): string {
+  return join(homedir(), '.local', 'bin', 'opencode');
+}
+
+export function renderOpenCodeSourceWrapper(input: {
+  sourceDir: string;
+  command?: string;
+}): string {
+  const command = input.command ?? 'bun run dev';
+  return `#!/usr/bin/env bash
+set -euo pipefail
+# >>> blacktower opencode source wrapper >>>
+cd ${shellQuote(input.sourceDir)}
+exec ${command} "$@"
+# <<< blacktower opencode source wrapper <<<
+`;
+}
+
+function isManagedOpenCodeSourceWrapper(path: string): boolean {
+  if (!existsSync(path)) return false;
+  return readFileSync(path, 'utf-8').includes(
+    'blacktower opencode source wrapper',
+  );
+}
+
+async function installOpenCodeSourceWrapper(
+  args: BootstrapArgs,
+): Promise<void> {
+  const sourceDir = args.opencodeSourceDir ?? getDefaultOpenCodeSourceDir();
+  const wrapperPath =
+    args.opencodeWrapperPath ?? getDefaultOpenCodeWrapperPath();
+  const wrapper = renderOpenCodeSourceWrapper({
+    sourceDir,
+    command: args.opencodeWrapperCommand,
+  });
+
+  if (args.dryRun) return;
+
+  mkdirSync(dirname(wrapperPath), { recursive: true });
+  if (existsSync(wrapperPath) && !isManagedOpenCodeSourceWrapper(wrapperPath)) {
+    renameSync(wrapperPath, `${wrapperPath}.blacktower-backup-${timestamp()}`);
+  }
+  writeFileSync(wrapperPath, wrapper);
+  chmodSync(wrapperPath, 0o755);
+}
+
+async function ensureOpenCodeFromSource(
+  args: BootstrapArgs,
+): Promise<StepResult> {
+  const sourceDir = args.opencodeSourceDir ?? getDefaultOpenCodeSourceDir();
+  const wrapperPath =
+    args.opencodeWrapperPath ?? getDefaultOpenCodeWrapperPath();
+  const repo = args.opencodeSourceRepo;
+  const branch = args.opencodeSourceBranch;
+  const commands: string[] = [];
+
+  if (args.dryRun) {
+    if (!existsSync(join(sourceDir, '.git'))) {
+      if (!repo) {
+        return {
+          ok: false,
+          message: `OpenCode source checkout missing at ${sourceDir}; pass --opencode-source-repo=<url>`,
+        };
+      }
+      commands.push(`git clone ${shellQuote(repo)} ${shellQuote(sourceDir)}`);
+    } else if (repo) {
+      commands.push(
+        `git -C ${shellQuote(sourceDir)} remote set-url origin ${shellQuote(repo)}`,
+      );
+    }
+    commands.push(`git -C ${shellQuote(sourceDir)} fetch origin`);
+    if (branch) {
+      commands.push(
+        `git -C ${shellQuote(sourceDir)} checkout ${shellQuote(branch)}`,
+      );
+      commands.push(
+        `git -C ${shellQuote(sourceDir)} pull --ff-only origin ${shellQuote(branch)}`,
+      );
+    }
+    commands.push(`bun install in ${sourceDir}`);
+    commands.push(`write ${wrapperPath}`);
+    return {
+      ok: true,
+      message: `Would prepare OpenCode source: ${commands.join(' && ')}`,
+    };
+  }
+
+  if (!existsSync(join(sourceDir, '.git'))) {
+    if (!repo) {
+      return {
+        ok: false,
+        message: `OpenCode source checkout missing at ${sourceDir}; pass --opencode-source-repo=<url>`,
+      };
+    }
+    mkdirSync(dirname(sourceDir), { recursive: true });
+    const cloneResult = await runProcess(['git', 'clone', repo, sourceDir]);
+    if (!cloneResult.ok) return cloneResult;
+  } else if (repo) {
+    const remoteResult = await runProcess([
+      'git',
+      '-C',
+      sourceDir,
+      'remote',
+      'set-url',
+      'origin',
+      repo,
+    ]);
+    if (!remoteResult.ok) return remoteResult;
+  }
+
+  const fetchResult = await runProcess([
+    'git',
+    '-C',
+    sourceDir,
+    'fetch',
+    'origin',
+  ]);
+  if (!fetchResult.ok) return fetchResult;
+
+  if (branch) {
+    const checkoutResult = await runProcess([
+      'git',
+      '-C',
+      sourceDir,
+      'checkout',
+      branch,
+    ]);
+    if (!checkoutResult.ok) return checkoutResult;
+
+    const pullResult = await runProcess([
+      'git',
+      '-C',
+      sourceDir,
+      'pull',
+      '--ff-only',
+      'origin',
+      branch,
+    ]);
+    if (!pullResult.ok) return pullResult;
+  }
+
+  const installResult = await runProcess(['bun', 'install'], {
+    cwd: sourceDir,
+  });
+  if (!installResult.ok) return installResult;
+
+  await installOpenCodeSourceWrapper(args);
+  return {
+    ok: true,
+    message: `Prepared OpenCode source at ${sourceDir}; wrapper installed at ${wrapperPath}`,
+  };
+}
+
 async function ensureOpenCode(args: BootstrapArgs): Promise<StepResult> {
   if (args.skipOpencode) {
     return { ok: true, message: 'Skipped OpenCode install/update' };
+  }
+
+  if (isOpenCodeSourceSelected(args)) {
+    return ensureOpenCodeFromSource(args);
   }
 
   const installed = await isOpenCodeInstalled();

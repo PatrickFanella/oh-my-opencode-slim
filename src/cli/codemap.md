@@ -69,7 +69,8 @@ The CLI is intentionally non-interactive-only now; it prints usage and steps to 
 - `install.ts`: end-to-end install orchestration and console messaging.
 - `bootstrap.ts`: clone-based machine bootstrap, full config-directory backup
   and reset, optional integration plugin registration, trusted host defaults,
-  DCP/quota sidecar defaults, and shell helper installation.
+  DCP/quota sidecar defaults, optional OpenCode source checkout/wrapper setup,
+  and shell helper installation.
 - `control-center.ts`: CLI parser/runner for the scheduled-task control center.
 - `control-center-web.ts`: CLI parser/runner for the local web dashboard and
   read-only API server.
@@ -115,6 +116,11 @@ Scheduled-task support is enabled by default: bootstrap installs the
 `opencode-tasks` plugin/daemon/commands, prepares the plugin cache, and writes
 disabled examples under `task-templates/` unless `--no-scheduled-tasks` or
 `--skip-scheduled-task-templates` is used.
+When `--opencode-source-repo`, `--opencode-source-branch`,
+`--opencode-source-dir`, `--opencode-wrapper-path`, or
+`--opencode-wrapper-command` is provided, bootstrap manages an OpenCode source
+checkout instead of running the standard installer and writes a managed wrapper
+at `~/.local/bin/opencode` by default.
 
 ## Runtime integration
 

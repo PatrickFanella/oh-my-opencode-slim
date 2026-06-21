@@ -26,6 +26,7 @@ import {
   getScheduledTasksPluginCacheDir,
   installScheduledTaskTemplates,
   parseBootstrapArgs,
+  renderOpenCodeSourceWrapper,
   resetOpenCodeConfigDirectory,
   tmuxHelperBlock,
   upsertManagedBlock,
@@ -67,6 +68,11 @@ describe('bootstrap CLI helpers', () => {
         '--reset',
         '--dry-run',
         '--yes',
+        '--opencode-source-repo=https://github.com/PatrickFanella/opencode.git',
+        '--opencode-source-branch=pr-29398',
+        '--opencode-source-dir=/tmp/opencode',
+        '--opencode-wrapper-path=/tmp/bin/opencode',
+        '--opencode-wrapper-command=bun run dev',
         '--opencode-install-cmd=true',
         '--rtk-install-cmd=true',
         '--scheduled-tasks-daemon-cmd=true',
@@ -89,6 +95,11 @@ describe('bootstrap CLI helpers', () => {
       withQuota: true,
       withRtk: true,
       withScheduledTasks: true,
+      opencodeSourceRepo: 'https://github.com/PatrickFanella/opencode.git',
+      opencodeSourceBranch: 'pr-29398',
+      opencodeSourceDir: '/tmp/opencode',
+      opencodeWrapperPath: '/tmp/bin/opencode',
+      opencodeWrapperCommand: 'bun run dev',
       opencodeInstallCommand: 'true',
       rtkInstallCommand: 'true',
       scheduledTasksDaemonCommand: 'true',
@@ -421,6 +432,26 @@ printf '{"name":"@opencode-ai/plugin"}\n' > node_modules/@opencode-ai/plugin/pac
         ),
       ),
     ).toBe(true);
+  });
+
+  test('renderOpenCodeSourceWrapper launches the source checkout', () => {
+    const wrapper = renderOpenCodeSourceWrapper({
+      sourceDir: '/home/test/src/opencode',
+    });
+
+    expect(wrapper).toContain('blacktower opencode source wrapper');
+    expect(wrapper).toContain('cd /home/test/src/opencode');
+    expect(wrapper).toContain('exec bun run dev "$@"');
+  });
+
+  test('renderOpenCodeSourceWrapper shell-quotes paths with spaces', () => {
+    const wrapper = renderOpenCodeSourceWrapper({
+      sourceDir: '/home/test/src/open code',
+      command: 'bun run --cwd packages/opencode dev',
+    });
+
+    expect(wrapper).toContain("cd '/home/test/src/open code'");
+    expect(wrapper).toContain('exec bun run --cwd packages/opencode dev "$@"');
   });
 
   test('tmuxHelperBlock defines OpenCode helpers with portable port selection', () => {

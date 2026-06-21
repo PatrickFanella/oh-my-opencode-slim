@@ -66,7 +66,8 @@ The bootstrap flow:
 - resets `~/.config/opencode` before recreating the desired directory layout,
   preserving only `backups/`
 - checks for `tmux`
-- installs or updates OpenCode with `curl -fsSL https://opencode.ai/install | bash`
+- installs or updates OpenCode with `curl -fsSL https://opencode.ai/install | bash`,
+  unless source-wrapper flags are used
 - runs `bun install --yes` and `bun run build`
 - runs the Blacktower installer from the local checkout
 - optionally adds `@tarquinen/opencode-dcp@latest` and
@@ -107,11 +108,30 @@ Useful bootstrap flags:
 | `--skip-scheduled-tasks-daemon` | Add plugin but skip launchd/systemd daemon install |
 | `--skip-scheduled-tasks-commands` | Add plugin/daemon but skip `/loop` command install |
 | `--skip-scheduled-task-templates` | Add plugin/daemon but skip writing disabled task templates |
+| `--opencode-source-repo=<url>` | Clone/fetch this OpenCode repo instead of running the standard installer |
+| `--opencode-source-branch=<branch>` | Checkout and fast-forward pull this OpenCode source branch |
+| `--opencode-source-dir=<path>` | Source checkout directory (default `~/.local/share/blacktower/opencode`) |
+| `--opencode-wrapper-path=<path>` | Wrapper path (default `~/.local/bin/opencode`) |
+| `--opencode-wrapper-command=<cmd>` | Wrapper command run from the source checkout (default `bun run dev`) |
 | `--opencode-install-cmd=<cmd>` | Override the OpenCode install/update command |
 | `--rtk-install-cmd=<cmd>` | Override the RTK install command |
 | `--scheduled-tasks-daemon-cmd=<cmd>` | Override scheduled-tasks daemon install command |
 | `--scheduled-tasks-commands-cmd=<cmd>` | Override scheduled-tasks command install command |
 | `--dry-run` | Show intended actions without writing files |
+
+To make setup use an OpenCode fork branch, pass source-wrapper flags:
+
+```bash
+bun run setup -- \
+  --opencode-source-repo=https://github.com/PatrickFanella/opencode.git \
+  --opencode-source-branch=pr-29398
+```
+
+Bootstrap will clone or update the source checkout, run `bun install`, and write
+`~/.local/bin/opencode` so future `opencode` launches resolve through that
+checkout. If an unmanaged file already exists at the wrapper path, it is backed
+up beside the wrapper before being replaced. Ensure `~/.local/bin` appears before
+other OpenCode install locations in `PATH`.
 
 ### Configuration Options
 
