@@ -1,0 +1,7 @@
+interface:
+  display_name: "Patreon Manager"
+  short_description: "Plan, publish, promote, and review Patreon work"
+  icon_small: "./assets/patreon-manager-icon.svg"
+  icon_large: "./assets/patreon-manager-icon.svg"
+  brand_color: "#FF424D"
+  default_prompt: "Use $patreon-manager to plan this week’s Patreon publishing and promotion workflow."
