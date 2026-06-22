@@ -130,6 +130,8 @@ Bootstrap options:
                          Add plugin/daemon but skip /loop command install
   --opencode-source-repo=<url>
                          Use an OpenCode source checkout instead of installer
+  --opencode-source-ref=<ref>
+                         Fetch this explicit source ref into the branch
   --opencode-source-branch=<branch>
                          Checkout/pull this source branch before wrapping
   --opencode-source-dir=<path>
@@ -184,8 +186,8 @@ Examples:
   bunx blacktower install --no-tui --skills=yes
   bunx blacktower install --preset=opencode-go
   bunx blacktower install --reset
-  bunx blacktower bootstrap --with-dcp --with-quota --with-rtk
-  bunx blacktower setup --opencode-source-repo=https://github.com/PatrickFanella/opencode.git --opencode-source-branch=pr-29398
+  bunx blacktower bootstrap --with-dcp --with-rtk
+  bunx blacktower setup --opencode-source-repo=https://github.com/anomalyco/opencode.git --opencode-source-ref=refs/pull/29398/head --opencode-source-branch=pr-29398
   bunx blacktower setup
   bunx blacktower preview
   bunx blacktower update

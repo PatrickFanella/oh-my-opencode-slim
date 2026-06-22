@@ -38,10 +38,10 @@ Current responsibilities:
     - `--reset`
     - `--help`
 - shortcut entrypoints expand before parsing:
-  - `setup` → `bootstrap --with-dcp --with-quota --with-rtk`
+  - `setup` → `bootstrap --with-dcp --with-rtk`
   - `preview` → same as `setup` plus `--dry-run`
   - `update` → `install --no-tui --skills=yes`
-  - `repair` → `bootstrap --with-dcp --with-quota --with-rtk --reset`
+  - `repair` → `bootstrap --with-dcp --with-rtk --reset`
   - scheduled-task plugin/daemon/commands/templates are bootstrap defaults;
     `--no-scheduled-tasks` opts out
 - `control-center` launches the read-only scheduled-task dashboard:
@@ -116,11 +116,17 @@ Scheduled-task support is enabled by default: bootstrap installs the
 `opencode-tasks` plugin/daemon/commands, prepares the plugin cache, and writes
 disabled examples under `task-templates/` unless `--no-scheduled-tasks` or
 `--skip-scheduled-task-templates` is used.
-When `--opencode-source-repo`, `--opencode-source-branch`,
-`--opencode-source-dir`, `--opencode-wrapper-path`, or
-`--opencode-wrapper-command` is provided, bootstrap manages an OpenCode source
-checkout instead of running the standard installer and writes a managed wrapper
-at `~/.local/bin/opencode` by default.
+Quota support adds `@slkiser/opencode-quota` to both OpenCode plugin config and
+TUI plugin config, writes quota toast defaults, and prepares that package cache
+with the OpenTUI runtime package versions expected by the managed source
+checkout.
+When `--opencode-source-repo`, `--opencode-source-ref`,
+`--opencode-source-branch`, `--opencode-source-dir`,
+`--opencode-wrapper-path`, or `--opencode-wrapper-command` is provided,
+bootstrap manages an OpenCode source checkout instead of running the standard
+installer and writes a managed wrapper at `~/.local/bin/opencode` by default.
+The source wrapper runs OpenCode from the checkout but preserves the caller's
+working directory for default TUI launches.
 
 ## Runtime integration
 

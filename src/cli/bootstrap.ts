@@ -51,6 +51,7 @@ const HELPER_END = '# <<< blacktower tmux helper <<<';
 const DCP_SCHEMA_URL =
   'https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json';
 const OPENCODE_PLUGIN_PACKAGE_VERSION = '1.15.3';
+const OPENTUI_TUI_PACKAGE_VERSION = '0.2.16';
 const OPENCODE_PLUGIN_TYPES_PACKAGE = {
   dependencies: {
     '@opencode-ai/plugin': OPENCODE_PLUGIN_PACKAGE_VERSION,
@@ -153,6 +154,7 @@ export interface BootstrapArgs {
   withRtk?: boolean;
   withScheduledTasks?: boolean;
   opencodeSourceRepo?: string;
+  opencodeSourceRef?: string;
   opencodeSourceBranch?: string;
   opencodeSourceDir?: string;
   opencodeWrapperPath?: string;
@@ -202,6 +204,8 @@ export function parseBootstrapArgs(args: string[]): BootstrapArgs {
       result.preset = arg.split('=')[1];
     } else if (arg.startsWith('--opencode-source-repo=')) {
       result.opencodeSourceRepo = arg.slice('--opencode-source-repo='.length);
+    } else if (arg.startsWith('--opencode-source-ref=')) {
+      result.opencodeSourceRef = arg.slice('--opencode-source-ref='.length);
     } else if (arg.startsWith('--opencode-source-branch=')) {
       result.opencodeSourceBranch = arg.slice(
         '--opencode-source-branch='.length,
@@ -508,9 +512,47 @@ async function isCommandAvailable(command: string): Promise<boolean> {
   return proc.exitCode === 0;
 }
 
+async function hasLocalGitBranch(
+  sourceDir: string,
+  branch: string,
+): Promise<boolean> {
+  const proc = crossSpawn(
+    ['git', '-C', sourceDir, 'rev-parse', '--verify', `refs/heads/${branch}`],
+    {
+      stdout: 'ignore',
+      stderr: 'ignore',
+    },
+  );
+  await proc.exited;
+  return proc.exitCode === 0;
+}
+
+export function getOpenCodeBranchCheckoutCommand(
+  sourceDir: string,
+  branch: string,
+  hasLocalBranch: boolean,
+): string[] {
+  if (hasLocalBranch) return ['git', '-C', sourceDir, 'checkout', branch];
+
+  const remoteBranch = branch.startsWith('origin/')
+    ? branch
+    : `origin/${branch}`;
+  return ['git', '-C', sourceDir, 'checkout', '-B', branch, remoteBranch];
+}
+
+export function getOpenCodeSourceRefCheckoutCommand(
+  sourceDir: string,
+  branch: string,
+  hasLocalBranch: boolean,
+): string[] {
+  if (hasLocalBranch) return ['git', '-C', sourceDir, 'checkout', branch];
+  return ['git', '-C', sourceDir, 'checkout', '-B', branch, 'FETCH_HEAD'];
+}
+
 function isOpenCodeSourceSelected(args: BootstrapArgs): boolean {
   return !!(
     args.opencodeSourceRepo ||
+    args.opencodeSourceRef ||
     args.opencodeSourceBranch ||
     args.opencodeSourceDir ||
     args.opencodeWrapperPath ||
@@ -534,8 +576,41 @@ export function renderOpenCodeSourceWrapper(input: {
   return `#!/usr/bin/env bash
 set -euo pipefail
 # >>> blacktower opencode source wrapper >>>
+caller_dir="$PWD"
 cd ${shellQuote(input.sourceDir)}
-exec ${command} "$@"
+
+has_positional=0
+for arg in "$@"; do
+  case "$arg" in
+    -* )
+      ;;
+    * )
+      has_positional=1
+      break
+      ;;
+  esac
+done
+
+case "\${1:-}" in
+  "" )
+    exec ${command} "$caller_dir"
+    ;;
+  completion|acp|mcp|attach|run|debug|providers|auth|agent|upgrade|uninstall|serve|web|models|stats|export|import|github|pr|session|plugin|plug|db )
+    exec ${command} "$@"
+    ;;
+  -h|--help|-v|--version )
+    exec ${command} "$@"
+    ;;
+  -* )
+    if [ "$has_positional" -eq 1 ]; then
+      exec ${command} "$@"
+    fi
+    exec ${command} "$caller_dir" "$@"
+    ;;
+  * )
+    exec ${command} "$@"
+    ;;
+esac
 # <<< blacktower opencode source wrapper <<<
 `;
 }
@@ -545,6 +620,32 @@ function isManagedOpenCodeSourceWrapper(path: string): boolean {
   return readFileSync(path, 'utf-8').includes(
     'blacktower opencode source wrapper',
   );
+}
+
+export function retireManagedOpenCodeSourceWrapper(
+  wrapperPath = getDefaultOpenCodeWrapperPath(),
+  dryRun = false,
+): StepResult {
+  if (!isManagedOpenCodeSourceWrapper(wrapperPath)) {
+    return {
+      ok: true,
+      message: 'No managed OpenCode source wrapper to retire',
+    };
+  }
+
+  if (dryRun) {
+    return {
+      ok: true,
+      message: `Would retire managed OpenCode source wrapper at ${wrapperPath}`,
+    };
+  }
+
+  const backupPath = `${wrapperPath}.blacktower-source-wrapper-${timestamp()}`;
+  renameSync(wrapperPath, backupPath);
+  return {
+    ok: true,
+    message: `Retired managed OpenCode source wrapper to ${backupPath}`,
+  };
 }
 
 async function installOpenCodeSourceWrapper(
@@ -575,6 +676,7 @@ async function ensureOpenCodeFromSource(
   const wrapperPath =
     args.opencodeWrapperPath ?? getDefaultOpenCodeWrapperPath();
   const repo = args.opencodeSourceRepo;
+  const sourceRef = args.opencodeSourceRef;
   const branch = args.opencodeSourceBranch;
   const commands: string[] = [];
 
@@ -592,10 +694,25 @@ async function ensureOpenCodeFromSource(
         `git -C ${shellQuote(sourceDir)} remote set-url origin ${shellQuote(repo)}`,
       );
     }
-    commands.push(`git -C ${shellQuote(sourceDir)} fetch origin`);
-    if (branch) {
+    if (sourceRef && branch) {
       commands.push(
-        `git -C ${shellQuote(sourceDir)} checkout ${shellQuote(branch)}`,
+        `git -C ${shellQuote(sourceDir)} fetch origin ${shellQuote(sourceRef)}`,
+      );
+      commands.push(
+        `git -C ${shellQuote(sourceDir)} checkout ${shellQuote(branch)} || git -C ${shellQuote(sourceDir)} checkout -B ${shellQuote(branch)} FETCH_HEAD`,
+      );
+      commands.push(
+        `git -C ${shellQuote(sourceDir)} merge --ff-only FETCH_HEAD`,
+      );
+    } else {
+      commands.push(`git -C ${shellQuote(sourceDir)} fetch origin`);
+    }
+    if (branch && !sourceRef) {
+      const remoteBranch = branch.startsWith('origin/')
+        ? branch
+        : `origin/${branch}`;
+      commands.push(
+        `git -C ${shellQuote(sourceDir)} checkout ${shellQuote(branch)} || git -C ${shellQuote(sourceDir)} checkout -B ${shellQuote(branch)} ${shellQuote(remoteBranch)}`,
       );
       commands.push(
         `git -C ${shellQuote(sourceDir)} pull --ff-only origin ${shellQuote(branch)}`,
@@ -632,35 +749,51 @@ async function ensureOpenCodeFromSource(
     if (!remoteResult.ok) return remoteResult;
   }
 
-  const fetchResult = await runProcess([
-    'git',
-    '-C',
-    sourceDir,
-    'fetch',
-    'origin',
-  ]);
+  const fetchResult = sourceRef
+    ? await runProcess(['git', '-C', sourceDir, 'fetch', 'origin', sourceRef])
+    : await runProcess(['git', '-C', sourceDir, 'fetch', 'origin']);
   if (!fetchResult.ok) return fetchResult;
 
   if (branch) {
-    const checkoutResult = await runProcess([
-      'git',
-      '-C',
-      sourceDir,
-      'checkout',
-      branch,
-    ]);
+    const checkoutResult = sourceRef
+      ? await runProcess(
+          getOpenCodeSourceRefCheckoutCommand(
+            sourceDir,
+            branch,
+            await hasLocalGitBranch(sourceDir, branch),
+          ),
+        )
+      : await runProcess(
+          getOpenCodeBranchCheckoutCommand(
+            sourceDir,
+            branch,
+            await hasLocalGitBranch(sourceDir, branch),
+          ),
+        );
     if (!checkoutResult.ok) return checkoutResult;
 
-    const pullResult = await runProcess([
-      'git',
-      '-C',
-      sourceDir,
-      'pull',
-      '--ff-only',
-      'origin',
-      branch,
-    ]);
-    if (!pullResult.ok) return pullResult;
+    if (sourceRef) {
+      const mergeResult = await runProcess([
+        'git',
+        '-C',
+        sourceDir,
+        'merge',
+        '--ff-only',
+        'FETCH_HEAD',
+      ]);
+      if (!mergeResult.ok) return mergeResult;
+    } else {
+      const pullResult = await runProcess([
+        'git',
+        '-C',
+        sourceDir,
+        'pull',
+        '--ff-only',
+        'origin',
+        branch,
+      ]);
+      if (!pullResult.ok) return pullResult;
+    }
   }
 
   const installResult = await runProcess(['bun', 'install'], {
@@ -686,10 +819,24 @@ async function ensureOpenCode(args: BootstrapArgs): Promise<StepResult> {
 
   const installed = await isOpenCodeInstalled();
   renderInfo(installed ? 'Updating OpenCode' : 'Installing OpenCode');
-  return runCommand(
+  const installResult = await runCommand(
     args.opencodeInstallCommand ?? OPENCODE_INSTALL_COMMAND,
     args.dryRun,
   );
+  if (!installResult.ok) return installResult;
+
+  const retireResult = retireManagedOpenCodeSourceWrapper(
+    getDefaultOpenCodeWrapperPath(),
+    args.dryRun,
+  );
+  if (retireResult.message === 'No managed OpenCode source wrapper to retire') {
+    return installResult;
+  }
+
+  return {
+    ok: true,
+    message: `${installResult.message}; ${retireResult.message}`,
+  };
 }
 
 async function ensureRepoBuild(args: BootstrapArgs): Promise<StepResult> {
@@ -1050,12 +1197,30 @@ export function getScheduledTasksPluginCacheDir(): string {
   return getOpenCodePackageCacheDir(OPTIONAL_PLUGINS.scheduledTasks);
 }
 
+export function getQuotaPluginCacheDir(): string {
+  return getOpenCodePackageCacheDir(OPTIONAL_PLUGINS.quota);
+}
+
 export function buildScheduledTasksPluginCacheManifest(): string {
   return `${JSON.stringify(
     {
       dependencies: {
         [OPTIONAL_PLUGINS.scheduledTasks]: 'latest',
         '@opencode-ai/plugin': OPENCODE_PLUGIN_PACKAGE_VERSION,
+      },
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+export function buildQuotaPluginCacheManifest(): string {
+  return `${JSON.stringify(
+    {
+      dependencies: {
+        [OPTIONAL_PLUGINS.quota]: 'latest',
+        '@opentui/core': OPENTUI_TUI_PACKAGE_VERSION,
+        '@opentui/solid': OPENTUI_TUI_PACKAGE_VERSION,
       },
     },
     null,
@@ -1148,6 +1313,93 @@ export async function ensureScheduledTasksPluginCache(
   };
 }
 
+function verifyQuotaPluginCache(cacheDir: string): StepResult | null {
+  const expectedPackageJsons = [
+    join(
+      cacheDir,
+      'node_modules',
+      '@slkiser',
+      'opencode-quota',
+      'package.json',
+    ),
+    join(cacheDir, 'node_modules', '@opentui', 'core', 'package.json'),
+    join(cacheDir, 'node_modules', '@opentui', 'solid', 'package.json'),
+  ];
+
+  const missing = expectedPackageJsons.filter((path) => !existsSync(path));
+  if (missing.length === 0) return null;
+
+  return {
+    ok: false,
+    message: `Quota plugin cache is missing: ${missing.join(', ')}`,
+  };
+}
+
+export async function ensureQuotaPluginCache(
+  args: Pick<BootstrapArgs, 'dryRun' | 'withQuota'>,
+): Promise<StepResult> {
+  if (!args.withQuota) {
+    return { ok: true, message: 'Quota plugin cache not selected' };
+  }
+
+  const cacheDir = getQuotaPluginCacheDir();
+  if (args.dryRun) {
+    return {
+      ok: true,
+      message: `Would prepare quota plugin cache in ${cacheDir}`,
+    };
+  }
+
+  try {
+    mkdirSync(cacheDir, { recursive: true });
+    writeFileSync(
+      join(cacheDir, 'package.json'),
+      buildQuotaPluginCacheManifest(),
+    );
+  } catch (err) {
+    return {
+      ok: false,
+      message: `Failed to write quota plugin cache manifest: ${err}`,
+    };
+  }
+
+  try {
+    const proc = crossSpawn(['bun', 'install', '--ignore-scripts'], {
+      cwd: cacheDir,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    });
+    await proc.exited;
+
+    if (proc.exitCode !== 0) {
+      const [stdout, stderr] = await Promise.all([
+        proc.stdout(),
+        proc.stderr(),
+      ]);
+      const output = stderr.trim() || stdout.trim();
+      return {
+        ok: false,
+        message:
+          output ||
+          `bun install --ignore-scripts exited with code ${proc.exitCode}`,
+      };
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      message: `Failed to prepare quota plugin cache: ${err}`,
+    };
+  }
+
+  const verificationError = verifyQuotaPluginCache(cacheDir);
+  if (verificationError) return verificationError;
+
+  return {
+    ok: true,
+    message: `Prepared quota plugin cache with OpenTUI ${OPENTUI_TUI_PACKAGE_VERSION}`,
+  };
+}
+
 export function getOptionalTuiPluginSpecs(args: BootstrapArgs): string[] {
   const pluginSpecs: string[] = [];
   if (args.withQuota) pluginSpecs.push(OPTIONAL_TUI_PLUGINS.quota);
@@ -1207,6 +1459,13 @@ async function installOptionalPlugins(
     return scheduledTasksCacheResult;
   }
 
+  const quotaCacheResult = args.withQuota
+    ? await ensureQuotaPluginCache(args)
+    : null;
+  if (quotaCacheResult && !quotaCacheResult.ok) {
+    return quotaCacheResult;
+  }
+
   if (pluginSpecs.length > 0) {
     writeConfig(configPath, addPluginsToConfig(config ?? {}, pluginSpecs));
   }
@@ -1223,6 +1482,9 @@ async function installOptionalPlugins(
   }
   if (scheduledTasksCacheResult) {
     messages.push(scheduledTasksCacheResult.message);
+  }
+  if (quotaCacheResult) {
+    messages.push(quotaCacheResult.message);
   }
 
   return {

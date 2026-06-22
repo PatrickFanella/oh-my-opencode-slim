@@ -99,8 +99,8 @@
     "turndown": "^7.2.4"
   },
   "optionalDependencies": {
-    "@opentui/core": "^0.1.97",
-    "@opentui/solid": "^0.1.97"
+    "@opentui/core": "^0.2.16",
+    "@opentui/solid": "^0.2.16"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.11",

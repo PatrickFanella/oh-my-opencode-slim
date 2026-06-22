@@ -14,14 +14,14 @@ export const CLI_SHORTCUTS = [
   {
     name: 'setup',
     target: 'bootstrap',
-    defaults: ['--with-dcp', '--with-quota', '--with-rtk'],
+    defaults: ['--with-dcp', '--with-rtk'],
     description: 'Full bootstrap',
     example: 'bunx blacktower setup',
   },
   {
     name: 'preview',
     target: 'bootstrap',
-    defaults: ['--with-dcp', '--with-quota', '--with-rtk', '--dry-run'],
+    defaults: ['--with-dcp', '--with-rtk', '--dry-run'],
     description: 'Bootstrap preview',
     example: 'bunx blacktower preview',
   },
@@ -35,7 +35,7 @@ export const CLI_SHORTCUTS = [
   {
     name: 'repair',
     target: 'bootstrap',
-    defaults: ['--with-dcp', '--with-quota', '--with-rtk', '--reset'],
+    defaults: ['--with-dcp', '--with-rtk', '--reset'],
     description: 'Recreate config directory',
     example: 'bunx blacktower repair',
   },

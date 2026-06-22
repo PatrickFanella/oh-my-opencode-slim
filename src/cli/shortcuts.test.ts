@@ -13,13 +13,7 @@ describe('cli shortcuts', () => {
       expandShortcutArgs('setup', ['--no-dcp', '--preset=opencode-go']),
     ).toEqual({
       command: 'bootstrap',
-      args: [
-        '--with-dcp',
-        '--with-quota',
-        '--with-rtk',
-        '--no-dcp',
-        '--preset=opencode-go',
-      ],
+      args: ['--with-dcp', '--with-rtk', '--no-dcp', '--preset=opencode-go'],
       shortcut: CLI_SHORTCUTS[0],
     });
   });
@@ -27,13 +21,7 @@ describe('cli shortcuts', () => {
   test('expands preview and update shortcuts to their targets', () => {
     expect(expandShortcutArgs('preview', ['--no-quota'])).toEqual({
       command: 'bootstrap',
-      args: [
-        '--with-dcp',
-        '--with-quota',
-        '--with-rtk',
-        '--dry-run',
-        '--no-quota',
-      ],
+      args: ['--with-dcp', '--with-rtk', '--dry-run', '--no-quota'],
       shortcut: CLI_SHORTCUTS[1],
     });
 
@@ -47,13 +35,7 @@ describe('cli shortcuts', () => {
   test('expands repair to reset bootstrap flow', () => {
     expect(expandShortcutArgs('repair', ['--no-scheduled-tasks'])).toEqual({
       command: 'bootstrap',
-      args: [
-        '--with-dcp',
-        '--with-quota',
-        '--with-rtk',
-        '--reset',
-        '--no-scheduled-tasks',
-      ],
+      args: ['--with-dcp', '--with-rtk', '--reset', '--no-scheduled-tasks'],
       shortcut: CLI_SHORTCUTS[3],
     });
   });

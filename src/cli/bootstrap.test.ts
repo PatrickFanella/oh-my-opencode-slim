@@ -17,17 +17,23 @@ import {
   applyBootstrapHostDefaults,
   backupOpenCodeConfig,
   buildDcpConfig,
+  buildQuotaPluginCacheManifest,
   buildQuotaToastConfig,
   buildScheduledTasksPluginCacheManifest,
   buildScheduledTaskTemplateFiles,
   ensureDesiredOpenCodeDirectory,
+  ensureQuotaPluginCache,
   ensureScheduledTasksPluginCache,
+  getOpenCodeBranchCheckoutCommand,
+  getOpenCodeSourceRefCheckoutCommand,
   getOptionalTuiPluginSpecs,
+  getQuotaPluginCacheDir,
   getScheduledTasksPluginCacheDir,
   installScheduledTaskTemplates,
   parseBootstrapArgs,
   renderOpenCodeSourceWrapper,
   resetOpenCodeConfigDirectory,
+  retireManagedOpenCodeSourceWrapper,
   tmuxHelperBlock,
   upsertManagedBlock,
 } from './bootstrap';
@@ -69,6 +75,7 @@ describe('bootstrap CLI helpers', () => {
         '--dry-run',
         '--yes',
         '--opencode-source-repo=https://github.com/PatrickFanella/opencode.git',
+        '--opencode-source-ref=refs/pull/29398/head',
         '--opencode-source-branch=pr-29398',
         '--opencode-source-dir=/tmp/opencode',
         '--opencode-wrapper-path=/tmp/bin/opencode',
@@ -96,6 +103,7 @@ describe('bootstrap CLI helpers', () => {
       withRtk: true,
       withScheduledTasks: true,
       opencodeSourceRepo: 'https://github.com/PatrickFanella/opencode.git',
+      opencodeSourceRef: 'refs/pull/29398/head',
       opencodeSourceBranch: 'pr-29398',
       opencodeSourceDir: '/tmp/opencode',
       opencodeWrapperPath: '/tmp/bin/opencode',
@@ -353,6 +361,14 @@ describe('bootstrap CLI helpers', () => {
     expect(packageJson.dependencies['@opencode-ai/plugin']).toBe('1.15.3');
   });
 
+  test('buildQuotaPluginCacheManifest pins TUI runtime dependencies', () => {
+    const packageJson = JSON.parse(buildQuotaPluginCacheManifest());
+
+    expect(packageJson.dependencies['@slkiser/opencode-quota']).toBe('latest');
+    expect(packageJson.dependencies['@opentui/core']).toBe('0.2.16');
+    expect(packageJson.dependencies['@opentui/solid']).toBe('0.2.16');
+  });
+
   test('buildScheduledTaskTemplateFiles creates disabled task templates', () => {
     const templates = buildScheduledTaskTemplateFiles(
       '/tmp/opencode-config',
@@ -434,13 +450,65 @@ printf '{"name":"@opencode-ai/plugin"}\n' > node_modules/@opencode-ai/plugin/pac
     ).toBe(true);
   });
 
+  test('ensureQuotaPluginCache prepares OpenCode cache with TUI runtime packages', async () => {
+    const fakeBin = join(tmpDir, 'bin');
+    const fakeBun = join(fakeBin, 'bun');
+    mkdirSync(fakeBin, { recursive: true });
+    writeFileSync(
+      fakeBun,
+      `#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p node_modules/@slkiser/opencode-quota node_modules/@opentui/core node_modules/@opentui/solid
+printf '{"name":"@slkiser/opencode-quota"}\n' > node_modules/@slkiser/opencode-quota/package.json
+printf '{"name":"@opentui/core"}\n' > node_modules/@opentui/core/package.json
+printf '{"name":"@opentui/solid"}\n' > node_modules/@opentui/solid/package.json
+`,
+    );
+    chmodSync(fakeBun, 0o755);
+    process.env.XDG_CACHE_HOME = join(tmpDir, 'cache');
+    process.env.PATH = `${fakeBin}:${process.env.PATH ?? ''}`;
+
+    const result = await ensureQuotaPluginCache({ withQuota: true });
+    const cacheDir = getQuotaPluginCacheDir();
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cacheDir, 'package.json'), 'utf-8')).toBe(
+      buildQuotaPluginCacheManifest(),
+    );
+    expect(
+      existsSync(
+        join(
+          cacheDir,
+          'node_modules',
+          '@slkiser',
+          'opencode-quota',
+          'package.json',
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      existsSync(
+        join(cacheDir, 'node_modules', '@opentui', 'core', 'package.json'),
+      ),
+    ).toBe(true);
+    expect(
+      existsSync(
+        join(cacheDir, 'node_modules', '@opentui', 'solid', 'package.json'),
+      ),
+    ).toBe(true);
+  });
+
   test('renderOpenCodeSourceWrapper launches the source checkout', () => {
     const wrapper = renderOpenCodeSourceWrapper({
       sourceDir: '/home/test/src/opencode',
     });
 
     expect(wrapper).toContain('blacktower opencode source wrapper');
+    expect(wrapper).toContain('caller_dir="$PWD"');
     expect(wrapper).toContain('cd /home/test/src/opencode');
+    expect(wrapper).toContain('has_positional=0');
+    expect(wrapper).toContain('exec bun run dev "$caller_dir"');
+    expect(wrapper).toContain('exec bun run dev "$caller_dir" "$@"');
     expect(wrapper).toContain('exec bun run dev "$@"');
   });
 
@@ -452,6 +520,80 @@ printf '{"name":"@opencode-ai/plugin"}\n' > node_modules/@opencode-ai/plugin/pac
 
     expect(wrapper).toContain("cd '/home/test/src/open code'");
     expect(wrapper).toContain('exec bun run --cwd packages/opencode dev "$@"');
+  });
+
+  test('renderOpenCodeSourceWrapper preserves subcommand args', () => {
+    const wrapper = renderOpenCodeSourceWrapper({
+      sourceDir: '/home/test/src/opencode',
+    });
+
+    expect(wrapper).toContain(
+      'completion|acp|mcp|attach|run|debug|providers|auth|agent|upgrade|uninstall|serve|web|models|stats|export|import|github|pr|session|plugin|plug|db',
+    );
+  });
+
+  test('retireManagedOpenCodeSourceWrapper moves managed source wrapper', () => {
+    const wrapperPath = join(tmpDir, 'bin', 'opencode');
+    mkdirSync(join(tmpDir, 'bin'), { recursive: true });
+    writeFileSync(
+      wrapperPath,
+      renderOpenCodeSourceWrapper({ sourceDir: '/tmp/opencode' }),
+    );
+
+    const result = retireManagedOpenCodeSourceWrapper(wrapperPath);
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(wrapperPath)).toBe(false);
+    expect(readdirSync(join(tmpDir, 'bin'))).toHaveLength(1);
+    expect(result.message).toContain('Retired managed OpenCode source wrapper');
+  });
+
+  test('retireManagedOpenCodeSourceWrapper preserves unmanaged opencode', () => {
+    const wrapperPath = join(tmpDir, 'bin', 'opencode');
+    mkdirSync(join(tmpDir, 'bin'), { recursive: true });
+    writeFileSync(wrapperPath, '#!/usr/bin/env bash\nexec opencode "$@"\n');
+
+    const result = retireManagedOpenCodeSourceWrapper(wrapperPath);
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(wrapperPath)).toBe(true);
+    expect(result.message).toBe('No managed OpenCode source wrapper to retire');
+  });
+
+  test('getOpenCodeBranchCheckoutCommand handles remote-only branches', () => {
+    expect(
+      getOpenCodeBranchCheckoutCommand('/tmp/opencode', 'pr-29398', false),
+    ).toEqual([
+      'git',
+      '-C',
+      '/tmp/opencode',
+      'checkout',
+      '-B',
+      'pr-29398',
+      'origin/pr-29398',
+    ]);
+
+    expect(
+      getOpenCodeBranchCheckoutCommand('/tmp/opencode', 'pr-29398', true),
+    ).toEqual(['git', '-C', '/tmp/opencode', 'checkout', 'pr-29398']);
+  });
+
+  test('getOpenCodeSourceRefCheckoutCommand creates branches from FETCH_HEAD', () => {
+    expect(
+      getOpenCodeSourceRefCheckoutCommand('/tmp/opencode', 'pr-29398', false),
+    ).toEqual([
+      'git',
+      '-C',
+      '/tmp/opencode',
+      'checkout',
+      '-B',
+      'pr-29398',
+      'FETCH_HEAD',
+    ]);
+
+    expect(
+      getOpenCodeSourceRefCheckoutCommand('/tmp/opencode', 'pr-29398', true),
+    ).toEqual(['git', '-C', '/tmp/opencode', 'checkout', 'pr-29398']);
   });
 
   test('tmuxHelperBlock defines OpenCode helpers with portable port selection', () => {

@@ -46,7 +46,7 @@ bun run control-center:web
 work when you need them:
 
 ```bash
-bun run src/cli/index.ts bootstrap --with-dcp --with-quota --with-rtk
+bun run src/cli/index.ts bootstrap --with-dcp --with-rtk
 ```
 
 ### Clone-Based Bootstrap
@@ -70,8 +70,9 @@ The bootstrap flow:
   unless source-wrapper flags are used
 - runs `bun install --yes` and `bun run build`
 - runs the Blacktower installer from the local checkout
-- optionally adds `@tarquinen/opencode-dcp@latest` and
-  `@slkiser/opencode-quota` to OpenCode's plugin list; quota is also added
+- adds `@tarquinen/opencode-dcp@latest` by default through `setup`; when
+  `--with-quota` is selected, adds `@slkiser/opencode-quota` to OpenCode's
+  plugin list and
   to `tui.json(c)` so its TUI panels load
 - applies trusted host defaults to `opencode.json(c)`: `permission: "allow"`,
   compaction `{ auto: false, prune: true, reserved: 10000 }`, and removes the
@@ -109,6 +110,7 @@ Useful bootstrap flags:
 | `--skip-scheduled-tasks-commands` | Add plugin/daemon but skip `/loop` command install |
 | `--skip-scheduled-task-templates` | Add plugin/daemon but skip writing disabled task templates |
 | `--opencode-source-repo=<url>` | Clone/fetch this OpenCode repo instead of running the standard installer |
+| `--opencode-source-ref=<ref>` | Fetch this explicit source ref into the selected branch |
 | `--opencode-source-branch=<branch>` | Checkout and fast-forward pull this OpenCode source branch |
 | `--opencode-source-dir=<path>` | Source checkout directory (default `~/.local/share/blacktower/opencode`) |
 | `--opencode-wrapper-path=<path>` | Wrapper path (default `~/.local/bin/opencode`) |
@@ -123,15 +125,21 @@ To make setup use an OpenCode fork branch, pass source-wrapper flags:
 
 ```bash
 bun run setup -- \
-  --opencode-source-repo=https://github.com/PatrickFanella/opencode.git \
+  --opencode-source-repo=https://github.com/anomalyco/opencode.git \
+  --opencode-source-ref=refs/pull/29398/head \
   --opencode-source-branch=pr-29398
 ```
 
 Bootstrap will clone or update the source checkout, run `bun install`, and write
 `~/.local/bin/opencode` so future `opencode` launches resolve through that
-checkout. If an unmanaged file already exists at the wrapper path, it is backed
-up beside the wrapper before being replaced. Ensure `~/.local/bin` appears before
-other OpenCode install locations in `PATH`.
+checkout while opening the directory where you invoked `opencode`. If an
+unmanaged file already exists at the wrapper path, it is backed up beside the
+wrapper before being replaced. Ensure `~/.local/bin` appears before other
+OpenCode install locations in `PATH`.
+
+When `--with-quota` is selected, setup also prepares the OpenCode quota package
+cache with the OpenTUI runtime packages used by the managed OpenCode source
+checkout.
 
 ### Configuration Options
 

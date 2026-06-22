@@ -45,7 +45,7 @@ bun run control-center:web
 still available when you need them:
 
 ```bash
-bun run src/cli/index.ts bootstrap --with-dcp --with-quota --with-rtk
+bun run src/cli/index.ts bootstrap --with-dcp --with-rtk
 ```
 
 
@@ -58,7 +58,7 @@ bunx blacktower@latest install
 For a full clone-based bootstrap that backs up the entire OpenCode config
 directory, resets `~/.config/opencode`, installs or updates OpenCode, builds
 this repo, configures Blacktower, installs scheduled-task support by default,
-optionally adds DCP/quota, and installs the tmux-aware `opencode`/`oc`/`occ`
+adds DCP, optionally adds quota, and installs the tmux-aware `opencode`/`oc`/`occ`
 helpers:
 
 ```bash
@@ -83,13 +83,15 @@ OpenCode installer, pass source-wrapper flags to setup:
 
 ```bash
 bun run setup -- \
-  --opencode-source-repo=https://github.com/PatrickFanella/opencode.git \
+  --opencode-source-repo=https://github.com/anomalyco/opencode.git \
+  --opencode-source-ref=refs/pull/29398/head \
   --opencode-source-branch=pr-29398
 ```
 
 This clones or updates the source checkout under
 `~/.local/share/blacktower/opencode`, runs `bun install`, and writes a managed
-`~/.local/bin/opencode` wrapper that runs `bun run dev` from that checkout.
+`~/.local/bin/opencode` wrapper that runs `bun run dev` from that checkout
+while opening the directory where you invoked `opencode`.
 Keep `~/.local/bin` before other OpenCode install paths in `PATH`.
 
 Use `bun run control-center` after scheduler setup to open a read-only OpenTUI
