@@ -37,6 +37,7 @@
     "security-ownership-map",
     "security-threat-model",
     "slo-implementation",
+    "vault-monthly-maintenance",
     "workflow-orchestration-patterns",
     "design-an-interface"
   ],

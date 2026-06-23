@@ -65,6 +65,8 @@ object below mirrors the current default skill assignment shape:
         "frontend-design",
         "game-design-theory",
         "image",
+        "imagegen",
+        "lightweight-charts",
         "marketing-psychology",
         "neubrutal-hud",
         "opentui",
@@ -80,8 +82,7 @@ object below mirrors the current default skill assignment shape:
         "wcag-audit-patterns",
         "webapp-testing",
         "stripe-integration",
-        "typescript-pro",
-        ""
+        "typescript-pro"
       ],
       "explorer": [
         "binary-analysis-patterns",
@@ -106,6 +107,8 @@ object below mirrors the current default skill assignment shape:
         "develop-web-game",
         "golang-pro",
         "hybrid-search-implementation",
+        "llama-line-client",
+        "lightweight-charts",
         "llm-evaluation",
         "mcp-builder",
         "neubrutal-hud",
@@ -138,6 +141,8 @@ object below mirrors the current default skill assignment shape:
         "ebook-analysis",
         "fact-check",
         "hads",
+        "llama-line-client",
+        "lightweight-charts",
         "openai-docs",
         "opensource-guide-coach",
         "pdf",
@@ -159,8 +164,11 @@ object below mirrors the current default skill assignment shape:
         "gitea-repo-overhaul",
         "git-advanced-workflows",
         "homelab",
+        "llama-line-client",
         "hybrid-search-implementation",
         "improve-codebase-architecture",
+        "switchyard-runtime",
+        "super-productivity-mcp",
         "multi-reviewer-patterns",
         "nodejs-backend-patterns",
         "nuc",
@@ -173,6 +181,7 @@ object below mirrors the current default skill assignment shape:
         "security-ownership-map",
         "security-threat-model",
         "slo-implementation",
+        "vault-monthly-maintenance",
         "workflow-orchestration-patterns"
       ],
       "orchestrator": [
