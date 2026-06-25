@@ -576,13 +576,29 @@ export function renderOpenCodeSourceWrapper(input: {
   return `#!/usr/bin/env bash
 set -euo pipefail
 # >>> blacktower opencode source wrapper >>>
-caller_dir="$PWD"
-cd ${shellQuote(input.sourceDir)}
+caller_dir="$(pwd -P)"
+export OPENCODE_CWD="$caller_dir"
+
+run_opencode_from_source() {
+  (
+    cd ${shellQuote(input.sourceDir)}
+    exec ${command} "$@"
+  )
+}
 
 has_positional=0
+skip_next=0
 for arg in "$@"; do
+  if [ "$skip_next" -eq 1 ]; then
+    skip_next=0
+    continue
+  fi
+
   case "$arg" in
-    -* )
+    --port|--cwd )
+      skip_next=1
+      ;;
+    --port=*|--cwd=*|-* )
       ;;
     * )
       has_positional=1
@@ -593,22 +609,23 @@ done
 
 case "\${1:-}" in
   "" )
-    exec ${command} "$caller_dir"
+    run_opencode_from_source "$caller_dir"
     ;;
   completion|acp|mcp|attach|run|debug|providers|auth|agent|upgrade|uninstall|serve|web|models|stats|export|import|github|pr|session|plugin|plug|db )
-    exec ${command} "$@"
+    run_opencode_from_source "$@"
     ;;
   -h|--help|-v|--version )
-    exec ${command} "$@"
+    run_opencode_from_source "$@"
     ;;
   -* )
     if [ "$has_positional" -eq 1 ]; then
-      exec ${command} "$@"
+      run_opencode_from_source "$@"
+      exit $?
     fi
-    exec ${command} "$caller_dir" "$@"
+    run_opencode_from_source "$caller_dir" "$@"
     ;;
   * )
-    exec ${command} "$@"
+    run_opencode_from_source "$@"
     ;;
 esac
 # <<< blacktower opencode source wrapper <<<

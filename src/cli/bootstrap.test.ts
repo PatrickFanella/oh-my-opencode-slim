@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import {
   chmodSync,
   existsSync,
@@ -504,12 +505,16 @@ printf '{"name":"@opentui/solid"}\n' > node_modules/@opentui/solid/package.json
     });
 
     expect(wrapper).toContain('blacktower opencode source wrapper');
-    expect(wrapper).toContain('caller_dir="$PWD"');
+    expect(wrapper).toContain('caller_dir="$(pwd -P)"');
+    expect(wrapper).toContain('export OPENCODE_CWD="$caller_dir"');
+    expect(wrapper).toContain('run_opencode_from_source()');
     expect(wrapper).toContain('cd /home/test/src/opencode');
     expect(wrapper).toContain('has_positional=0');
-    expect(wrapper).toContain('exec bun run dev "$caller_dir"');
-    expect(wrapper).toContain('exec bun run dev "$caller_dir" "$@"');
-    expect(wrapper).toContain('exec bun run dev "$@"');
+    expect(wrapper).toContain('skip_next=0');
+    expect(wrapper).toContain('--port|--cwd )');
+    expect(wrapper).toContain('run_opencode_from_source "$caller_dir"');
+    expect(wrapper).toContain('run_opencode_from_source "$caller_dir" "$@"');
+    expect(wrapper).toContain('run_opencode_from_source "$@"');
   });
 
   test('renderOpenCodeSourceWrapper shell-quotes paths with spaces', () => {
@@ -520,6 +525,33 @@ printf '{"name":"@opentui/solid"}\n' > node_modules/@opentui/solid/package.json
 
     expect(wrapper).toContain("cd '/home/test/src/open code'");
     expect(wrapper).toContain('exec bun run --cwd packages/opencode dev "$@"');
+  });
+
+  test('renderOpenCodeSourceWrapper keeps caller dir for the wrapper shell', () => {
+    const sourceDir = join(tmpDir, 'open code');
+    const callerDir = join(tmpDir, 'project');
+    const wrapperPath = join(tmpDir, 'opencode');
+    mkdirSync(sourceDir, { recursive: true });
+    mkdirSync(callerDir, { recursive: true });
+    writeFileSync(
+      wrapperPath,
+      renderOpenCodeSourceWrapper({
+        sourceDir,
+        command:
+          'bash -c \'printf "child=%s\\narg=%s\\nenv=%s\\n" "$PWD" "$1" "$OPENCODE_CWD"\' sh',
+      }),
+    );
+    chmodSync(wrapperPath, 0o755);
+
+    const result = spawnSync(wrapperPath, [], {
+      cwd: callerDir,
+      encoding: 'utf-8',
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(`child=${sourceDir}\n`);
+    expect(result.stdout).toContain(`arg=${callerDir}\n`);
+    expect(result.stdout).toContain(`env=${callerDir}\n`);
   });
 
   test('renderOpenCodeSourceWrapper preserves subcommand args', () => {
